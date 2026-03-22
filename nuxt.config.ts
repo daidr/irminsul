@@ -5,6 +5,14 @@ export default defineNuxtConfig({
 
   nitro: {
     preset: "bun",
+    externals: {
+      inline: ["mongodb"],
+    },
+    esbuild: {
+      options: {
+        target: "esnext",
+      },
+    },
   },
 
   vite: {
