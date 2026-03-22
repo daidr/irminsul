@@ -6,11 +6,13 @@
     "dev": "nuxt dev",
     "build": "nuxt build",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare",
+    "prod": "nuxt build && bun .output/server/index.mjs",
     "lint": "oxlint --type-aware --type-check",
     "lint:fix": "oxlint --type-aware --type-check --fix",
-    "fmt": "oxfmt .",
-    "fmt:check": "oxfmt --check ."
+    "fmt": "bunx oxfmt .",
+    "fmt:check": "bunx oxfmt --check .",
+    "test": "vitest run",
+    "postinstall": "nuxt prepare"
   },
   "dependencies": {
     "@daidr/minecraft-skin-renderer": "^0.3.1",
@@ -48,8 +50,12 @@
     "lint-staged": "^16.4.0",
     "oxfmt": "^0.41.0",
     "oxlint": "^1.56.0",
+    "oxlint-tsgolint": "^0.17.1",
     "sass-embedded": "^1.98.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.0"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,mjs,cjs,vue}": "bun run lint"
   }
 }

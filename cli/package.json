@@ -1,0 +1,20 @@
+{
+  "name": "irminsul-cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun src/init.ts",
+    "build": "bun build src/init.ts --bundle --target=bun --outfile=dist/init.js"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.5.3",
+    "chalk": "^5.4.1",
+    "mongodb": "^7.1.0",
+    "yaml": "^2.7.1"
+  },
+  "devDependencies": {
+    "bun-types": "^1.3.11",
+    "typescript": "^5.9.3"
+  }
+}
