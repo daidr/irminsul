@@ -1,0 +1,53 @@
+{
+  "name": "irminsul-nuxt",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "lint": "oxlint --type-aware --type-check",
+    "lint:fix": "oxlint --type-aware --type-check --fix",
+    "fmt": "oxfmt .",
+    "fmt:check": "oxfmt --check ."
+  },
+  "dependencies": {
+    "@daidr/minecraft-skin-renderer": "^0.3.1",
+    "@iconify-json/hugeicons": "^1.2.24",
+    "@logtape/logtape": "^2.0.4",
+    "@logtape/otel": "^2.0.4",
+    "@nuxt/icon": "^2.2.1",
+    "@nuxt/test-utils": "^4.0.0",
+    "@pinia/nuxt": "^0.11.3",
+    "@simplewebauthn/browser": "^13.3.0",
+    "@simplewebauthn/server": "^13.3.0",
+    "@tailwindcss/vite": "^4.2.2",
+    "@vueuse/core": "^14.2.1",
+    "altcha": "^2.3.0",
+    "daisyui": "5",
+    "js-sha3": "^0.9.3",
+    "mongodb": "^7.1.0",
+    "motion-v": "^2.1.0",
+    "nodemailer": "^8.0.3",
+    "nuxt": "^4.4.2",
+    "pinia": "^3.0.4",
+    "pngjs-nozlib": "^1.0.0",
+    "tailwindcss": "4",
+    "uuid": "^13.0.0",
+    "vue": "^3.5.30",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
+    "@types/nodemailer": "^7.0.11",
+    "@types/uuid": "^11.0.0",
+    "bun-git-hooks": "^0.3.1",
+    "lint-staged": "^16.4.0",
+    "oxfmt": "^0.41.0",
+    "oxlint": "^1.56.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0"
+  }
+}
