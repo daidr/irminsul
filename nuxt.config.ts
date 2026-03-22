@@ -5,13 +5,15 @@ export default defineNuxtConfig({
 
   nitro: {
     preset: "bun",
+    noExternals: false,
     externals: {
-      inline: ["mongodb"],
-    },
-    esbuild: {
-      options: {
-        target: "esnext",
-      },
+      external: [
+        "mongodb",
+        "mongodb-connection-string-url",
+        "@simplewebauthn/server",
+        "nodemailer",
+        "@logtape/logtape",
+      ],
     },
   },
 
