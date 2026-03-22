@@ -1,2 +1,3 @@
-// Stub — will be replaced in Task 10
-export default defineEventHandler(() => null)
+export default defineEventHandler((event) => {
+  return event.context.user || null;
+});

@@ -1,0 +1,89 @@
+import { getLogger } from "@logtape/logtape";
+import { hasActiveBan } from "~~/server/types/user.schema";
+
+const logger = getLogger(["irminsul", "auth"]);
+
+const BASE_URL = process.env.IRMIN_YGGDRASIL_BASE_URL || "http://localhost:12042";
+const SUCCESS_MESSAGE = "如果该邮箱已注册，我们已发送密码重置链接，请检查收件箱。";
+
+/** Per-email 频率限制：10 分钟内只能请求一次密码重置 */
+const RESET_EMAIL_COOLDOWN_SECONDS = 10 * 60;
+
+async function checkEmailResetRateLimit(email: string): Promise<boolean> {
+  const redis = getRedisClient();
+  const key = buildRedisKey("password-reset-email", email.toLowerCase());
+  const existing = await redis.send("GET", [key]);
+  if (existing) return false;
+  await redis.send("SET", [key, "1", "EX", RESET_EMAIL_COOLDOWN_SECONDS.toString()]);
+  return true;
+}
+
+export default defineEventHandler(async (event) => {
+  const body = await readBody<{
+    email?: string;
+    altchaPayload?: string;
+  }>(event);
+
+  const { email, altchaPayload } = body || {};
+
+  if (!altchaPayload) {
+    return { success: false, error: "人机验证失败，请重试" };
+  }
+
+  // Verify altcha
+  const altchaValid = await verifyAltchaPayload(altchaPayload);
+  if (!altchaValid) {
+    return { success: false, error: "人机验证失败，请重试" };
+  }
+  if (altchaValid.expired) {
+    return { success: false, error: "人机验证已过期，请重试" };
+  }
+  if (!altchaValid.verified) {
+    return { success: false, error: "人机验证失败，请重试" };
+  }
+
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRegex.test(email)) {
+    return { success: false, error: "请输入有效的邮箱地址" };
+  }
+
+  // Check if SMTP is configured
+  const smtpHost = getSetting("smtp.host");
+  if (!smtpHost) {
+    return { success: false, error: "邮件服务未配置，请联系管理员" };
+  }
+
+  // Per-email rate limit (prevent email bombing)
+  const allowed = await checkEmailResetRateLimit(email);
+  if (!allowed) {
+    return { success: true, message: SUCCESS_MESSAGE };
+  }
+
+  // Find user (don't reveal whether user exists)
+  const user = await findUserByEmail(email);
+  if (!user) {
+    return { success: true, message: SUCCESS_MESSAGE };
+  }
+
+  // Check banned
+  if (hasActiveBan(user.bans)) {
+    return { success: true, message: SUCCESS_MESSAGE };
+  }
+
+  // Create reset token and send email
+  try {
+    const token = await createPasswordResetToken(user.uuid, user.email);
+    if (token) {
+      const resetLink = `${BASE_URL}/reset-password?token=${token}`;
+      const sent = await sendPasswordResetEmail(user.email, resetLink);
+      if (!sent) {
+        logger.error`Failed to send password reset email to ${user.email}`;
+      }
+    }
+  } catch (err) {
+    logger.error`Error during password reset for ${email}: ${err}`;
+  }
+
+  return { success: true, message: SUCCESS_MESSAGE };
+});
