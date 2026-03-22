@@ -27,6 +27,7 @@
     "altcha": "^2.3.0",
     "daisyui": "5",
     "js-sha3": "^0.9.3",
+    "marked": "^17.0.5",
     "mongodb": "^7.1.0",
     "motion-v": "^2.1.0",
     "nodemailer": "^8.0.3",
