@@ -6,9 +6,12 @@ const LOG_DIR = "./irminsul-data/log";
 
 export default defineNitroPlugin((nitroApp) => {
   const config = useRuntimeConfig();
-  const maxFiles = Number(config.evlogMaxFiles) || 30;
-  const samplingInfo = Number(config.evlogSamplingInfo) || 100;
-  const samplingDebug = Number(config.evlogSamplingDebug) || 10;
+  const rawMaxFiles = Number(config.evlogMaxFiles);
+  const rawSamplingInfo = Number(config.evlogSamplingInfo);
+  const rawSamplingDebug = Number(config.evlogSamplingDebug);
+  const maxFiles = Number.isNaN(rawMaxFiles) ? 30 : rawMaxFiles;
+  const samplingInfo = Number.isNaN(rawSamplingInfo) ? 100 : rawSamplingInfo;
+  const samplingDebug = Number.isNaN(rawSamplingDebug) ? 10 : rawSamplingDebug;
 
   const fsDrain = createFsDrain({ dir: LOG_DIR, maxFiles });
 
