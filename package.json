@@ -17,9 +17,7 @@
   "dependencies": {
     "@daidr/minecraft-skin-renderer": "^0.3.1",
     "@iconify-json/hugeicons": "^1.2.24",
-    "@logtape/logtape": "^2.0.4",
-    "@logtape/otel": "^2.0.4",
-    "@nuxt/a11y": "1.0.0-alpha.1",
+"@nuxt/a11y": "1.0.0-alpha.1",
     "@nuxt/hints": "1.0.2",
     "@nuxt/icon": "^2.2.1",
     "@nuxt/test-utils": "^4.0.0",
@@ -29,6 +27,7 @@
     "@vueuse/core": "^14.2.1",
     "altcha": "^3.0.0-beta.3",
     "daisyui": "5",
+    "evlog": "^2.9.0",
     "js-sha3": "^0.9.3",
     "marked": "^17.0.5",
     "mongodb": "^7.1.0",
