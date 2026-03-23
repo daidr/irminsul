@@ -50,7 +50,11 @@ export default defineEventHandler(async (event) => {
   }
 
   // Verify old password
-  const passwordValid = await verifyPassword(oldPassword, userDoc.passwordHash, userDoc.hashVersion);
+  const passwordValid = await verifyPassword(
+    oldPassword,
+    userDoc.passwordHash,
+    userDoc.hashVersion,
+  );
   if (!passwordValid) {
     return { success: false, error: "旧密码错误" };
   }

@@ -64,9 +64,14 @@ async function handleSendVerification() {
       <!-- 左列 -->
       <div class="lg:col-span-4 flex flex-col gap-6">
         <AnnouncementCard :announcement="pageData?.announcement ?? ''" />
-        <ShortcutCard :is-admin="user?.isAdmin" @change-password="changePasswordRef?.open()"
-          @session-manage="sessionManageRef?.open()" @passkey-manage="passkeyRef?.open()"
-          @ban-history="banHistoryRef?.open()" @admin-panel="adminPanelRef?.open()" />
+        <ShortcutCard
+          :is-admin="user?.isAdmin"
+          @change-password="changePasswordRef?.open()"
+          @session-manage="sessionManageRef?.open()"
+          @passkey-manage="passkeyRef?.open()"
+          @ban-history="banHistoryRef?.open()"
+          @admin-panel="adminPanelRef?.open()"
+        />
       </div>
       <!-- 右列 -->
       <div class="lg:col-span-8 flex flex-col gap-6">

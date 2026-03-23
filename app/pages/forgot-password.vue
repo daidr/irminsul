@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type AltchaField from '~/components/AltchaField.vue';
+import type AltchaField from "~/components/AltchaField.vue";
 
 useHead({ title: "忘记密码" });
 
@@ -66,8 +66,14 @@ async function handleSubmit() {
         <!-- Email -->
         <fieldset class="fieldset">
           <legend class="fieldset-legend text-sm font-semibold">邮箱</legend>
-          <input v-model="email" type="email" class="input input-bordered w-full" placeholder="你的邮箱"
-            autocomplete="email" required />
+          <input
+            v-model="email"
+            type="email"
+            class="input input-bordered w-full"
+            placeholder="你的邮箱"
+            autocomplete="email"
+            required
+          />
           <p class="fieldset-label text-xs leading-relaxed">
             我们会向你的邮箱发送一封带有密码重置链接的邮件。
           </p>

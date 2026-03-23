@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type AltchaField from '~/components/AltchaField.vue';
+import type AltchaField from "~/components/AltchaField.vue";
 
 useHead({ title: "注册" });
 
@@ -70,8 +70,14 @@ async function handleSubmit() {
       <!-- Email -->
       <fieldset class="fieldset">
         <legend class="fieldset-legend text-sm font-semibold">邮箱</legend>
-        <input v-model="email" type="email" class="input input-bordered w-full validator" placeholder="你的邮箱"
-          autocomplete="email" required />
+        <input
+          v-model="email"
+          type="email"
+          class="input input-bordered w-full validator"
+          placeholder="你的邮箱"
+          autocomplete="email"
+          required
+        />
         <p class="fieldset-label text-xs leading-relaxed">
           放心，我们不会将你的邮箱泄露给任何人。<br />
           不合法的邮箱可能会导致无法加入游戏。
@@ -81,9 +87,18 @@ async function handleSubmit() {
       <!-- Game ID -->
       <fieldset class="fieldset">
         <legend class="fieldset-legend text-sm font-semibold">游戏昵称</legend>
-        <input v-model="gameId" type="text" class="input input-bordered w-full validator" placeholder="游戏昵称"
-          autocomplete="username" pattern="[a-zA-Z0-9_]{4,12}" title="仅支持字母、数字、下划线，长度4-12个字符" minlength="4"
-          maxlength="12" required />
+        <input
+          v-model="gameId"
+          type="text"
+          class="input input-bordered w-full validator"
+          placeholder="游戏昵称"
+          autocomplete="username"
+          pattern="[a-zA-Z0-9_]{4,12}"
+          title="仅支持字母、数字、下划线，长度4-12个字符"
+          minlength="4"
+          maxlength="12"
+          required
+        />
         <p class="fieldset-label text-xs leading-relaxed">
           这将会是你游戏内的玩家名称。<br />
           支持字母、数字、下划线。<br />
@@ -94,16 +109,30 @@ async function handleSubmit() {
       <!-- Password -->
       <fieldset class="fieldset">
         <legend class="fieldset-legend text-sm font-semibold">密码</legend>
-        <input v-model="password" type="password" class="input input-bordered w-full validator" placeholder="密码"
-          autocomplete="new-password" minlength="8" maxlength="128" required />
+        <input
+          v-model="password"
+          type="password"
+          class="input input-bordered w-full validator"
+          placeholder="密码"
+          autocomplete="new-password"
+          minlength="8"
+          maxlength="128"
+          required
+        />
       </fieldset>
 
       <!-- Confirm Password -->
       <fieldset class="fieldset">
         <legend class="fieldset-legend text-sm font-semibold">重复密码</legend>
-        <input ref="confirmPasswordRef" v-model="confirmPassword" type="password"
-          class="input input-bordered w-full validator" placeholder="确认你的密码正确无误" autocomplete="confirm-password"
-          required />
+        <input
+          ref="confirmPasswordRef"
+          v-model="confirmPassword"
+          type="password"
+          class="input input-bordered w-full validator"
+          placeholder="确认你的密码正确无误"
+          autocomplete="confirm-password"
+          required
+        />
       </fieldset>
 
       <!-- Altcha Captcha -->

@@ -64,7 +64,9 @@ function parseWebUA(ua: string): { browser: string; os: string; icon: "monitor" 
 async function loadGameSessions() {
   loading.value = true;
   try {
-    const result = await $fetch<{ success: boolean; sessions: GameSessionItem[] }>("/api/user/sessions/game");
+    const result = await $fetch<{ success: boolean; sessions: GameSessionItem[] }>(
+      "/api/user/sessions/game",
+    );
     if (result.success) gameSessions.value = result.sessions;
   } finally {
     loading.value = false;
@@ -74,7 +76,9 @@ async function loadGameSessions() {
 async function loadWebSessions() {
   loading.value = true;
   try {
-    const result = await $fetch<{ success: boolean; sessions: WebSessionItem[] }>("/api/user/sessions/web");
+    const result = await $fetch<{ success: boolean; sessions: WebSessionItem[] }>(
+      "/api/user/sessions/web",
+    );
     if (result.success) webSessions.value = result.sessions;
   } finally {
     loading.value = false;

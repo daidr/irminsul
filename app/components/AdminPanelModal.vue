@@ -62,7 +62,11 @@ defineExpose({ open });
         </div>
 
         <!-- Tab 内容：key 变化时重建组件，重新拉取配置 -->
-        <AdminSiteConfigTab :key="'sc-' + openKey" v-show="activeTab === 'site-config'" ref="siteConfigRef" />
+        <AdminSiteConfigTab
+          :key="'sc-' + openKey"
+          v-show="activeTab === 'site-config'"
+          ref="siteConfigRef"
+        />
         <AdminUserManageTab :key="'um-' + openKey" v-show="activeTab === 'user-manage'" />
       </div>
       <!-- 背景点击关闭 -->

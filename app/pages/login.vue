@@ -158,15 +158,27 @@ onBeforeUnmount(() => {
       <!-- Email -->
       <fieldset class="fieldset">
         <legend class="fieldset-legend text-sm font-semibold">邮箱</legend>
-        <input v-model="email" type="email" class="input input-bordered w-full" placeholder="你的邮箱"
-          autocomplete="email webauthn" required />
+        <input
+          v-model="email"
+          type="email"
+          class="input input-bordered w-full"
+          placeholder="你的邮箱"
+          autocomplete="email webauthn"
+          required
+        />
       </fieldset>
 
       <!-- Password -->
       <fieldset class="fieldset">
         <legend class="fieldset-legend text-sm font-semibold">密码</legend>
-        <input v-model="password" type="password" class="input input-bordered w-full" placeholder="你的密码"
-          autocomplete="current-password" required />
+        <input
+          v-model="password"
+          type="password"
+          class="input input-bordered w-full"
+          placeholder="你的密码"
+          autocomplete="current-password"
+          required
+        />
       </fieldset>
 
       <!-- Altcha Captcha -->
@@ -188,7 +200,12 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- Passkey Login Button -->
-      <button type="button" class="btn btn-outline w-full" :disabled="passkeyLoading" @click="handlePasskeyLogin">
+      <button
+        type="button"
+        class="btn btn-outline w-full"
+        :disabled="passkeyLoading"
+        @click="handlePasskeyLogin"
+      >
         <span v-if="passkeyLoading" class="loading loading-spinner loading-sm" />
         <template v-else>
           <Icon name="hugeicons:key-01" class="text-base" />
@@ -197,7 +214,9 @@ onBeforeUnmount(() => {
       </button>
 
       <!-- Forgot Password -->
-      <NuxtLink to="/forgot-password" class="text-primary text-sm text-center"> 忘记密码？ </NuxtLink>
+      <NuxtLink to="/forgot-password" class="text-primary text-sm text-center">
+        忘记密码？
+      </NuxtLink>
     </form>
   </div>
 </template>

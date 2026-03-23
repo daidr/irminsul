@@ -292,9 +292,9 @@ async function migrateUsers(
         hashVersion: "legacy",
         skin: old.skin?.hash
           ? {
-            type: (old.skin.type === 1 ? 1 : 0) as 0 | 1,
-            hash: old.skin.hash,
-          }
+              type: (old.skin.type === 1 ? 1 : 0) as 0 | 1,
+              hash: old.skin.hash,
+            }
           : null,
         cape: null,
         bans: old.isBanned
@@ -340,9 +340,7 @@ async function migrateUsers(
           for (const we of bulkErr.writeErrors) {
             const doc = docsToInsert[we.index];
             if (doc) {
-              result.duplicateUsers.push(
-                `${doc.email as string} (${doc.gameId as string})`,
-              );
+              result.duplicateUsers.push(`${doc.email as string} (${doc.gameId as string})`);
             }
           }
         }
@@ -637,9 +635,7 @@ async function migrateFromGHAuth(): Promise<void> {
   );
   console.log(
     `    公告: ${chalk.cyan(
-      announcement
-        ? announcement.slice(0, 50) + (announcement.length > 50 ? "..." : "")
-        : "(无)",
+      announcement ? announcement.slice(0, 50) + (announcement.length > 50 ? "..." : "") : "(无)",
     )}`,
   );
 
@@ -866,7 +862,9 @@ async function migrateFromGHAuth(): Promise<void> {
 async function main(): Promise<void> {
   console.log();
   console.log(chalk.bold("╔═════════════════════════════════════╗"));
-  console.log(`${chalk.bold("║")}   ${chalk.green.bold("Irminsul")} ${chalk.dim("初始化向导")}               ${chalk.bold("║")}`);
+  console.log(
+    `${chalk.bold("║")}   ${chalk.green.bold("Irminsul")} ${chalk.dim("初始化向导")}               ${chalk.bold("║")}`,
+  );
   console.log(chalk.bold("╚═════════════════════════════════════╝"));
   console.log();
 

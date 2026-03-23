@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type AltchaField from '~/components/AltchaField.vue';
+import type AltchaField from "~/components/AltchaField.vue";
 
 useHead({ title: "重置密码" });
 
@@ -64,7 +64,11 @@ async function handleSubmit() {
 
 <template>
   <div class="flex justify-center items-center px-4 min-h-dvh -mt-18 pt-22 pb-8 bg-base-100">
-    <form v-if="tokenData?.tokenValid" class="w-full max-w-105 flex flex-col gap-7" @submit.prevent="handleSubmit">
+    <form
+      v-if="tokenData?.tokenValid"
+      class="w-full max-w-105 flex flex-col gap-7"
+      @submit.prevent="handleSubmit"
+    >
       <h1 class="text-4xl text-base-content text-center">重置密码</h1>
 
       <!-- Error message -->
@@ -81,17 +85,31 @@ async function handleSubmit() {
         <!-- New Password -->
         <fieldset class="fieldset">
           <legend class="fieldset-legend text-sm font-semibold">新密码</legend>
-          <input v-model="password" type="password" class="input input-bordered w-full validator" placeholder="新密码"
-            autocomplete="new-password" minlength="8" maxlength="128" required />
+          <input
+            v-model="password"
+            type="password"
+            class="input input-bordered w-full validator"
+            placeholder="新密码"
+            autocomplete="new-password"
+            minlength="8"
+            maxlength="128"
+            required
+          />
           <p class="fieldset-label text-xs leading-relaxed">密码长度至少 8 个字符。</p>
         </fieldset>
 
         <!-- Confirm Password -->
         <fieldset class="fieldset">
           <legend class="fieldset-legend text-sm font-semibold">确认密码</legend>
-          <input ref="confirmPasswordRef" v-model="confirmPassword" type="password"
-            class="input input-bordered w-full validator" placeholder="确认你的新密码" autocomplete="confirm-password"
-            required />
+          <input
+            ref="confirmPasswordRef"
+            v-model="confirmPassword"
+            type="password"
+            class="input input-bordered w-full validator"
+            placeholder="确认你的新密码"
+            autocomplete="confirm-password"
+            required
+          />
         </fieldset>
 
         <!-- Altcha Captcha -->
@@ -116,7 +134,9 @@ async function handleSubmit() {
       <div role="alert" class="alert alert-error alert-soft w-full">
         <span>重置链接无效或已过期，请重新发送密码重置邮件。</span>
       </div>
-      <NuxtLink to="/forgot-password" class="text-primary text-sm text-center"> 重新发送重置邮件 </NuxtLink>
+      <NuxtLink to="/forgot-password" class="text-primary text-sm text-center">
+        重新发送重置邮件
+      </NuxtLink>
       <NuxtLink to="/login" class="text-primary text-sm text-center"> 返回登录 </NuxtLink>
     </div>
   </div>

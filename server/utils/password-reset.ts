@@ -59,12 +59,7 @@ export async function createPasswordResetToken(
 
   const redis = getRedisClient();
   await redis.send("SET", [key, JSON.stringify(data), "EX", RESET_EXPIRY_SECONDS.toString()]);
-  await redis.send("SET", [
-    lockKey(userId),
-    tokenHash,
-    "EX",
-    RESET_EXPIRY_SECONDS.toString(),
-  ]);
+  await redis.send("SET", [lockKey(userId), tokenHash, "EX", RESET_EXPIRY_SECONDS.toString()]);
 
   logger.info`Password reset token created for user ${userId}`;
   return rawToken;

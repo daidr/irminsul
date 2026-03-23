@@ -188,10 +188,13 @@ async function save() {
       const base64 = btoa(new Uint8Array(buffer).reduce((s, b) => s + String.fromCharCode(b), ""));
 
       const model = activeTab.value === "skin" ? selectedModelType.value : undefined;
-      const result = await $fetch<{ success: boolean; hash?: string; error?: string }>("/api/user/texture", {
-        method: "POST",
-        body: { type: activeTab.value, data: base64, model },
-      });
+      const result = await $fetch<{ success: boolean; hash?: string; error?: string }>(
+        "/api/user/texture",
+        {
+          method: "POST",
+          body: { type: activeTab.value, data: base64, model },
+        },
+      );
 
       if (result.success && result.hash) {
         if (activeTab.value === "skin") {
@@ -229,10 +232,13 @@ async function deleteTexture() {
   error.value = "";
 
   try {
-    const result = await $fetch<{ success: boolean; fallbackSkinHash?: string; error?: string }>("/api/user/texture", {
-      method: "DELETE",
-      body: { type: activeTab.value },
-    });
+    const result = await $fetch<{ success: boolean; fallbackSkinHash?: string; error?: string }>(
+      "/api/user/texture",
+      {
+        method: "DELETE",
+        body: { type: activeTab.value },
+      },
+    );
     if (result.success) {
       if (activeTab.value === "skin") {
         profileStore.clearSkin(result.fallbackSkinHash);

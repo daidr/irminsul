@@ -36,7 +36,7 @@ export async function verifyPassword(
  *   4. 与存储的 hash 比较
  */
 async function verifyLegacy(plaintext: string, storedHash: string): Promise<boolean> {
-  const legacyGlobalSalt = useRuntimeConfig().legacyGlobalSalt as string || "";
+  const legacyGlobalSalt = (useRuntimeConfig().legacyGlobalSalt as string) || "";
   const preprocessed = legacyPreprocess(plaintext);
   const computed = await hmacSha256(preprocessed, legacyGlobalSalt);
   if (computed.length !== storedHash.length) return false;

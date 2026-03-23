@@ -51,11 +51,17 @@ export async function findUserByUuid(uuid: string): Promise<UserDocument | null>
 /** Session 中间件专用：仅查询必要字段，排除 tokens 等大字段 */
 export async function findUserForSession(
   uuid: string,
-): Promise<Pick<UserDocument, "skin" | "cape" | "bans" | "time" | "isAdmin" | "emailVerified"> | null> {
+): Promise<Pick<
+  UserDocument,
+  "skin" | "cape" | "bans" | "time" | "isAdmin" | "emailVerified"
+> | null> {
   return getUserCollection().findOne(
     { uuid },
     { projection: { skin: 1, cape: 1, bans: 1, time: 1, isAdmin: 1, emailVerified: 1 } },
-  ) as Promise<Pick<UserDocument, "skin" | "cape" | "bans" | "time" | "isAdmin" | "emailVerified"> | null>;
+  ) as Promise<Pick<
+    UserDocument,
+    "skin" | "cape" | "bans" | "time" | "isAdmin" | "emailVerified"
+  > | null>;
 }
 
 export async function findUsersByGameIds(

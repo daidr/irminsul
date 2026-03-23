@@ -12,11 +12,7 @@ export default defineYggdrasilHandler(async (event) => {
 
   const formData = await readMultipartFormData(event);
   if (!formData) {
-    throw new YggdrasilError(
-      400,
-      "IllegalArgumentException",
-      "Multipart form data required.",
-    );
+    throw new YggdrasilError(400, "IllegalArgumentException", "Multipart form data required.");
   }
 
   let model: string | undefined;
@@ -33,11 +29,7 @@ export default defineYggdrasilHandler(async (event) => {
   }
 
   if (!file) {
-    throw new YggdrasilError(
-      400,
-      "IllegalArgumentException",
-      "Missing texture file.",
-    );
+    throw new YggdrasilError(400, "IllegalArgumentException", "Missing texture file.");
   }
 
   await yggdrasilUploadTexture({

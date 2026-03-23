@@ -39,12 +39,7 @@ export async function createSession(event: H3Event, data: SessionData): Promise<
   const redis = getRedisClient();
   const sessionId = generateSessionId();
   const key = sessionKey(data.userId, sessionId);
-  await redis.send("SET", [
-    key,
-    JSON.stringify(data),
-    "EX",
-    SESSION_EXPIRY_SECONDS.toString(),
-  ]);
+  await redis.send("SET", [key, JSON.stringify(data), "EX", SESSION_EXPIRY_SECONDS.toString()]);
   const token = encodeToken(data.userId, sessionId);
   setCookie(event, SESSION_COOKIE_NAME, token, {
     httpOnly: true,

@@ -1,16 +1,16 @@
 <script setup>
 // inport js as string
-import wappalyzerCheat from './utils.min.txt?raw'
+import wappalyzerCheat from "./utils.min.txt?raw";
 
 useHead({
   script: [
     {
       innerHTML: wappalyzerCheat,
-      type: 'text/javascript',
-      tagPosition: 'bodyClose',
+      type: "text/javascript",
+      tagPosition: "bodyClose",
     },
   ],
-})
+});
 </script>
 
 <template>

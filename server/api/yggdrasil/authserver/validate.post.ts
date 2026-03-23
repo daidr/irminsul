@@ -6,11 +6,7 @@ export default defineYggdrasilHandler(async (event) => {
   });
 
   if (!valid) {
-    throw new YggdrasilError(
-      403,
-      "ForbiddenOperationException",
-      "Invalid token.",
-    );
+    throw new YggdrasilError(403, "ForbiddenOperationException", "Invalid token.");
   }
 
   setResponseStatus(event, 204);

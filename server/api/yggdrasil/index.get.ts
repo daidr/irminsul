@@ -1,8 +1,6 @@
 export default defineYggdrasilHandler(async () => {
   const config = useRuntimeConfig();
-  const skinDomains = config.yggdrasilSkinDomains
-    .split(",")
-    .filter(Boolean);
+  const skinDomains = config.yggdrasilSkinDomains.split(",").filter(Boolean);
 
   return {
     meta: {

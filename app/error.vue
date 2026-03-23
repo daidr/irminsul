@@ -17,8 +17,6 @@ function handleBack() {
   <div class="flex min-h-dvh flex-col items-center justify-center gap-4 p-8">
     <h1 class="text-2xl font-bold">{{ heading }}</h1>
     <p class="opacity-60">{{ reason }}</p>
-    <button class="btn btn-primary btn-sm" @click="handleBack">
-      Back to Home
-    </button>
+    <button class="btn btn-primary btn-sm" @click="handleBack">Back to Home</button>
   </div>
 </template>

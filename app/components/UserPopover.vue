@@ -97,7 +97,9 @@ const isBanned = computed(() => {
               user.gameId
             }}</motion.p>
             <span v-if="isBanned" class="badge badge-soft badge-error badge-sm">封禁中</span>
-            <span v-else-if="user.isAdmin" class="badge badge-soft badge-primary badge-sm">管理员</span>
+            <span v-else-if="user.isAdmin" class="badge badge-soft badge-primary badge-sm"
+              >管理员</span
+            >
             <span v-else class="badge badge-soft badge-sm">普通玩家</span>
 
             <div class="divider my-0" />

@@ -1,8 +1,6 @@
 <script setup lang="ts">
 const { data: user } = useUser();
-const { data: pageData } = await useAsyncData("index-data", () =>
-  $fetch("/api/page-data"),
-);
+const { data: pageData } = await useAsyncData("index-data", () => $fetch("/api/page-data"));
 </script>
 
 <template>

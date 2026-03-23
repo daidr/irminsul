@@ -53,10 +53,7 @@ const renderGraph = useRenderGraph(renderCanvasRef, skinUrl);
         </button>
       </div>
     </template>
-    <div
-      v-else
-      class="flex flex-col items-center justify-center gap-2 text-base-content/30 py-16"
-    >
+    <div v-else class="flex flex-col items-center justify-center gap-2 text-base-content/30 py-16">
       <Icon name="hugeicons:user" class="text-[5rem]" />
       <span class="text-sm">暂无皮肤</span>
     </div>

@@ -22,10 +22,6 @@
     #000 40%,
     rgba(0, 0, 0, 0.4) 100%
   );
-  mask-image: radial-gradient(
-    ellipse 50% 50% at 50% 50%,
-    #000 40%,
-    rgba(0, 0, 0, 0.4) 100%
-  );
+  mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 40%, rgba(0, 0, 0, 0.4) 100%);
 }
 </style>

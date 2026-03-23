@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type AltchaField from './AltchaField.vue';
+import type AltchaField from "./AltchaField.vue";
 
 const dialogRef = useTemplateRef<HTMLDialogElement>("dialogRef");
 
@@ -114,23 +114,44 @@ defineExpose({ open });
           <!-- Old Password -->
           <fieldset class="fieldset">
             <legend class="fieldset-legend text-sm font-semibold">旧密码</legend>
-            <input v-model="oldPassword" type="password" class="input input-bordered w-full" placeholder="旧密码"
-              autocomplete="current-password" required />
+            <input
+              v-model="oldPassword"
+              type="password"
+              class="input input-bordered w-full"
+              placeholder="旧密码"
+              autocomplete="current-password"
+              required
+            />
           </fieldset>
 
           <!-- New Password -->
           <fieldset class="fieldset">
             <legend class="fieldset-legend text-sm font-semibold">新密码</legend>
-            <input v-model="newPassword" type="password" class="input input-bordered w-full validator" placeholder="新密码"
-              autocomplete="new-password" minlength="8" maxlength="128" required />
+            <input
+              v-model="newPassword"
+              type="password"
+              class="input input-bordered w-full validator"
+              placeholder="新密码"
+              autocomplete="new-password"
+              minlength="8"
+              maxlength="128"
+              required
+            />
             <p class="fieldset-label text-xs leading-relaxed">密码长度至少 8 个字符。</p>
           </fieldset>
 
           <!-- Confirm Password -->
           <fieldset class="fieldset">
             <legend class="fieldset-legend text-sm font-semibold">重复新密码</legend>
-            <input ref="confirmPasswordRef" v-model="confirmPassword" type="password"
-              class="input input-bordered w-full validator" placeholder="重复新密码" autocomplete="new-password" required />
+            <input
+              ref="confirmPasswordRef"
+              v-model="confirmPassword"
+              type="password"
+              class="input input-bordered w-full validator"
+              placeholder="重复新密码"
+              autocomplete="new-password"
+              required
+            />
           </fieldset>
 
           <!-- Altcha Captcha -->

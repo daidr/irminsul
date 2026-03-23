@@ -43,12 +43,7 @@ function challengeKey(id: string): string {
 
 export async function storeChallenge(id: string, challenge: string): Promise<void> {
   const redis = getRedisClient();
-  await redis.send("SET", [
-    challengeKey(id),
-    challenge,
-    "EX",
-    CHALLENGE_TTL_SECONDS.toString(),
-  ]);
+  await redis.send("SET", [challengeKey(id), challenge, "EX", CHALLENGE_TTL_SECONDS.toString()]);
 }
 
 export async function consumeChallenge(id: string): Promise<string | null> {

@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
 
     const config = useRuntimeConfig();
     const defaultHash = config.yggdrasilDefaultSkinHash || "";
-    const fallbackSkinHash = textureType === "skin" ? (defaultHash || undefined) : undefined;
+    const fallbackSkinHash = textureType === "skin" ? defaultHash || undefined : undefined;
 
     return { success: true, fallbackSkinHash };
   } catch (error) {

@@ -17,9 +17,7 @@ export class YggdrasilError extends Error {
   }
 }
 
-export function defineYggdrasilHandler<T>(
-  handler: (event: H3Event) => Promise<T>,
-): EventHandler {
+export function defineYggdrasilHandler<T>(handler: (event: H3Event) => Promise<T>): EventHandler {
   return defineEventHandler(async (event) => {
     try {
       return await handler(event);

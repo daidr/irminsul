@@ -10,7 +10,8 @@ export default defineEventHandler(async (event) => {
       backupEligible: pk.backupEligible,
       backupState: pk.backupState,
       createdAt: pk.createdAt instanceof Date ? pk.createdAt.toISOString() : String(pk.createdAt),
-      lastUsedAt: pk.lastUsedAt instanceof Date ? pk.lastUsedAt.toISOString() : String(pk.lastUsedAt),
+      lastUsedAt:
+        pk.lastUsedAt instanceof Date ? pk.lastUsedAt.toISOString() : String(pk.lastUsedAt),
     })),
   };
 });

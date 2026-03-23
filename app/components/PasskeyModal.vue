@@ -42,9 +42,12 @@ async function handleAdd() {
   actionLoading.value = "add";
   errorMsg.value = "";
   try {
-    const startResult = await $fetch<{ success: boolean; options?: any; error?: string }>("/api/passkey/register-options", {
-      method: "POST",
-    });
+    const startResult = await $fetch<{ success: boolean; options?: any; error?: string }>(
+      "/api/passkey/register-options",
+      {
+        method: "POST",
+      },
+    );
     if (!startResult.success || !startResult.options) {
       errorMsg.value = startResult.error || "获取注册选项失败";
       return;
@@ -59,10 +62,13 @@ async function handleAdd() {
       return;
     }
 
-    const finishResult = await $fetch<{ success: boolean; error?: string }>("/api/passkey/register-verify", {
-      method: "POST",
-      body: credential,
-    });
+    const finishResult = await $fetch<{ success: boolean; error?: string }>(
+      "/api/passkey/register-verify",
+      {
+        method: "POST",
+        body: credential,
+      },
+    );
     if (!finishResult.success) {
       errorMsg.value = finishResult.error || "注册失败";
       return;
@@ -166,16 +172,27 @@ defineExpose({ open });
             暂无通行密钥
           </div>
           <div v-else class="mt-5 flex flex-col gap-3 max-h-[40dvh] overflow-auto">
-            <div v-for="pk in passkeys" :key="pk.credentialId"
-              class="flex items-center justify-between border border-base-300 bg-base-200/50 px-4 py-3">
+            <div
+              v-for="pk in passkeys"
+              :key="pk.credentialId"
+              class="flex items-center justify-between border border-base-300 bg-base-200/50 px-4 py-3"
+            >
               <div class="flex flex-col gap-1 min-w-0 flex-1">
                 <div class="flex items-center gap-2">
                   <!-- Rename mode -->
                   <template v-if="renamingId === pk.credentialId">
-                    <input v-model="renameValue" class="input input-bordered input-sm w-full max-w-48" maxlength="50"
-                      @keyup.enter="confirmRename(pk.credentialId)" @keyup.escape="cancelRename" />
-                    <button class="btn btn-ghost btn-xs" :disabled="actionLoading === pk.credentialId"
-                      @click="confirmRename(pk.credentialId)">
+                    <input
+                      v-model="renameValue"
+                      class="input input-bordered input-sm w-full max-w-48"
+                      maxlength="50"
+                      @keyup.enter="confirmRename(pk.credentialId)"
+                      @keyup.escape="cancelRename"
+                    />
+                    <button
+                      class="btn btn-ghost btn-xs"
+                      :disabled="actionLoading === pk.credentialId"
+                      @click="confirmRename(pk.credentialId)"
+                    >
                       <Icon name="hugeicons:checkmark-circle-02" class="text-base text-success" />
                     </button>
                     <button class="btn btn-ghost btn-xs" @click="cancelRename">
@@ -185,8 +202,10 @@ defineExpose({ open });
                   <!-- Display mode -->
                   <template v-else>
                     <span class="text-sm font-semibold truncate">{{ pk.label }}</span>
-                    <span class="shrink-0 px-2 py-0.5 text-[10px] font-semibold"
-                      :class="pk.backupEligible ? 'bg-info/15 text-info' : 'bg-base-300 opacity-70'">
+                    <span
+                      class="shrink-0 px-2 py-0.5 text-[10px] font-semibold"
+                      :class="pk.backupEligible ? 'bg-info/15 text-info' : 'bg-base-300 opacity-70'"
+                    >
                       {{ pk.backupEligible ? "同步" : "本地" }}
                     </span>
                   </template>
@@ -198,13 +217,22 @@ defineExpose({ open });
               </div>
 
               <!-- Actions (hide during rename) -->
-              <div v-if="renamingId !== pk.credentialId" class="flex items-center gap-1 shrink-0 ml-2">
+              <div
+                v-if="renamingId !== pk.credentialId"
+                class="flex items-center gap-1 shrink-0 ml-2"
+              >
                 <button class="btn btn-ghost btn-xs" @click="startRename(pk)">
                   <Icon name="hugeicons:pencil-edit-01" class="text-sm opacity-60" />
                 </button>
-                <button class="btn btn-ghost btn-xs text-error" :disabled="actionLoading === pk.credentialId"
-                  @click="handleDelete(pk.credentialId)">
-                  <span v-if="actionLoading === pk.credentialId" class="loading loading-spinner loading-xs" />
+                <button
+                  class="btn btn-ghost btn-xs text-error"
+                  :disabled="actionLoading === pk.credentialId"
+                  @click="handleDelete(pk.credentialId)"
+                >
+                  <span
+                    v-if="actionLoading === pk.credentialId"
+                    class="loading loading-spinner loading-xs"
+                  />
                   <Icon v-else name="hugeicons:delete-02" class="text-sm" />
                 </button>
               </div>
@@ -212,7 +240,11 @@ defineExpose({ open });
           </div>
 
           <!-- Add Button -->
-          <button class="btn btn-primary mt-5 w-full" :disabled="actionLoading === 'add'" @click="handleAdd">
+          <button
+            class="btn btn-primary mt-5 w-full"
+            :disabled="actionLoading === 'add'"
+            @click="handleAdd"
+          >
             <span v-if="actionLoading === 'add'" class="loading loading-spinner loading-sm" />
             <template v-else>
               <Icon name="hugeicons:add-circle-half-dot" class="text-base" />

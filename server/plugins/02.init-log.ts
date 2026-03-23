@@ -1,19 +1,19 @@
-import fs from 'node:fs'
-import { Writable } from 'node:stream'
-import { configure, getConsoleSink, getStreamSink } from '@logtape/logtape'
+import fs from "node:fs";
+import { Writable } from "node:stream";
+import { configure, getConsoleSink, getStreamSink } from "@logtape/logtape";
 
-const LOG_DIR = './irminsul-data/log'
+const LOG_DIR = "./irminsul-data/log";
 
 function getLogFileSink() {
-  const date = new Date().toISOString().slice(0, 10)
-  const logPath = `${LOG_DIR}/app-${date}.log`
-  const nodeStream = fs.createWriteStream(logPath, { flags: 'a', encoding: 'utf-8' })
-  const webStream = Writable.toWeb(nodeStream)
-  return getStreamSink(webStream)
+  const date = new Date().toISOString().slice(0, 10);
+  const logPath = `${LOG_DIR}/app-${date}.log`;
+  const nodeStream = fs.createWriteStream(logPath, { flags: "a", encoding: "utf-8" });
+  const webStream = Writable.toWeb(nodeStream);
+  return getStreamSink(webStream);
 }
 
 export default defineNitroPlugin(async () => {
-  console.log('[Plugin 02] Init log')
+  console.log("[Plugin 02] Init log");
   await configure({
     reset: true,
     sinks: {
@@ -22,14 +22,14 @@ export default defineNitroPlugin(async () => {
     },
     loggers: [
       {
-        category: ['irminsul'],
-        lowestLevel: (useRuntimeConfig().appLogLevel as any) || 'info',
-        sinks: ['console', 'file'],
+        category: ["irminsul"],
+        lowestLevel: (useRuntimeConfig().appLogLevel as any) || "info",
+        sinks: ["console", "file"],
       },
       {
-        category: ['logtape', 'meta'],
-        sinks: process.env.NODE_ENV === 'development' ? ['console'] : [],
+        category: ["logtape", "meta"],
+        sinks: process.env.NODE_ENV === "development" ? ["console"] : [],
       },
     ],
-  })
-})
+  });
+});

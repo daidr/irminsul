@@ -55,7 +55,9 @@ defineExpose({ anyDirty });
 // ---- 加载 ----
 onMounted(async () => {
   try {
-    const result = await $fetch<{ success: boolean; settings: Record<string, any>; error: string }>("/api/admin/settings");
+    const result = await $fetch<{ success: boolean; settings: Record<string, any>; error: string }>(
+      "/api/admin/settings",
+    );
     if (!result.success) {
       loadError.value = result.error;
       return;

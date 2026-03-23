@@ -54,6 +54,7 @@ bun run test       # Run tests with Vitest
 ### Server Routes & API
 
 Nitro file-based API routes replace Telefunc. Convention:
+
 - `server/api/**/*.get.ts` — GET endpoints
 - `server/api/**/*.post.ts` — POST endpoints
 - `server/routes/yggdrasil/` — Yggdrasil protocol endpoints
@@ -151,6 +152,7 @@ defineExpose({ open });
 ```
 
 **Key points:**
+
 - `ClientOnly` ensures dialog only renders on client, `Teleport to="body"` hoists it to `<body>`
 - Open via `dialogRef.showModal()`, close via `method="dialog"` form
 - `modal-bottom sm:modal-middle` for responsive positioning

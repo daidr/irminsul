@@ -53,12 +53,7 @@ export async function createEmailVerificationToken(
 
   const redis = getRedisClient();
   await redis.send("SET", [key, JSON.stringify(data), "EX", VERIFY_EXPIRY_SECONDS.toString()]);
-  await redis.send("SET", [
-    lockKey(userId),
-    tokenHash,
-    "EX",
-    VERIFY_EXPIRY_SECONDS.toString(),
-  ]);
+  await redis.send("SET", [lockKey(userId), tokenHash, "EX", VERIFY_EXPIRY_SECONDS.toString()]);
 
   logger.info`Email verification token created for user ${userId}`;
   return rawToken;
