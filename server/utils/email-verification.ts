@@ -1,7 +1,4 @@
-import { getLogger } from "@logtape/logtape";
 import crypto from "node:crypto";
-
-const logger = getLogger(["irminsul", "auth"]);
 
 const VERIFY_PREFIX = "email-verify";
 const VERIFY_LOCK_PREFIX = "email-verify-lock";
@@ -36,7 +33,7 @@ export async function createEmailVerificationToken(
   email: string,
 ): Promise<string | null> {
   if (await hasActiveEmailVerificationToken(userId)) {
-    logger.info`Email verification token already active for user ${userId}, skipping.`;
+    useLogger().set({ emailVerification: { skipped: "token_already_active", userId } });
     return null;
   }
 
@@ -55,7 +52,7 @@ export async function createEmailVerificationToken(
   await redis.send("SET", [key, JSON.stringify(data), "EX", VERIFY_EXPIRY_SECONDS.toString()]);
   await redis.send("SET", [lockKey(userId), tokenHash, "EX", VERIFY_EXPIRY_SECONDS.toString()]);
 
-  logger.info`Email verification token created for user ${userId}`;
+  useLogger().set({ emailVerification: { tokenCreated: true, userId } });
   return rawToken;
 }
 
@@ -86,6 +83,6 @@ export async function consumeEmailVerificationToken(
   await redis.send("DEL", [key]);
   await redis.send("DEL", [lockKey(data.userId)]);
 
-  logger.info`Email verification token consumed for user ${data.userId}`;
+  useLogger().set({ emailVerification: { tokenConsumed: true, userId: data.userId } });
   return { userId: data.userId, email: data.email };
 }

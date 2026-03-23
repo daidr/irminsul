@@ -1,8 +1,5 @@
-import { getLogger } from "@logtape/logtape";
 import type { YggdrasilToken } from "~~/server/types/user.schema";
 import { hasActiveBan } from "~~/server/types/user.schema";
-
-const logger = getLogger(["irminsul", "yggdrasil"]);
 
 // --- authenticate ---
 
@@ -36,7 +33,7 @@ export async function yggdrasilAuthenticate(params: {
   if (user.hashVersion !== "argon2id") {
     const newHash = await hashPassword(params.password);
     await updatePasswordHash(user.uuid, newHash, "argon2id");
-    logger.info`Migrated password hash for user ${user.email} from ${user.hashVersion} to argon2id`;
+    useLogger().set({ auth: { passwordHashMigrated: true, userId: user.email, from: user.hashVersion } });
   }
 
   // 邮箱验证检查
@@ -74,7 +71,7 @@ export async function yggdrasilAuthenticate(params: {
     response.user = buildYggdrasilUser(user);
   }
 
-  logger.info`Yggdrasil authenticate: ${user.email}`;
+  useLogger().set({ yggdrasil: { action: "authenticate", userId: user.email } });
   return response;
 }
 
@@ -170,7 +167,7 @@ export async function yggdrasilSignout(params: {
   if (user.hashVersion !== "argon2id") {
     const newHash = await hashPassword(params.password);
     await updatePasswordHash(user.uuid, newHash, "argon2id");
-    logger.info`Migrated password hash for user ${user.email} from ${user.hashVersion} to argon2id`;
+    useLogger().set({ auth: { passwordHashMigrated: true, userId: user.email, from: user.hashVersion } });
   }
 
   await removeAllTokens(user.uuid);
@@ -296,7 +293,7 @@ export async function yggdrasilUploadTexture(params: {
     );
   }
 
-  logger.info`Texture uploaded: ${params.textureType} for ${user.gameId}`;
+  useLogger().set({ yggdrasil: { textureAction: "upload", type: params.textureType, gameId: user.gameId } });
 }
 
 // --- 材质删除 ---
@@ -332,7 +329,7 @@ export async function yggdrasilDeleteTexture(params: {
     );
   }
 
-  logger.info`Texture deleted: ${params.textureType} for ${user.gameId}`;
+  useLogger().set({ yggdrasil: { textureAction: "delete", type: params.textureType, gameId: user.gameId } });
 }
 
 // --- batch profiles ---

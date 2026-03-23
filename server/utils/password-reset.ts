@@ -1,7 +1,4 @@
-import { getLogger } from "@logtape/logtape";
 import crypto from "node:crypto";
-
-const logger = getLogger(["irminsul", "auth"]);
 
 const RESET_PREFIX = "password-reset";
 const RESET_LOCK_PREFIX = "password-reset-lock";
@@ -42,7 +39,7 @@ export async function createPasswordResetToken(
   email: string,
 ): Promise<string | null> {
   if (await hasActivePasswordResetToken(userId)) {
-    logger.info`Password reset token already active for user ${userId}, skipping.`;
+    useLogger().set({ passwordReset: { skipped: "token_already_active", userId } });
     return null;
   }
 
@@ -61,7 +58,7 @@ export async function createPasswordResetToken(
   await redis.send("SET", [key, JSON.stringify(data), "EX", RESET_EXPIRY_SECONDS.toString()]);
   await redis.send("SET", [lockKey(userId), tokenHash, "EX", RESET_EXPIRY_SECONDS.toString()]);
 
-  logger.info`Password reset token created for user ${userId}`;
+  useLogger().set({ passwordReset: { tokenCreated: true, userId } });
   return rawToken;
 }
 
@@ -92,6 +89,6 @@ export async function consumePasswordResetToken(
   await redis.send("DEL", [key]);
   await redis.send("DEL", [lockKey(data.userId)]);
 
-  logger.info`Password reset token consumed for user ${data.userId}`;
+  useLogger().set({ passwordReset: { tokenConsumed: true, userId: data.userId } });
   return { userId: data.userId, email: data.email };
 }

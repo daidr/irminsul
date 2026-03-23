@@ -1,7 +1,3 @@
-import { getLogger } from "@logtape/logtape";
-
-const logger = getLogger(["irminsul", "yggdrasil", "rate-limit"]);
-
 export interface RateLimitOptions {
   /** Time window in milliseconds (default: 60000) */
   duration: number;
@@ -63,7 +59,7 @@ export async function checkRateLimit(
   if (!entry || now >= entry.resetAt) {
     // Reject new keys when store is at capacity
     if (!entry && store.size >= options.maxKeys) {
-      logger.warn`Rate limit store full (${store.size} keys), rejecting ${key}`;
+      useLogger().set({ rateLimit: { warning: "store_full", storeSize: store.size, key } });
       throw new YggdrasilError(
         429,
         "TooManyRequestsException",
@@ -79,7 +75,7 @@ export async function checkRateLimit(
   // Reject if over max
   if (entry.count > options.max) {
     const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
-    logger.warn`Rate limit exceeded for ${key}`;
+    useLogger().set({ rateLimit: { exceeded: true, key } });
     throw new YggdrasilError(
       429,
       "TooManyRequestsException",
@@ -90,7 +86,7 @@ export async function checkRateLimit(
   // Progressive delay after threshold
   if (entry.count > options.delayAfter) {
     const delay = (entry.count - options.delayAfter) * options.timeWait;
-    logger.info`Rate limit delay ${delay}ms for ${key}`;
+    useLogger().set({ rateLimit: { delayed: true, delayMs: delay, key } });
     await sleep(delay);
   }
 }

@@ -1,9 +1,6 @@
 import { keccak_512 } from "js-sha3";
 import { timingSafeEqual } from "node:crypto";
-import { getLogger } from "@logtape/logtape";
 import type { HashVersion } from "~~/server/types/user.schema";
-
-const logger = getLogger(["irminsul", "password"]);
 
 const LEGACY_PASSWORD_SUFFIX = "dKfkZh";
 
@@ -23,7 +20,7 @@ export async function verifyPassword(
       return verifyLegacy(plaintext, storedHash);
 
     default:
-      logger.warn`Unknown hash version: ${hashVersion}`;
+      useLogger().set({ auth: { warning: "unknown_hash_version", hashVersion } });
       return false;
   }
 }
