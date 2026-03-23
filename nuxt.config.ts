@@ -8,11 +8,11 @@ export default defineNuxtConfig({
     externals: {
       external: [
         "mongodb",
-        "mongodb-connection-string-url",
         "@simplewebauthn/server",
         "nodemailer",
-        "@logtape/logtape",
+        "evlog",
       ],
+      inline: ["mongodb-connection-string-url"],
     },
   },
 
@@ -36,10 +36,15 @@ export default defineNuxtConfig({
     "@nuxt/test-utils/module",
     "@nuxt/a11y",
     "@nuxt/hints",
+    "evlog/nuxt",
   ],
 
   icon: {
     // Hugeicons via Iconify
+  },
+
+  evlog: {
+    env: { service: "irminsul" },
   },
 
   runtimeConfig: {
@@ -47,7 +52,9 @@ export default defineNuxtConfig({
     dbName: "irmin",
     redisUrl: "",
     redisScope: "irmin",
-    appLogLevel: "debug",
+    evlogSamplingInfo: 100,
+    evlogSamplingDebug: 10,
+    evlogMaxFiles: 30,
     yggdrasilBaseUrl: "",
     yggdrasilSkinDomains: "",
     yggdrasilTokenExpiryMs: 432000000,
