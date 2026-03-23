@@ -23,7 +23,7 @@ export default defineNitroPlugin(async () => {
     loggers: [
       {
         category: ['irminsul'],
-        lowestLevel: (process.env.IRMIN_APP_LOG_LEVEL as any) || 'info',
+        lowestLevel: (useRuntimeConfig().appLogLevel as any) || 'info',
         sinks: ['console', 'file'],
       },
       {

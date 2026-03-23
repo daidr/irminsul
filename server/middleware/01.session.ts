@@ -3,7 +3,7 @@ export default defineEventHandler(async (event) => {
   if (!sessionData) return;
 
   const userDoc = await findUserForSession(sessionData.userId);
-  const defaultSkinHash = process.env.IRMIN_YGGDRASIL_DEFAULT_SKIN_HASH || "";
+  const defaultSkinHash = useRuntimeConfig(event).yggdrasilDefaultSkinHash;
   const skinHash = userDoc?.skin?.hash || defaultSkinHash || undefined;
 
   const bans = (userDoc?.bans ?? []).map((ban) => ({

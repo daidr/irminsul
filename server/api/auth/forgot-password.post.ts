@@ -3,7 +3,6 @@ import { hasActiveBan } from "~~/server/types/user.schema";
 
 const logger = getLogger(["irminsul", "auth"]);
 
-const BASE_URL = process.env.IRMIN_YGGDRASIL_BASE_URL || "http://localhost:12042";
 const SUCCESS_MESSAGE = "如果该邮箱已注册，我们已发送密码重置链接，请检查收件箱。";
 
 /** Per-email 频率限制：10 分钟内只能请求一次密码重置 */
@@ -75,7 +74,8 @@ export default defineEventHandler(async (event) => {
   try {
     const token = await createPasswordResetToken(user.uuid, user.email);
     if (token) {
-      const resetLink = `${BASE_URL}/reset-password?token=${token}`;
+      const baseUrl = useRuntimeConfig(event).yggdrasilBaseUrl;
+      const resetLink = `${baseUrl}/reset-password?token=${token}`;
       const sent = await sendPasswordResetEmail(user.email, resetLink);
       if (!sent) {
         logger.error`Failed to send password reset email to ${user.email}`;

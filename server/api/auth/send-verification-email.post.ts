@@ -2,8 +2,6 @@ import { getLogger } from "@logtape/logtape";
 
 const logger = getLogger(["irminsul", "auth"]);
 
-const BASE_URL = process.env.IRMIN_YGGDRASIL_BASE_URL || "http://localhost:12042";
-
 export default defineEventHandler(async (event) => {
   if (!event.context.user) {
     return { success: false, error: "未登录" };
@@ -40,7 +38,8 @@ export default defineEventHandler(async (event) => {
       return { success: true, message: "验证邮件已发送，请检查收件箱" };
     }
 
-    const verifyLink = `${BASE_URL}/verify-email?token=${token}`;
+    const baseUrl = useRuntimeConfig(event).yggdrasilBaseUrl;
+    const verifyLink = `${baseUrl}/verify-email?token=${token}`;
     const sent = await sendEmailVerificationEmail(user.email, verifyLink);
     if (!sent) {
       logger.error`Failed to send verification email to ${user.email}`;
