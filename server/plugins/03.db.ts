@@ -1,3 +1,5 @@
+import { createLogger } from "evlog";
+
 export default defineNitroPlugin((nitroApp) => {
   const log = createLogger({ category: "startup" });
   log.set({ plugin: "03.db", action: "connect" });

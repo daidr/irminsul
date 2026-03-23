@@ -1,3 +1,5 @@
+import { createLogger } from "evlog";
+
 export default defineNitroPlugin(() => {
   const log = createLogger({ category: "startup" });
   log.set({ plugin: "07.init-secrets" });

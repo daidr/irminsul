@@ -1,3 +1,4 @@
+import { createLogger } from "evlog";
 import fs from "node:fs";
 
 const DATA_DIR = "./irminsul-data";

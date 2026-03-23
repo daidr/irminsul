@@ -1,3 +1,4 @@
+import { createLogger } from "evlog";
 import type { Collection } from "mongodb";
 import type {
   UserDocument,
