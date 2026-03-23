@@ -1,5 +1,8 @@
 export default defineNitroPlugin(async () => {
-  console.log("[Plugin 05] Init settings");
+  const log = createLogger({ category: "startup" });
+  log.set({ plugin: "05.init-settings" });
   await initBuiltinSettings();
   await loadSettingsCache();
+  log.set({ status: "ok" });
+  log.emit();
 });

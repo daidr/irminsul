@@ -1,5 +1,8 @@
 export default defineNitroPlugin(async () => {
-  console.log("[Plugin 04] Init indexes");
+  const log = createLogger({ category: "startup" });
+  log.set({ plugin: "04.init-indexes" });
   await ensureUserIndexes();
   await ensureSettingsIndexes();
+  log.set({ status: "ok" });
+  log.emit();
 });
