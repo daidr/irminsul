@@ -29,7 +29,7 @@ export default defineNuxtConfig({
     },
   },
 
-  css: ["~/assets/css/tailwind.css", "~/assets/css/altcha.css"],
+  css: ["~/assets/css/tailwind.css"],
 
   modules: ["@pinia/nuxt", "@nuxt/icon", "@nuxt/test-utils/module"],
 
