@@ -1,8 +1,5 @@
-import { getLogger } from "@logtape/logtape";
 import type { Collection } from "mongodb";
 import type { SettingDocument } from "~~/server/types/settings.schema";
-
-const logger = getLogger(["irminsul", "db"]);
 
 const COLLECTION_NAME = "settings";
 const BUILTIN_SOURCE = "irminsul.builtin";
@@ -24,7 +21,9 @@ export function getSettingsCollection(): Collection<SettingDocument> {
 export async function ensureSettingsIndexes(): Promise<void> {
   const col = getSettingsCollection();
   await col.createIndex({ key: 1 }, { unique: true });
-  logger.info`Settings collection indexes ensured.`;
+  const log = createLogger({ category: "db" });
+  log.set({ action: "ensureSettingsIndexes", status: "complete" });
+  log.emit();
 }
 
 export async function loadSettingsCache(): Promise<void> {
@@ -33,7 +32,9 @@ export async function loadSettingsCache(): Promise<void> {
   for (const doc of docs) {
     getSettingsCache().set(doc.key, doc.value);
   }
-  logger.info`Settings cache loaded (${docs.length} entries).`;
+  const log = createLogger({ category: "db" });
+  log.set({ action: "loadSettingsCache", status: "complete", entries: docs.length });
+  log.emit();
 }
 
 export function getSetting(key: string): unknown {
@@ -104,5 +105,7 @@ export async function initBuiltinSettings(): Promise<void> {
     },
   }));
   await col.bulkWrite(ops);
-  logger.info`Builtin settings initialized.`;
+  const log = createLogger({ category: "db" });
+  log.set({ action: "initBuiltinSettings", status: "complete" });
+  log.emit();
 }

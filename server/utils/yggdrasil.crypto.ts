@@ -1,8 +1,5 @@
 import fs from "node:fs/promises";
 import crypto from "node:crypto";
-import { getLogger } from "@logtape/logtape";
-
-const logger = getLogger(["irminsul", "yggdrasil", "crypto"]);
 
 const RSA_PRIVATE_KEY_PATH = "./irminsul-data/auto-generate/yggdrasil-private.pem";
 const RSA_PUBLIC_KEY_PATH = "./irminsul-data/auto-generate/yggdrasil-public.pem";
@@ -24,6 +21,7 @@ async function fileExists(path: string): Promise<boolean> {
  * - 仅一者存在：报错退出
  */
 export async function loadOrGenerateKeys(): Promise<void> {
+  const log = createLogger({ category: "crypto" });
   const privateExists = await fileExists(RSA_PRIVATE_KEY_PATH);
   const publicExists = await fileExists(RSA_PUBLIC_KEY_PATH);
 
@@ -35,7 +33,7 @@ export async function loadOrGenerateKeys(): Promise<void> {
   }
 
   if (!privateExists) {
-    logger.info`RSA key pair not found, generating...`;
+    log.set({ action: "generateRsaKeys" });
     const { privateKey: privPem, publicKey: pubPem } = crypto.generateKeyPairSync("rsa", {
       modulusLength: 4096,
       publicKeyEncoding: { type: "spki", format: "pem" },
@@ -43,12 +41,14 @@ export async function loadOrGenerateKeys(): Promise<void> {
     });
     await fs.writeFile(RSA_PRIVATE_KEY_PATH, privPem, { mode: 0o600 });
     await fs.writeFile(RSA_PUBLIC_KEY_PATH, pubPem, { mode: 0o644 });
-    logger.info`RSA key pair generated.`;
+    log.set({ status: "generated" });
+  } else {
+    log.set({ action: "loadRsaKeys", status: "loaded" });
   }
 
   privateKey = await fs.readFile(RSA_PRIVATE_KEY_PATH, "utf-8");
   publicKeyPem = await fs.readFile(RSA_PUBLIC_KEY_PATH, "utf-8");
-  logger.info`RSA keys loaded for Yggdrasil texture signing.`;
+  log.emit();
 }
 
 /**

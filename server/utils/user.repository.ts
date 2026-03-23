@@ -1,4 +1,3 @@
-import { getLogger } from "@logtape/logtape";
 import type { Collection } from "mongodb";
 import type {
   UserDocument,
@@ -8,8 +7,6 @@ import type {
   PasskeyRecord,
 } from "~~/server/types/user.schema";
 import { hasActiveBan } from "~~/server/types/user.schema";
-
-const logger = getLogger(["irminsul", "db"]);
 
 const COLLECTION_NAME = "users";
 
@@ -31,7 +28,9 @@ export async function ensureUserIndexes(): Promise<void> {
     { "passkeys.credentialId": 1 },
     { unique: true, partialFilterExpression: { "passkeys.credentialId": { $exists: true } } },
   );
-  logger.info`User collection indexes ensured.`;
+  const log = createLogger({ category: "db" });
+  log.set({ action: "ensureUserIndexes", status: "complete" });
+  log.emit();
 }
 
 // --- 查询 ---
