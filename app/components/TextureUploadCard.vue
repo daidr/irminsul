@@ -24,16 +24,21 @@ const isModelDirty = computed(() => selectedModelType.value !== savedModelType.v
 // store 状态变更时同步（如保存成功后 store 更新）
 watch(savedModelType, (val) => {
   selectedModelType.value = val;
+  profileStore.setPreviewSlim(undefined);
 });
 
-// 选择变更时立刻更新 store 预览
-watch(selectedModelType, (val) => {
+/**
+ * 设置模型类型并更新预览状态
+ * @param val 模型类型 (0=Steve, 1=Alex)
+ */
+function setModelType(val: 0 | 1) {
+  selectedModelType.value = val;
   if (val !== savedModelType.value) {
     profileStore.setPreviewSlim(val === 1);
   } else {
     profileStore.setPreviewSlim(undefined);
   }
-});
+}
 
 const currentHash = computed(() => (activeTab.value === "skin" ? skinHash.value : capeHash.value));
 
@@ -380,14 +385,14 @@ function cancelSwitchTab() {
         <button
           class="btn btn-sm join-item flex-1"
           :class="selectedModelType === 0 ? 'btn-active' : ''"
-          @click="selectedModelType = 0"
+          @click="setModelType(0)"
         >
           默认 (Steve)
         </button>
         <button
           class="btn btn-sm join-item flex-1"
           :class="selectedModelType === 1 ? 'btn-active' : ''"
-          @click="selectedModelType = 1"
+          @click="setModelType(1)"
         >
           纤细 (Alex)
         </button>
