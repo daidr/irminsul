@@ -19,6 +19,8 @@
     "@iconify-json/hugeicons": "^1.2.24",
     "@logtape/logtape": "^2.0.4",
     "@logtape/otel": "^2.0.4",
+    "@nuxt/a11y": "1.0.0-alpha.1",
+    "@nuxt/hints": "1.0.2",
     "@nuxt/icon": "^2.2.1",
     "@nuxt/test-utils": "^4.0.0",
     "@pinia/nuxt": "^0.11.3",

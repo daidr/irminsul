@@ -34,6 +34,8 @@ export default defineNuxtConfig({
     "@pinia/nuxt",
     "@nuxt/icon",
     "@nuxt/test-utils/module",
+    "@nuxt/a11y",
+    "@nuxt/hints",
   ],
 
   icon: {
@@ -65,6 +67,11 @@ export default defineNuxtConfig({
   },
   app: {
     buildAssetsDir: "/_irmin/",
+    head: {
+      htmlAttrs: {
+        lang: "zh-CN",
+      },
+    },
     rootAttrs: {
       id: "__irmin_app",
     },

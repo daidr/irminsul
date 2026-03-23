@@ -33,7 +33,7 @@ const inRegisterPage = computed(() => route.path.includes("/register"));
           >注册</NuxtLink
         >
       </div>
-      <UserPopover v-else :user="user" />
+      <LazyUserPopover v-else :user="user" />
     </div>
   </header>
 </template>
