@@ -1,3 +1,5 @@
+import { skipHydrate } from "pinia";
+
 export const useProfileStore = defineStore("profile", () => {
   // --- Saved state (serialized to client) ---
   const skinHash = ref<string | undefined>();
@@ -21,9 +23,7 @@ export const useProfileStore = defineStore("profile", () => {
     return capeHash.value ? `/textures/${capeHash.value}` : undefined;
   });
 
-  const effectiveSkinSlim = computed(
-    () => previewSlim.value ?? skinSlim.value,
-  );
+  const effectiveSkinSlim = computed(() => previewSlim.value ?? skinSlim.value);
 
   // --- Actions ---
   function initFromUser(user: any) {
