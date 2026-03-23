@@ -1,7 +1,4 @@
-import { getLogger } from "@logtape/logtape";
 import type { SessionData } from "~~/server/utils/session";
-
-const logger = getLogger(["irminsul", "auth"]);
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<{
@@ -9,6 +6,7 @@ export default defineEventHandler(async (event) => {
     password?: string;
     altchaPayload?: string;
   }>(event);
+  const log = useLogger(event);
 
   const { email, password, altchaPayload } = body || {};
 
@@ -50,9 +48,9 @@ export default defineEventHandler(async (event) => {
     try {
       const newHash = await hashPassword(password);
       await updatePasswordHash(user.uuid, newHash, "argon2id");
-      logger.info`Password hash upgraded for user ${user.uuid}`;
+      log.set({ auth: { passwordHashUpgraded: true, userId: user.uuid } });
     } catch (err) {
-      logger.error`Failed to upgrade password hash for user ${user.uuid}: ${err}`;
+      log.error(err as Error, { step: "password_hash_upgrade", userId: user.uuid });
     }
   }
 

@@ -1,10 +1,8 @@
-import { getLogger } from "@logtape/logtape";
 import type { RegistrationResponseJSON } from "@simplewebauthn/server";
 import type { PasskeyRecord } from "~~/server/types/user.schema";
 
-const logger = getLogger(["irminsul", "passkey"]);
-
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event);
   const user = requireAuth(event);
 
   const body = await readBody<{
@@ -24,12 +22,12 @@ export default defineEventHandler(async (event) => {
   try {
     verified = await verifyRegistration(userDoc.uuid, body.credential);
   } catch (e) {
-    logger.debug`Passkey registration verification threw for user ${userDoc.uuid}: ${e}`;
+    log.error(e as Error, { step: "passkey_register_verify", userId: userDoc.uuid });
     return { success: false, error: "验证失败，请重试" };
   }
 
   if (!verified.verified || !verified.registrationInfo) {
-    logger.debug`Passkey registration verification failed for user ${userDoc.uuid}: verified=${verified.verified}`;
+    log.set({ passkey: { registrationFailure: true, userId: userDoc.uuid, verified: verified.verified } });
     return { success: false, error: "验证失败，请重试" };
   }
 
