@@ -3,7 +3,7 @@ import {
   startAuthentication,
   browserSupportsWebAuthn,
   WebAuthnAbortService,
-} from "simplewebauthn-browser";
+} from "@simplewebauthn/browser";
 import type AltchaField from "~/components/AltchaField.vue";
 
 useHead({ title: "登录" });
