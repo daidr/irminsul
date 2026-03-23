@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "skills": {
+    "analyze-logs": {
+      "source": "hugorcd/evlog",
+      "sourceType": "github",
+      "computedHash": "68e3149fbb6a11474d55b4c60bf8d8c7bacc79fb5ca760fb4b6e0b23a5f19af9"
+    },
+    "create-evlog-adapter": {
+      "source": "hugorcd/evlog",
+      "sourceType": "github",
+      "computedHash": "82d20ecf0905894a4be7a31df81093f29a0a16446f005424e3cf9325da2cad69"
+    },
+    "create-evlog-enricher": {
+      "source": "hugorcd/evlog",
+      "sourceType": "github",
+      "computedHash": "3bc259c465ddf7ca33fc639c2a2f36d67ce1b27e890e3dc7637f2f1e2349b7c7"
+    },
+    "create-evlog-framework-integration": {
+      "source": "hugorcd/evlog",
+      "sourceType": "github",
+      "computedHash": "aca8c2751a082a1c4f981e13ebf5eccaec4cc46b37790e94dfe6875c12b6f611"
+    },
+    "review-logging-patterns": {
+      "source": "hugorcd/evlog",
+      "sourceType": "github",
+      "computedHash": "2e85cbcd9105c874121c4249229dcb893cf6b646dad5ac8d1c59bd26e61a53be"
+    }
+  }
+}
