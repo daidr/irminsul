@@ -17,6 +17,12 @@ export default defineEventHandler(async (event) => {
     return { success: false, error: "缺少文件数据" };
   }
 
+  // 限制上传大小：1MB base64 ≈ 768KB 二进制，对 64x64 PNG 绰绰有余
+  const MAX_BASE64_LENGTH = 1024 * 1024;
+  if (fileBase64.length > MAX_BASE64_LENGTH) {
+    return { success: false, error: "文件过大，请上传小于 768KB 的图片" };
+  }
+
   // Check email verification requirement
   const requireEmailVerification = getSetting("auth.requireEmailVerification");
   if (requireEmailVerification) {
