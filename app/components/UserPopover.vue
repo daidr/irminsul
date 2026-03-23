@@ -12,6 +12,10 @@ const show = ref(false);
 const loggingOut = ref(false);
 let closeTimer: ReturnType<typeof setTimeout> | null = null;
 
+onBeforeUnmount(() => {
+  if (closeTimer) clearTimeout(closeTimer);
+});
+
 function onEnter() {
   if (closeTimer) {
     clearTimeout(closeTimer);

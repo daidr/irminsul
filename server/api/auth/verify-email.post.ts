@@ -27,10 +27,10 @@ export default defineEventHandler(async (event) => {
   }
 
   if (user.emailVerified) {
-    return { success: true };
+    return { success: true } as const;
   }
 
   await setEmailVerified(result.userId, true);
   logger.info`Email verified for user ${result.userId} (${result.email})`;
-  return { success: true };
+  return { success: true } as const;
 });

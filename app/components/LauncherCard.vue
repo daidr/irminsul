@@ -6,6 +6,10 @@ const props = defineProps<{
 const copied = ref(false);
 let copyTimer: ReturnType<typeof setTimeout> | undefined;
 
+onBeforeUnmount(() => {
+  clearTimeout(copyTimer);
+});
+
 async function copyApiUrl() {
   try {
     await navigator.clipboard.writeText(props.apiUrl);

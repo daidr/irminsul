@@ -21,7 +21,7 @@ async function handleConfirm() {
       successMsg.value = "你的邮箱已成功验证，正在跳转...";
       redirectTimer = setTimeout(() => {
         navigateTo("/");
-      }, 5000);
+      }, 1500);
     } else {
       errorMsg.value = result.error || "验证失败";
     }

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type AltchaField from './AltchaField.vue';
+
 const dialogRef = useTemplateRef<HTMLDialogElement>("dialogRef");
 
 const oldPassword = ref("");
@@ -10,6 +12,11 @@ const successMsg = ref("");
 const isLoading = ref(false);
 const altchaRef = ref<InstanceType<typeof AltchaField> | null>(null);
 const confirmPasswordRef = useTemplateRef<HTMLInputElement>("confirmPasswordRef");
+let redirectTimer: ReturnType<typeof setTimeout> | undefined;
+
+onBeforeUnmount(() => {
+  clearTimeout(redirectTimer);
+});
 
 watch([newPassword, confirmPassword], () => {
   const el = confirmPasswordRef.value;
@@ -58,7 +65,7 @@ async function handleSubmit() {
     });
     if (result.success) {
       successMsg.value = "密码修改成功，正在跳转至登录页...";
-      setTimeout(() => {
+      redirectTimer = setTimeout(() => {
         navigateTo("/login");
       }, 1500);
     } else {
