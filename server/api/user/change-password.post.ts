@@ -65,8 +65,13 @@ export default defineEventHandler(async (event) => {
   // Delete all sessions (including current)
   await destroyAllSessions(userDoc.uuid);
 
-  // Clear current session cookie
-  destroySession(event);
+  // Clear current session cookie (sessions already destroyed above)
+  deleteCookie(event, "irmin_session", {
+    httpOnly: true,
+    path: "/",
+    sameSite: "lax",
+    secure: process.env.NODE_ENV !== "development",
+  });
 
   logger.info`Password changed for user ${userDoc.uuid}, all sessions and tokens invalidated`;
   return { success: true };
