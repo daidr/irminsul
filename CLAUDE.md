@@ -177,7 +177,9 @@ Config via `IRMIN_*` environment variables or `.env` file (`nitro.envPrefix: 'IR
 - `IRMIN_REDIS_SCOPE` — Redis key prefix (default: `irmin`)
 - `IRMIN_HOST` — Listen address (default: `0.0.0.0`)
 - `IRMIN_PORT` — Listen port (default: `3000`)
-- `IRMIN_APP_LOG_LEVEL` — Log level (default: `debug`)
+- `IRMIN_EVLOG_SAMPLING_INFO` — Info event sampling rate, 0-100% (default: `100`)
+- `IRMIN_EVLOG_SAMPLING_DEBUG` — Debug event sampling rate, 0-100% (default: `10`)
+- `IRMIN_EVLOG_MAX_FILES` — Max log files retained by fs drain (default: `30`)
 - `IRMIN_YGGDRASIL_BASE_URL` — Yggdrasil base URL
 - `IRMIN_YGGDRASIL_SKIN_DOMAINS` — Trusted skin domains (comma-separated)
 - `IRMIN_PUBLIC_SITE_NAME` — Site name (default: `Irminsul`)
