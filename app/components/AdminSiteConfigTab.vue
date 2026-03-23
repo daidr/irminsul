@@ -86,15 +86,18 @@ async function saveSmtp() {
   smtpError.value = "";
   smtpSaving.value = true;
   try {
-    const result = await $fetch<{ success: boolean; error: string }>("/api/admin/settings/smtp", {
+    const result = await $fetch<{ success: boolean; error: string }>("/api/admin/settings", {
       method: "POST",
       body: {
-        host: smtp.host,
-        port: smtp.port,
-        secure: smtp.secure,
-        user: smtp.user,
-        pass: smtp.pass,
-        from: smtp.from,
+        category: "smtp",
+        values: {
+          "smtp.host": smtp.host,
+          "smtp.port": smtp.port,
+          "smtp.secure": smtp.secure,
+          "smtp.user": smtp.user,
+          "smtp.pass": smtp.pass,
+          "smtp.from": smtp.from,
+        },
       },
     });
     if (!result.success) {
@@ -113,9 +116,12 @@ async function saveAuth() {
   authError.value = "";
   authSaving.value = true;
   try {
-    const result = await $fetch<{ success: boolean; error: string }>("/api/admin/settings/auth", {
+    const result = await $fetch<{ success: boolean; error: string }>("/api/admin/settings", {
       method: "POST",
-      body: { requireEmailVerification: auth.requireEmailVerification },
+      body: {
+        category: "auth",
+        values: { "auth.requireEmailVerification": auth.requireEmailVerification },
+      },
     });
     if (!result.success) {
       authError.value = result.error;
@@ -133,9 +139,12 @@ async function saveAnnouncement() {
   announcementError.value = "";
   announcementSaving.value = true;
   try {
-    const result = await $fetch<{ success: boolean; error: string }>("/api/admin/settings/announcement", {
+    const result = await $fetch<{ success: boolean; error: string }>("/api/admin/settings", {
       method: "POST",
-      body: { announcement: announcement.value },
+      body: {
+        category: "general",
+        values: { "general.announcement": announcement.value },
+      },
     });
     if (!result.success) {
       announcementError.value = result.error;
