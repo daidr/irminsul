@@ -348,6 +348,7 @@ export async function yggdrasilBatchProfiles(playernames: string[]) {
 
 // --- player certificates ---
 
+import { CERT_EXPIRY_MS } from "~~/server/utils/yggdrasil.crypto";
 const CERT_TTL_SECONDS = Math.floor(CERT_EXPIRY_MS / 1000); // 48h in seconds
 
 export async function yggdrasilPlayerCertificates(authorization: string | undefined, ip: string) {
