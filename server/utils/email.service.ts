@@ -1,5 +1,6 @@
 import { createTransport } from "nodemailer";
 import type { Transporter } from "nodemailer";
+import { useLogger } from "evlog";
 
 const SMTP_KEYS = ["smtp.host", "smtp.port", "smtp.secure", "smtp.user", "smtp.pass", "smtp.from"];
 

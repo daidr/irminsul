@@ -1,4 +1,5 @@
 import type { EventHandler, H3Event } from "h3";
+import { useLogger } from "evlog";
 
 export class YggdrasilError extends Error {
   constructor(

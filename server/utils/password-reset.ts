@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { useLogger } from "evlog";
 
 const RESET_PREFIX = "password-reset";
 const RESET_LOCK_PREFIX = "password-reset-lock";

@@ -1,3 +1,4 @@
+import { useLogger } from "evlog";
 import type { SessionData } from "~~/server/utils/session";
 
 export default defineEventHandler(async (event) => {

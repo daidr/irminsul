@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { useLogger } from "evlog";
 
 const VERIFY_PREFIX = "email-verify";
 const VERIFY_LOCK_PREFIX = "email-verify-lock";

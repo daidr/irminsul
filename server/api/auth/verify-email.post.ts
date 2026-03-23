@@ -1,3 +1,5 @@
+import { useLogger } from "evlog";
+
 export default defineEventHandler(async (event) => {
   const log = useLogger(event);
   const body = await readBody<{ token?: string }>(event);

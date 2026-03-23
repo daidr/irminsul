@@ -1,3 +1,4 @@
+import { useLogger } from "evlog";
 import { hasActiveBan } from "~~/server/types/user.schema";
 
 export default defineEventHandler(async (event) => {

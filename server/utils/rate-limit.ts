@@ -1,3 +1,5 @@
+import { useLogger } from "evlog";
+
 export interface RateLimitOptions {
   /** Time window in milliseconds (default: 60000) */
   duration: number;

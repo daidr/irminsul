@@ -1,3 +1,4 @@
+import { useLogger } from "evlog";
 import type { YggdrasilToken } from "~~/server/types/user.schema";
 import { hasActiveBan } from "~~/server/types/user.schema";
 

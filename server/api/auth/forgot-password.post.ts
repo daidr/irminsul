@@ -1,3 +1,4 @@
+import { useLogger } from "evlog";
 import { hasActiveBan } from "~~/server/types/user.schema";
 
 const SUCCESS_MESSAGE = "如果该邮箱已注册，我们已发送密码重置链接，请检查收件箱。";

@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { useLogger } from "evlog";
 //@ts-expect-error pngjs-nozlib 没有类型定义
 import { PNG } from "pngjs-nozlib";
 

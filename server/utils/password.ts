@@ -1,5 +1,6 @@
 import { keccak_512 } from "js-sha3";
 import { timingSafeEqual } from "node:crypto";
+import { useLogger } from "evlog";
 import type { HashVersion } from "~~/server/types/user.schema";
 
 const LEGACY_PASSWORD_SUFFIX = "dKfkZh";

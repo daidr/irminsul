@@ -1,4 +1,5 @@
 import type { RegistrationResponseJSON } from "@simplewebauthn/server";
+import { useLogger } from "evlog";
 import type { PasskeyRecord } from "~~/server/types/user.schema";
 
 export default defineEventHandler(async (event) => {
