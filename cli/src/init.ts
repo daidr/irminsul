@@ -87,10 +87,10 @@ interface IrminsulConfig {
   IRMIN_DB_NAME: string;
   IRMIN_REDIS_URL: string;
   IRMIN_REDIS_SCOPE: string;
-  IRMIN_APP_PORT: string;
-  IRMIN_APP_HOST: string;
+  IRMIN_HOST: string;
+  IRMIN_PORT: string;
   IRMIN_APP_LOG_LEVEL: string;
-  IRMIN_SITE_NAME: string;
+  IRMIN_PUBLIC_SITE_NAME: string;
   IRMIN_LEGACY_GLOBAL_SALT: string;
   IRMIN_YGGDRASIL_BASE_URL: string;
   IRMIN_YGGDRASIL_SKIN_DOMAINS: string;
@@ -127,10 +127,10 @@ IRMIN_REDIS_URL=${config.IRMIN_REDIS_URL}
 IRMIN_REDIS_SCOPE=${config.IRMIN_REDIS_SCOPE}
 
 # Server
-IRMIN_APP_PORT=${config.IRMIN_APP_PORT}
-IRMIN_APP_HOST=${config.IRMIN_APP_HOST}
+IRMIN_HOST=${config.IRMIN_HOST}
+IRMIN_PORT=${config.IRMIN_PORT}
 IRMIN_APP_LOG_LEVEL=${config.IRMIN_APP_LOG_LEVEL}
-IRMIN_SITE_NAME=${config.IRMIN_SITE_NAME}
+IRMIN_PUBLIC_SITE_NAME=${config.IRMIN_PUBLIC_SITE_NAME}
 
 # Legacy password compatibility
 IRMIN_LEGACY_GLOBAL_SALT=${config.IRMIN_LEGACY_GLOBAL_SALT}
@@ -561,10 +561,10 @@ async function freshInstall(): Promise<void> {
     IRMIN_DB_NAME: mongoDbName,
     IRMIN_REDIS_URL: redisUrl,
     IRMIN_REDIS_SCOPE: redisScope,
-    IRMIN_APP_PORT: appPort,
-    IRMIN_APP_HOST: appHost,
+    IRMIN_HOST: appHost,
+    IRMIN_PORT: appPort,
     IRMIN_APP_LOG_LEVEL: "info",
-    IRMIN_SITE_NAME: siteName,
+    IRMIN_PUBLIC_SITE_NAME: siteName,
     IRMIN_LEGACY_GLOBAL_SALT: "",
     IRMIN_YGGDRASIL_BASE_URL: baseUrl,
     IRMIN_YGGDRASIL_SKIN_DOMAINS: skinDomains,
@@ -747,10 +747,10 @@ async function migrateFromGHAuth(): Promise<void> {
     IRMIN_DB_NAME: newDbName,
     IRMIN_REDIS_URL: redisUrl,
     IRMIN_REDIS_SCOPE: redisScope,
-    IRMIN_APP_PORT: appPort,
-    IRMIN_APP_HOST: appHost,
+    IRMIN_HOST: appHost,
+    IRMIN_PORT: appPort,
     IRMIN_APP_LOG_LEVEL: "info",
-    IRMIN_SITE_NAME: siteName,
+    IRMIN_PUBLIC_SITE_NAME: siteName,
     IRMIN_LEGACY_GLOBAL_SALT: ghConfig.extra.slat ?? "",
     IRMIN_YGGDRASIL_BASE_URL: baseUrl,
     IRMIN_YGGDRASIL_SKIN_DOMAINS: skinDomains,

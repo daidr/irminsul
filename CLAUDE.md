@@ -167,17 +167,18 @@ defineExpose({ open });
 
 ## Environment
 
-Config via `NUXT_*` environment variables or `.env` file. Key variables map to `runtimeConfig` in `nuxt.config.ts`:
+Config via `IRMIN_*` environment variables or `.env` file (`nitro.envPrefix: 'IRMIN_'`). Key variables map to `runtimeConfig` in `nuxt.config.ts`:
 
-- `NUXT_DB_URL` — MongoDB connection URL
-- `NUXT_DB_NAME` — MongoDB database name (default: `irmin`)
-- `NUXT_REDIS_URL` — Redis connection URL
-- `NUXT_REDIS_SCOPE` — Redis key prefix (default: `irmin`)
-- `NUXT_APP_HOST` — Listen address (default: `0.0.0.0`)
-- `NUXT_APP_LOG_LEVEL` — Log level (default: `debug`)
-- `NUXT_YGGDRASIL_BASE_URL` — Yggdrasil base URL
-- `NUXT_YGGDRASIL_SKIN_DOMAINS` — Trusted skin domains (comma-separated)
-- `NUXT_PUBLIC_SITE_NAME` — Site name (default: `Irminsul`)
+- `IRMIN_DB_URL` — MongoDB connection URL
+- `IRMIN_DB_NAME` — MongoDB database name (default: `irmin`)
+- `IRMIN_REDIS_URL` — Redis connection URL
+- `IRMIN_REDIS_SCOPE` — Redis key prefix (default: `irmin`)
+- `IRMIN_HOST` — Listen address (default: `0.0.0.0`)
+- `IRMIN_PORT` — Listen port (default: `3000`)
+- `IRMIN_APP_LOG_LEVEL` — Log level (default: `debug`)
+- `IRMIN_YGGDRASIL_BASE_URL` — Yggdrasil base URL
+- `IRMIN_YGGDRASIL_SKIN_DOMAINS` — Trusted skin domains (comma-separated)
+- `IRMIN_PUBLIC_SITE_NAME` — Site name (default: `Irminsul`)
 
 Secrets (Altcha HMAC keys) are auto-generated to `irminsul-data/auto-generate/secrets.yaml` on first run.
 

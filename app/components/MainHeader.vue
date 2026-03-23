@@ -15,7 +15,7 @@ const inRegisterPage = computed(() => route.path.includes("/register"));
         <Icon name="hugeicons:tree-06" class="w-5 h-5 text-primary inline" />
         Irminsul
       </NuxtLink>
-      <div v-if="!user" class="flex gap-3">
+      <div v-if="!user?.userId" class="flex gap-3">
         <NuxtLink
           class="btn btn-sm btn-ghost"
           to="/login"

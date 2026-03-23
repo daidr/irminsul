@@ -1,5 +1,3 @@
-import tailwindcss from "@tailwindcss/vite";
-
 export default defineNuxtConfig({
   compatibilityDate: "2026-03-23",
   future: { compatibilityVersion: 4 },
@@ -19,7 +17,7 @@ export default defineNuxtConfig({
   },
 
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [],
     vue: {
       template: {
         compilerOptions: {
@@ -31,7 +29,12 @@ export default defineNuxtConfig({
 
   css: ["~/assets/css/tailwind.css"],
 
-  modules: ["@pinia/nuxt", "@nuxt/icon", "@nuxt/test-utils/module"],
+  modules: [
+    "@nuxtjs/tailwindcss",
+    "@pinia/nuxt",
+    "@nuxt/icon",
+    "@nuxt/test-utils/module",
+  ],
 
   icon: {
     // Hugeicons via Iconify
@@ -42,7 +45,6 @@ export default defineNuxtConfig({
     dbName: "irmin",
     redisUrl: "",
     redisScope: "irmin",
-    appHost: "0.0.0.0",
     appLogLevel: "debug",
     yggdrasilBaseUrl: "",
     yggdrasilSkinDomains: "",
@@ -53,6 +55,18 @@ export default defineNuxtConfig({
     webauthnOrigin: "",
     public: {
       siteName: "Irminsul",
+    },
+    app: {
+      buildAssetsDir: "/_irmin/",
+    },
+    nitro: {
+      envPrefix: "IRMIN_",
+    },
+  },
+  app: {
+    buildAssetsDir: "/_irmin/",
+    rootAttrs: {
+      id: "__irmin_app",
     },
   },
 });
