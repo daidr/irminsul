@@ -5,7 +5,7 @@
         <p>
           Powered By
           <a class="link" href="https://github.com/daidr/irminsul"
-            ><Icon name="hugeicons:tree-06" class="w-4 h-4 text-primary inline" />Irminsul</a
+            ><Icon name="hugeicons:tree-06" class="text-base text-primary inline" />Irminsul</a
           >.
           <br />
           Designed with all the love in the world by

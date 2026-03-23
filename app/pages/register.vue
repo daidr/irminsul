@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import type AltchaField from '~/components/AltchaField.vue';
+
+useHead({ title: "注册" });
+
 const email = ref("");
 const gameId = ref("");
 const password = ref("");

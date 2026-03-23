@@ -1,4 +1,6 @@
 <script setup lang="ts">
+useHead({ title: "验证邮箱" });
+
 const route = useRoute();
 const { data: tokenData } = await useAsyncData("verify-token", () =>
   $fetch("/api/page-data/verify-email", { query: { token: route.query.token } }),

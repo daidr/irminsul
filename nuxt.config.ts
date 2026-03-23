@@ -67,11 +67,6 @@ export default defineNuxtConfig({
   },
   app: {
     buildAssetsDir: "/_irmin/",
-    head: {
-      htmlAttrs: {
-        lang: "zh-CN",
-      },
-    },
     rootAttrs: {
       id: "__irmin_app",
     },

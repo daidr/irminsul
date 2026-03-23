@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import type AltchaField from '~/components/AltchaField.vue';
+
+useHead({ title: "忘记密码" });
+
 const email = ref("");
 const altchaPayload = ref("");
 const errorMsg = ref("");

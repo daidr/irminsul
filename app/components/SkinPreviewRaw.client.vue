@@ -58,7 +58,7 @@ function onCapeImgLoad(e: Event) {
       </div>
       <!-- 无皮肤 -->
       <div v-if="!skinUrl" class="flex flex-col items-center gap-2 text-base-content/30">
-        <Icon name="hugeicons:user" class="h-20 w-20" />
+        <Icon name="hugeicons:user" class="text-[5rem]" />
         <span class="text-sm">暂无皮肤</span>
       </div>
     </div>

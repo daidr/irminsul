@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import type AltchaField from '~/components/AltchaField.vue';
+
+useHead({ title: "重置密码" });
+
 const route = useRoute();
 const { data: tokenData } = await useAsyncData("reset-token", () =>
   $fetch("/api/page-data/reset-password", { query: { token: route.query.token } }),

@@ -78,7 +78,7 @@ const features = computed(() => [
                         <div
                             class="absolute inset-0 bg-current opacity-7"
                         ></div>
-                        <Icon :name="feature.icon" class="w-6 h-6" />
+                        <Icon :name="feature.icon" class="text-2xl" />
                     </div>
                     <div class="text-lg">{{ feature.title }}</div>
                 </div>

@@ -47,7 +47,7 @@ defineExpose({ open });
           </div>
           <form method="dialog">
             <button class="btn btn-ghost btn-sm">
-              <Icon name="hugeicons:cancel-01" class="h-5 w-5 opacity-40" />
+              <Icon name="hugeicons:cancel-01" class="text-xl opacity-40" />
             </button>
           </form>
         </div>

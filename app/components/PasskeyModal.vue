@@ -140,7 +140,7 @@ defineExpose({ open });
           <h3 class="text-xl font-bold">通行密钥</h3>
           <form method="dialog">
             <button class="btn btn-ghost btn-sm">
-              <Icon name="hugeicons:cancel-01" class="h-5 w-5 opacity-40" />
+              <Icon name="hugeicons:cancel-01" class="text-xl opacity-40" />
             </button>
           </form>
         </div>
@@ -187,10 +187,10 @@ defineExpose({ open });
                       :disabled="actionLoading === pk.credentialId"
                       @click="confirmRename(pk.credentialId)"
                     >
-                      <Icon name="hugeicons:checkmark-circle-02" class="h-4 w-4 text-success" />
+                      <Icon name="hugeicons:checkmark-circle-02" class="text-base text-success" />
                     </button>
                     <button class="btn btn-ghost btn-xs" @click="cancelRename">
-                      <Icon name="hugeicons:cancel-01" class="h-4 w-4 opacity-40" />
+                      <Icon name="hugeicons:cancel-01" class="text-base opacity-40" />
                     </button>
                   </template>
                   <!-- Display mode -->
@@ -216,7 +216,7 @@ defineExpose({ open });
                 class="flex items-center gap-1 shrink-0 ml-2"
               >
                 <button class="btn btn-ghost btn-xs" @click="startRename(pk)">
-                  <Icon name="hugeicons:pencil-edit-01" class="h-3.5 w-3.5 opacity-60" />
+                  <Icon name="hugeicons:pencil-edit-01" class="text-sm opacity-60" />
                 </button>
                 <button
                   class="btn btn-ghost btn-xs text-error"
@@ -227,7 +227,7 @@ defineExpose({ open });
                     v-if="actionLoading === pk.credentialId"
                     class="loading loading-spinner loading-xs"
                   />
-                  <Icon v-else name="hugeicons:delete-02" class="h-3.5 w-3.5" />
+                  <Icon v-else name="hugeicons:delete-02" class="text-sm" />
                 </button>
               </div>
             </div>
@@ -241,7 +241,7 @@ defineExpose({ open });
           >
             <span v-if="actionLoading === 'add'" class="loading loading-spinner loading-sm" />
             <template v-else>
-              <Icon name="hugeicons:add-circle-half-dot" class="h-4 w-4" />
+              <Icon name="hugeicons:add-circle-half-dot" class="text-base" />
               添加通行密钥
             </template>
           </button>

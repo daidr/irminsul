@@ -54,8 +54,8 @@ function onDragStart(e: DragEvent) {
         @dragstart="onDragStart"
         @click="copyApiUrl"
       >
-        <Icon v-if="!copied" name="hugeicons:drag-drop" class="h-4 w-4" />
-        <Icon v-else name="hugeicons:checkmark-square-04" class="h-4 w-4" />
+        <Icon v-if="!copied" name="hugeicons:drag-drop" class="text-base" />
+        <Icon v-else name="hugeicons:checkmark-square-04" class="text-base" />
         <span>{{ copied ? "已复制" : "将此按钮拖至启动器" }}</span>
       </button>
     </div>

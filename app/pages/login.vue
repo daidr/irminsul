@@ -4,6 +4,9 @@ import {
   browserSupportsWebAuthn,
   WebAuthnAbortService,
 } from "simplewebauthn-browser";
+import type AltchaField from "~/components/AltchaField.vue";
+
+useHead({ title: "登录" });
 
 const email = ref("");
 const password = ref("");
@@ -188,7 +191,7 @@ onBeforeUnmount(() => {
       <button type="button" class="btn btn-outline w-full" :disabled="passkeyLoading" @click="handlePasskeyLogin">
         <span v-if="passkeyLoading" class="loading loading-spinner loading-sm" />
         <template v-else>
-          <Icon name="hugeicons:key-01" class="h-4 w-4" />
+          <Icon name="hugeicons:key-01" class="text-base" />
           使用通行密钥登录
         </template>
       </button>

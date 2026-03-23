@@ -325,7 +325,7 @@ function cancelSwitchTab() {
               @click="deleteTexture"
             >
               <span v-if="deleting" class="loading loading-spinner loading-xs" />
-              <Icon v-else name="hugeicons:delete-02" class="h-4 w-4" />
+              <Icon v-else name="hugeicons:delete-02" class="text-base" />
               {{ activeTab === "skin" ? "重置皮肤" : "重置披风" }}
             </button>
           </div>
@@ -353,7 +353,7 @@ function cancelSwitchTab() {
         <span class="text-xs text-base-content/50">{{ selectedFile?.name }}</span>
       </template>
       <template v-else>
-        <Icon name="hugeicons:image-upload" class="h-9 w-9 text-base-content/25" />
+        <Icon name="hugeicons:image-upload" class="text-4xl text-base-content/25" />
         <div class="flex flex-col items-center gap-1">
           <span class="text-sm text-base-content/50">
             拖放{{ activeTab === "skin" ? "皮肤" : "披风" }}文件到此处
@@ -404,7 +404,7 @@ function cancelSwitchTab() {
 
     <!-- 违规内容警告 -->
     <div class="mt-5 flex items-start gap-2 bg-error/10 p-2.5 px-3">
-      <Icon name="hugeicons:alert-02" class="h-3.5 w-3.5 text-error shrink-0 mt-0.5" />
+      <Icon name="hugeicons:alert-02" class="text-sm text-error shrink-0 mt-0.5" />
       <p class="text-xs text-error leading-relaxed">
         请勿上传违规内容（包括但不限于含有政治、色情、赌博信息的皮肤图片），一经发现将直接封禁。
       </p>
