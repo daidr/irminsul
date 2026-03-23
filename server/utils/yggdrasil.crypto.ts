@@ -41,8 +41,8 @@ export async function loadOrGenerateKeys(): Promise<void> {
       publicKeyEncoding: { type: "spki", format: "pem" },
       privateKeyEncoding: { type: "pkcs8", format: "pem" },
     });
-    await fs.writeFile(RSA_PRIVATE_KEY_PATH, privPem);
-    await fs.writeFile(RSA_PUBLIC_KEY_PATH, pubPem);
+    await fs.writeFile(RSA_PRIVATE_KEY_PATH, privPem, { mode: 0o600 });
+    await fs.writeFile(RSA_PUBLIC_KEY_PATH, pubPem, { mode: 0o644 });
     logger.info`RSA key pair generated.`;
   }
 
