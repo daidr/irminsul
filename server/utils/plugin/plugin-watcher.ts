@@ -56,7 +56,8 @@ export class PluginWatcher {
     if (!relPath) return false;
     return (
       /(?:^|\/)(?:node_modules|\.git|logs)(?:\/|$)/.test(relPath) ||
-      /\.tmp$|~$/.test(relPath)
+      /^logs$/.test(relPath) ||
+      /\.tmp$|~$|\.jsonl$/.test(relPath)
     );
   }
 

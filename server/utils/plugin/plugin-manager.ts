@@ -337,19 +337,19 @@ export class PluginManager {
   // === Evlog Bridge ===
 
   bridgeEvlogHooks(nitroApp: any): void {
-    nitroApp.hooks.hook("evlog:drain", async (events: any[]) => {
-      // Enrichers: patch model
+    // evlog:drain hook receives ONE event per call (not a batch).
+    // The pipeline handles batching internally before passing to the drain adapter.
+    nitroApp.hooks.hook("evlog:drain", async (event: any) => {
+      // Enrichers: each returns a patch object for this single event
       for (const handler of this.hookRegistry.get("evlog:enricher")) {
         try {
-          const patches = (await this.bridge.callHook(
+          const patch = (await this.bridge.callHook(
             handler.pluginId,
             "evlog:enricher",
-            events,
-          )) as Record<string, unknown>[];
-          if (Array.isArray(patches)) {
-            for (let i = 0; i < events.length && i < patches.length; i++) {
-              if (patches[i]) Object.assign(events[i], patches[i]);
-            }
+            event,
+          )) as Record<string, unknown> | null;
+          if (patch && typeof patch === "object") {
+            Object.assign(event, patch);
           }
         } catch (err: unknown) {
           this.logManager.push({
@@ -362,13 +362,13 @@ export class PluginManager {
         }
       }
 
-      // Drains
+      // Drains: each receives the single event
       for (const handler of this.hookRegistry.get("evlog:drain")) {
         try {
           await this.bridge.callHook(
             handler.pluginId,
             "evlog:drain",
-            events,
+            event,
           );
         } catch (err: unknown) {
           this.logManager.push({
