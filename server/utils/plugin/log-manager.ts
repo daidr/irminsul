@@ -130,6 +130,8 @@ export class PluginLogManager {
         if (opts.type && entry.type !== opts.type) continue;
 
         if (logs.length >= limit) {
+          // Reverse to chronological order (oldest first) before returning
+          logs.reverse();
           return { logs, nextCursor: entry.timestamp, hasMore: true };
         }
 
@@ -137,6 +139,8 @@ export class PluginLogManager {
       }
     }
 
+    // Reverse to chronological order (oldest first)
+    logs.reverse();
     return { logs, nextCursor: null, hasMore: false };
   }
 

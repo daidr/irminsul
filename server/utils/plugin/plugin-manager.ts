@@ -177,6 +177,21 @@ export class PluginManager {
     const plugin = this.plugins.get(id);
     if (!plugin) return { ok: false, error: "Plugin not found" };
     if (plugin.status === "enabled") return { ok: true };
+
+    // If the plugin was just marked disabled (still running in Host), just flip the flag.
+    // Remove from dirty reasons if it was pending restart due to disable.
+    if (plugin.status === "disabled" && this.hookRegistry.get("evlog:enricher").some(h => h.pluginId === id)
+      || this.hookRegistry.get("evlog:drain").some(h => h.pluginId === id)) {
+      plugin.status = "enabled";
+      plugin.error = undefined;
+      this.dirtyReasons = this.dirtyReasons.filter(
+        (r) => !(r.pluginId === id && r.reason === "disabled"),
+      );
+      this.notifyStatusChange();
+      await this.saveRegistry();
+      return { ok: true };
+    }
+
     if (plugin.status === "error" && plugin.meta.hooks.length === 0) {
       return { ok: false, error: plugin.error ?? "Plugin has errors" };
     }
@@ -202,10 +217,8 @@ export class PluginManager {
     const plugin = this.plugins.get(id);
     if (!plugin || plugin.status !== "enabled") return;
 
-    // Remove from hook registry (stop forwarding calls)
-    this.hookRegistry.removePlugin(id);
-
-    // Mark dirty
+    // Just mark as disabled + dirty. The plugin keeps running in the Host
+    // until the admin restarts the Host. Hooks are NOT removed here.
     plugin.status = "disabled";
     this.addDirtyReason(id, "disabled");
 

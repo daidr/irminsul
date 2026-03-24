@@ -19,6 +19,7 @@ export class PluginBridge {
   private pendingCalls = new Map<string, PendingCall>();
   private pendingLoads = new Map<string, PendingCall>();
   private callIdCounter = 0;
+  private shuttingDown = false;
   private readonly onLog: PluginBridgeOptions["onLog"];
   private readonly onHookRegister: PluginBridgeOptions["onHookRegister"];
   private readonly onCrash: PluginBridgeOptions["onCrash"];
@@ -32,8 +33,7 @@ export class PluginBridge {
   }
 
   start(): void {
-    // import.meta.url points to .nuxt/dev/index.mjs in Nitro dev, making relative
-    // URLs unreliable. Use process.cwd() which always points to the project root.
+    this.shuttingDown = false;
     const workerPath = join(process.cwd(), "server", "worker", "plugin-host.ts");
     this.worker = new Worker(workerPath, {
       smol: true,
@@ -41,10 +41,11 @@ export class PluginBridge {
     (this.worker as any).unref();
     this.worker.onmessage = (e: MessageEvent<WorkerToMainMessage>) =>
       this.handleMessage(e.data);
-    this.worker.onerror = (e: ErrorEvent) =>
-      this.handleCrash(e.message ?? "Worker error");
+    this.worker.onerror = (e: ErrorEvent) => {
+      if (!this.shuttingDown) this.handleCrash(e.message ?? "Worker error");
+    };
     this.worker.addEventListener("close", () => {
-      if (this.worker) this.handleCrash("Worker closed unexpectedly");
+      if (this.worker && !this.shuttingDown) this.handleCrash("Worker closed unexpectedly");
     });
     this.send({ type: "init" });
   }
@@ -101,6 +102,7 @@ export class PluginBridge {
 
   async shutdown(): Promise<void> {
     if (!this.worker) return;
+    this.shuttingDown = true;
     this.send({ type: "shutdown" });
     await new Promise<void>((resolve) => {
       const timer = setTimeout(() => {
