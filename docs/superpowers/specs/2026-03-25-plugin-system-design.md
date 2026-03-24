@@ -61,7 +61,7 @@ Main Thread                          Plugin Host Worker (单一)
 [未发现] → 文件监听/手动扫描 → [已发现/已禁用]
 [已发现/已禁用] → 管理面板启用 → 向 Host 发送 load 指令 → setup() 成功 → app:started → [已启用]
                                                          → setup() 失败 → [错误] (保持禁用)
-[已启用] → 管理面板禁用 → 标脏（pending restart）
+[已启用] → 管理面板禁用 → 从 HookRegistry 移除 hook + 标脏（pending restart）
 [已启用] → 文件变更检测 → 标脏（pending restart）
 [任意状态] → 插件目录被删除 → 标脏 + 从 registry 移除
 [标脏] → 管理员手动重启 Host → terminate Worker → 新 Worker → 加载所有 enabled 插件
@@ -422,7 +422,7 @@ interface ConfigChanges {
 ```js
 // irminsul-data/plugins/axiom-drain/index.js
 export function setup(ctx) {
-  const { apiKey, dataset } = ctx.config;
+  const { apiKey, dataset } = ctx.config.getAll();
 
   ctx.hook('evlog:drain', async (events) => {
     ctx.log.set({ drain: 'axiom', count: events.length });
@@ -531,8 +531,8 @@ nitroApp.hooks.hook('evlog:drain', async (events) => {
 { type: 'plugin:load', pluginId: string, pluginDir: string, entryPath: string,
   config: Record<string, any>, meta: PluginMeta, allowedHooks: string[] }
 
-// 调用 hook
-{ type: 'hook:call', hookName: string, args: any[], callId: string }
+// 调用指定插件的 hook handler
+{ type: 'hook:call', pluginId: string, hookName: string, args: any[], callId: string }
 
 // 配置热更新（非 restart 配置项变更）
 { type: 'config:update', pluginId: string, config: Record<string, any>,
@@ -706,9 +706,10 @@ function callHandler(pluginId: string, handler: Function, ...args: any[]) {
 1. 向当前 Plugin Host 发送 `plugin:load` 消息
 2. Host 内构造 `ctx`，`import()` 插件 `index.js`，调用 `setup(ctx)`
 3. 等待 Host 返回 `plugin:loaded` 消息
-4. 成功 → 将 Host 中注册的 hook handler 记录到主线程 HookRegistry → 调用 `app:started`
-5. 失败 → 记录错误日志，插件状态设为错误
-6. **无需重启 Host**，已启用的其他插件不受影响
+4. 成功 → 将 Host 中注册的 hook handler 记录到主线程 HookRegistry
+5. 成功 → Host 内部自动调用该插件的 `app:started` handler（无需额外 IPC 消息）
+6. 失败 → 记录错误日志，插件状态设为错误
+7. **无需重启 Host**，已启用的其他插件不受影响
 
 ### Disable Plugin（禁用插件）
 
@@ -722,6 +723,7 @@ function callHandler(pluginId: string, handler: Function, ...args: any[]) {
 1. 检查变更的 key 是否有 `restart: true` 标记
 2. **有 restart 标记的 key**：标脏，管理面板提示需要重启
 3. **无 restart 标记的 key**：向 Host 发送 `config:update` 消息 → Host 更新插件内部 config 存储 → 调用插件的 `config:changed` hook
+4. **混合情况**（同时包含 restart 和非 restart 的 key）：对非 restart 的 key 执行热更新，同时标脏
 
 ### Restart Host（重启 Plugin Host）
 
