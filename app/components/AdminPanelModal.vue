@@ -61,6 +61,15 @@ defineExpose({ open });
           </button>
         </div>
 
+        <!-- 插件管理入口 -->
+        <div class="mt-3 flex justify-end">
+          <NuxtLink to="/admin/plugins" class="btn btn-sm btn-ghost gap-1" @click="dialogRef?.close()">
+            <Icon name="hugeicons:plug-01" class="text-base" />
+            插件管理
+            <Icon name="hugeicons:arrow-right-01" class="text-sm" />
+          </NuxtLink>
+        </div>
+
         <!-- Tab 内容：key 变化时重建组件，重新拉取配置 -->
         <AdminSiteConfigTab
           :key="'sc-' + openKey"
