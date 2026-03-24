@@ -337,19 +337,22 @@ export class PluginManager {
   // === Evlog Bridge ===
 
   bridgeEvlogHooks(nitroApp: any): void {
-    // evlog:drain hook receives ONE event per call (not a batch).
-    // The pipeline handles batching internally before passing to the drain adapter.
-    nitroApp.hooks.hook("evlog:drain", async (event: any) => {
-      // Enrichers: each returns a patch object for this single event
+    // evlog calls hooks with context objects:
+    //   evlog:enrich → { event, request?, headers? }  (runs BEFORE drain)
+    //   evlog:drain  → { event, request?, headers? }  (runs AFTER enrich)
+
+    // Enrichers: hook into evlog:enrich (runs before drain/FS write)
+    nitroApp.hooks.hook("evlog:enrich", async (ctx: any) => {
       for (const handler of this.hookRegistry.get("evlog:enricher")) {
         try {
+          // Send only the serializable event data to the Worker
           const patch = (await this.bridge.callHook(
             handler.pluginId,
             "evlog:enricher",
-            event,
+            ctx.event,
           )) as Record<string, unknown> | null;
           if (patch && typeof patch === "object") {
-            Object.assign(event, patch);
+            Object.assign(ctx.event, patch);
           }
         } catch (err: unknown) {
           this.logManager.push({
@@ -361,14 +364,16 @@ export class PluginManager {
           });
         }
       }
+    });
 
-      // Drains: each receives the single event
+    // Drains: hook into evlog:drain (runs after enrich)
+    nitroApp.hooks.hook("evlog:drain", async (ctx: any) => {
       for (const handler of this.hookRegistry.get("evlog:drain")) {
         try {
           await this.bridge.callHook(
             handler.pluginId,
             "evlog:drain",
-            event,
+            ctx.event,
           );
         } catch (err: unknown) {
           this.logManager.push({
