@@ -35,6 +35,7 @@ export class PluginManager {
   private logManager: PluginLogManager;
   private watcher: PluginWatcher | null = null;
   private pluginsDir: string;
+  private statusSubscribers = new Set<ReadableStreamDefaultController>();
 
   constructor(pluginsDir: string) {
     this.pluginsDir = resolve(pluginsDir);
@@ -131,7 +132,7 @@ export class PluginManager {
 
   async start(): Promise<void> {
     this.bridge.start();
-    this.hostStatus = "running";
+    this.setHostStatus("running");
 
     // Load enabled plugins in order
     const toLoad = [...this.plugins.values()]
@@ -139,7 +140,14 @@ export class PluginManager {
       .sort((a, b) => a.order - b.order);
 
     for (const plugin of toLoad) {
-      await this.loadPluginIntoHost(plugin);
+      try {
+        await this.loadPluginIntoHost(plugin);
+      } catch (err: unknown) {
+        plugin.status = "error";
+        plugin.error = err instanceof Error ? err.message : String(err);
+        // eslint-disable-next-line no-console
+        console.error(`[plugin-manager] Failed to load ${plugin.id}: ${plugin.error}`);
+      }
       delete (plugin as any)._shouldEnable;
     }
 
@@ -292,11 +300,11 @@ export class PluginManager {
     // Shutdown existing Host
     await this.bridge.shutdown();
     this.hookRegistry.clear();
-    this.hostStatus = "stopped";
+    this.setHostStatus("stopped");
 
     // Create new Host
     this.bridge.start();
-    this.hostStatus = "running";
+    this.setHostStatus("running");
 
     // Reload all enabled plugins
     const toLoad = [...this.plugins.values()]
@@ -304,11 +312,19 @@ export class PluginManager {
       .sort((a, b) => a.order - b.order);
 
     for (const plugin of toLoad) {
-      await this.loadPluginIntoHost(plugin);
+      try {
+        await this.loadPluginIntoHost(plugin);
+      } catch (err: unknown) {
+        plugin.status = "error";
+        plugin.error = err instanceof Error ? err.message : String(err);
+        // eslint-disable-next-line no-console
+        console.error(`[plugin-manager] Failed to reload ${plugin.id}: ${plugin.error}`);
+      }
     }
 
     // Clear dirty state
     this.dirtyReasons = [];
+    this.notifyStatusChange();
   }
 
   getPlugins(): PluginState[] {
@@ -325,6 +341,32 @@ export class PluginManager {
         ? ("dirty" as HostStatus)
         : this.hostStatus;
     return { status, dirtyReasons: [...this.dirtyReasons] };
+  }
+
+  private setHostStatus(status: HostStatus): void {
+    this.hostStatus = status;
+    this.notifyStatusChange();
+  }
+
+  private notifyStatusChange(): void {
+    const data = this.getHostStatus();
+    const encoded = new TextEncoder().encode(
+      `event: status\ndata: ${JSON.stringify(data)}\n\n`,
+    );
+    for (const controller of this.statusSubscribers) {
+      try {
+        controller.enqueue(encoded);
+      } catch {
+        this.statusSubscribers.delete(controller);
+      }
+    }
+  }
+
+  subscribeHostStatus(controller: ReadableStreamDefaultController): () => void {
+    this.statusSubscribers.add(controller);
+    return () => {
+      this.statusSubscribers.delete(controller);
+    };
   }
 
   getLogManager(): PluginLogManager {
@@ -396,6 +438,10 @@ export class PluginManager {
     await this.bridge.shutdown();
     this.logManager.destroy();
     this.hookRegistry.clear();
+    for (const controller of this.statusSubscribers) {
+      try { controller.close(); } catch {}
+    }
+    this.statusSubscribers.clear();
   }
 
   // === Watcher Management ===
@@ -464,7 +510,7 @@ export class PluginManager {
     // eslint-disable-next-line no-console
     console.error(`[plugin-manager] Host crashed: ${error}`);
 
-    this.hostStatus = "crashed";
+    this.setHostStatus("crashed");
     this.hookRegistry.clear();
 
     // Prevent infinite restart loop: max 3 restarts within 30 seconds
@@ -485,7 +531,7 @@ export class PluginManager {
     setTimeout(async () => {
       try {
         this.bridge.start();
-        this.hostStatus = "running";
+        this.setHostStatus("running");
 
         const toLoad = [...this.plugins.values()]
           .filter((p) => p.status === "enabled")
@@ -501,6 +547,7 @@ export class PluginManager {
         }
 
         this.dirtyReasons = [];
+        this.notifyStatusChange();
       } catch (restartErr) {
         // eslint-disable-next-line no-console
         console.error(`[plugin-manager] Recovery failed: ${restartErr}`);
@@ -588,6 +635,7 @@ export class PluginManager {
     )
       return;
     this.dirtyReasons.push({ pluginId, reason });
+    this.notifyStatusChange();
   }
 
   private async saveRegistry(): Promise<void> {

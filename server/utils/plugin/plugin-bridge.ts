@@ -117,6 +117,9 @@ export class PluginBridge {
 
   terminate(): void {
     if (!this.worker) return;
+    const w = this.worker;
+    // Set null BEFORE terminate to prevent close event from triggering handleCrash
+    this.worker = null;
     // Reject all pending calls
     for (const [, pending] of this.pendingCalls) {
       clearTimeout(pending.timer);
@@ -128,8 +131,7 @@ export class PluginBridge {
       pending.reject(new Error("Worker terminated"));
     }
     this.pendingLoads.clear();
-    this.worker.terminate();
-    this.worker = null;
+    w.terminate();
   }
 
   get isRunning(): boolean {

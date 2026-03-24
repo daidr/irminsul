@@ -2,31 +2,35 @@
 const status = ref<string | null>(null);
 const dirtyReasons = ref<any[]>([]);
 const restarting = ref(false);
+let eventSource: EventSource | null = null;
 
-async function fetchStatus() {
-  try {
-    const data = await $fetch<{ status: string; dirtyReasons: any[] }>("/api/admin/plugins/host/status");
+function connectSSE() {
+  disconnectSSE();
+  eventSource = new EventSource("/api/admin/plugins/host/status-stream");
+  eventSource.addEventListener("status", (e) => {
+    const data = JSON.parse(e.data);
     status.value = data.status;
     dirtyReasons.value = data.dirtyReasons;
-  } catch {}
+  });
+  eventSource.onerror = () => {
+    // Reconnect after 3 seconds on error
+    disconnectSSE();
+    setTimeout(connectSSE, 3000);
+  };
 }
 
-let interval: ReturnType<typeof setInterval> | null = null;
+function disconnectSSE() {
+  eventSource?.close();
+  eventSource = null;
+}
 
-onMounted(() => {
-  fetchStatus();
-  interval = setInterval(fetchStatus, 5000);
-});
-
-onBeforeUnmount(() => {
-  if (interval) clearInterval(interval);
-});
+onMounted(connectSSE);
+onBeforeUnmount(disconnectSSE);
 
 async function restartHost() {
   restarting.value = true;
   try {
     await $fetch("/api/admin/plugins/host/restart", { method: "POST" });
-    await fetchStatus();
   } catch {} finally {
     restarting.value = false;
   }
