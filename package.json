@@ -36,6 +36,7 @@
     "nuxt": "^4.4.2",
     "pinia": "^3.0.4",
     "pngjs-nozlib": "^1.0.0",
+    "sortablejs": "^1.15.7",
     "uuid": "^13.0.0",
     "vue": "^3.5.30",
     "zod": "^4.3.6"
@@ -45,6 +46,7 @@
     "@commitlint/config-conventional": "^20.5.0",
     "@nuxtjs/tailwindcss": "7.0.0-beta.1",
     "@types/nodemailer": "^7.0.11",
+    "@types/sortablejs": "^1.15.9",
     "@types/uuid": "^11.0.0",
     "bun-git-hooks": "^0.3.1",
     "lint-staged": "^16.4.0",
