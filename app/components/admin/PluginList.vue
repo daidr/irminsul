@@ -24,7 +24,7 @@ const statusBadge = (status: string) => {
   <div v-if="modelValue.length === 0" class="p-4 text-sm text-base-content/40 text-center">
     未发现插件
   </div>
-  <SortableList
+  <AdminSortableList
     v-else
     :model-value="modelValue"
     :options="{ handle: '.drag-handle', ghostClass: 'opacity-30' }"
@@ -46,5 +46,5 @@ const statusBadge = (status: string) => {
         {{ statusBadge(plugin.status).label }}
       </span>
     </div>
-  </SortableList>
+  </AdminSortableList>
 </template>

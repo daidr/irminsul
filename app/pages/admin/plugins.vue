@@ -55,9 +55,9 @@ async function handlePluginAction() {
   <div v-if="user?.isAdmin" class="flex gap-0 mx-4 my-6" style="min-height: calc(100dvh - 200px)">
     <!-- 左侧面板 -->
     <div class="w-[300px] shrink-0 border border-base-300 bg-base-200 flex flex-col">
-      <PluginHostStatus class="p-3 border-b border-base-300" />
+      <AdminPluginHostStatus class="p-3 border-b border-base-300" />
       <div class="flex-1 overflow-y-auto">
-        <PluginList
+        <AdminPluginList
           v-if="!loading"
           v-model="plugins"
           :selected-id="selectedId"
@@ -78,7 +78,7 @@ async function handlePluginAction() {
 
     <!-- 右侧面板 -->
     <div class="flex-1 border border-l-0 border-base-300 bg-base-200">
-      <PluginDetail
+      <AdminPluginDetail
         v-if="selectedPlugin"
         :plugin-id="selectedPlugin.id"
         @action="handlePluginAction"
@@ -91,6 +91,6 @@ async function handlePluginAction() {
 
   <!-- 系统设置弹窗 -->
   <ClientOnly>
-    <PluginSystemSettingsModal ref="settingsRef" />
+    <AdminPluginSystemSettingsModal ref="settingsRef" />
   </ClientOnly>
 </template>

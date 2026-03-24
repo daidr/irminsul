@@ -63,6 +63,11 @@ function handleClick(item: (typeof shortcuts)[number]) {
         <Icon name="hugeicons:dashboard-square-setting" class="h-[18px] w-[18px] shrink-0" />
         <span class="text-[13px] font-medium">管理面板</span>
       </button>
+      <!-- Plugin management (admin only) -->
+      <NuxtLink v-if="isAdmin" to="/admin/plugins" class="btn border border-base-300">
+        <Icon name="hugeicons:plug-01" class="h-[18px] w-[18px] shrink-0" />
+        <span class="text-[13px] font-medium">插件管理</span>
+      </NuxtLink>
     </div>
   </div>
 </template>

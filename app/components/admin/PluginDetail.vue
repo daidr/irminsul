@@ -96,19 +96,19 @@ async function toggleEnabled() {
 
     <!-- Tab 内容 -->
     <div class="flex-1 overflow-y-auto p-4">
-      <PluginConfigTab
+      <AdminPluginConfigTab
         v-show="activeTab === 'config'"
         :plugin-id="plugin.id"
         :config-schema="plugin.configSchema"
         :config="plugin.config"
         @saved="fetchDetail(); emit('action')"
       />
-      <PluginLogTab
+      <AdminPluginLogTab
         v-show="activeTab === 'logs'"
         :plugin-id="plugin.id"
         :active="activeTab === 'logs'"
       />
-      <PluginInfoTab
+      <AdminPluginInfoTab
         v-show="activeTab === 'info'"
         :plugin="plugin"
       />
