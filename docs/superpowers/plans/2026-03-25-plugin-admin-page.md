@@ -1,36 +1,36 @@
-# Plugin Admin Page Implementation Plan
+# 插件管理页面实现计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **给 Agent 的说明：** 必须使用子技能：使用 superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 来逐任务实现本计划。步骤使用复选框（`- [ ]`）语法进行追踪。
 
-**Goal:** Build a `/admin/plugins` page with left-right master-detail layout for managing plugins, their configuration, and viewing logs.
+**目标：** 构建 `/admin/plugins` 页面，采用左右主从布局（master-detail），用于管理插件、配置及查看日志。
 
-**Architecture:** Standalone Nuxt page at `app/pages/admin/plugins.vue` with 8 child components under `app/components/admin/`. Left panel: sortable plugin list + Host status. Right panel: tab-switched detail view (config/logs/info). SortableJS for drag reorder. SSE EventSource for real-time log streaming.
+**架构：** 独立的 Nuxt 页面位于 `app/pages/admin/plugins.vue`，包含 8 个子 component 位于 `app/components/admin/` 下。左面板：可排序的插件列表 + Host 状态。右面板：标签页切换的详情视图（配置/日志/信息）。使用 SortableJS 实现拖拽排序。使用 SSE EventSource 实现实时日志流。
 
-**Tech Stack:** Vue 3 Composition API, DaisyUI v5, Tailwind CSS v4, SortableJS, EventSource (SSE)
+**技术栈：** Vue 3 Composition API、DaisyUI v5、Tailwind CSS v4、SortableJS、EventSource（SSE）
 
-**Spec:** `docs/superpowers/specs/2026-03-25-plugin-admin-page-design.md`
+**设计规格：** `docs/superpowers/specs/2026-03-25-plugin-admin-page-design.md`
 
 ---
 
-## File Structure
+## 文件结构
 
-### New Files
+### 新增文件
 
 ```
-app/utils/plugin-condition.ts              — evaluateCondition() ported to frontend (no server type deps)
-app/pages/admin/plugins.vue                — Page entry: auth guard, layout container, data fetching
+app/utils/plugin-condition.ts              — evaluateCondition() 移植到前端（不依赖 server 类型）
+app/pages/admin/plugins.vue                — 页面入口：权限守卫、布局容器、数据获取
 app/components/admin/
-  PluginList.vue                           — Left panel: sortable plugin list with status badges
-  PluginHostStatus.vue                     — Host status badge + dirty reasons + restart button
-  PluginDetail.vue                         — Right panel: title bar + enable/disable + tab switcher
-  PluginConfigTab.vue                      — Dynamic config form from configSchema
-  PluginLogTab.vue                         — SSE real-time logs + history scroll-back + filters
-  PluginInfoTab.vue                        — Plugin metadata display
-  PluginSystemSettingsModal.vue            — System settings modal (watcher, log buffer, retention)
-  SortableList.vue                         — Generic SortableJS wrapper component
+  PluginList.vue                           — 左面板：可排序的插件列表，带状态徽标
+  PluginHostStatus.vue                     — Host 状态徽标 + dirty 原因 + 重启按钮
+  PluginDetail.vue                         — 右面板：标题栏 + 启用/禁用 + 标签页切换器
+  PluginConfigTab.vue                      — 基于 configSchema 的动态配置表单
+  PluginLogTab.vue                         — SSE 实时日志 + 历史回滚 + 过滤
+  PluginInfoTab.vue                        — 插件元数据展示
+  PluginSystemSettingsModal.vue            — 系统设置弹窗（监听器、日志缓冲、保留策略）
+  SortableList.vue                         — 通用 SortableJS 封装 component
 ```
 
-### New Dependencies
+### 新增依赖
 
 ```
 sortablejs
@@ -39,24 +39,24 @@ sortablejs
 
 ---
 
-## Task 1: Install SortableJS + Frontend Condition Evaluator
+## 任务 1：安装 SortableJS + 前端条件求值器
 
-**Files:**
-- Create: `app/utils/plugin-condition.ts`
+**文件：**
+- 新建：`app/utils/plugin-condition.ts`
 
-- [ ] **Step 1: Install sortablejs**
+- [ ] **步骤 1：安装 sortablejs**
 
 ```bash
 bun add sortablejs && bun add -D @types/sortablejs
 ```
 
-- [ ] **Step 2: Create frontend condition evaluator**
+- [ ] **步骤 2：创建前端条件求值器**
 
-Port `server/utils/plugin/condition.ts` to `app/utils/plugin-condition.ts`. This file will be auto-imported by Nuxt in the frontend context. Remove the server type imports and use inline types:
+将 `server/utils/plugin/condition.ts` 移植到 `app/utils/plugin-condition.ts`。该文件会被 Nuxt 在前端上下文中自动导入。移除 server 类型导入并使用内联类型：
 
 ```typescript
-// Condition evaluator for plugin config form (frontend).
-// Mirrors server/utils/plugin/condition.ts logic.
+// 插件配置表单的条件求值器（前端）。
+// 镜像 server/utils/plugin/condition.ts 的逻辑。
 
 type FieldCondition = Record<string, unknown> | unknown;
 type Condition =
@@ -109,7 +109,7 @@ function isOperatorObject(v: unknown): boolean {
 }
 ```
 
-- [ ] **Step 3: Commit**
+- [ ] **步骤 3：提交**
 
 ```bash
 git add app/utils/plugin-condition.ts package.json bun.lock
@@ -118,14 +118,14 @@ git commit -m "feat(plugin-admin): add sortablejs and frontend condition evaluat
 
 ---
 
-## Task 2: SortableList Component
+## 任务 2：SortableList component
 
-**Files:**
-- Create: `app/components/admin/SortableList.vue`
+**文件：**
+- 新建：`app/components/admin/SortableList.vue`
 
-- [ ] **Step 1: Implement SortableList**
+- [ ] **步骤 1：实现 SortableList**
 
-Generic SortableJS wrapper component. Uses `onMounted` to initialize Sortable on the container element, emits reordered array on drag end.
+通用 SortableJS 封装 component。在 `onMounted` 时对容器元素初始化 Sortable，在拖拽结束时 emit 重排后的数组。
 
 ```vue
 <script setup lang="ts">
@@ -170,7 +170,7 @@ onBeforeUnmount(() => {
 </template>
 ```
 
-- [ ] **Step 2: Commit**
+- [ ] **步骤 2：提交**
 
 ```bash
 git add app/components/admin/SortableList.vue
@@ -179,19 +179,19 @@ git commit -m "feat(plugin-admin): add SortableList component wrapping SortableJ
 
 ---
 
-## Task 3: Page Entry + Auth Guard
+## 任务 3：页面入口 + 权限守卫
 
-**Files:**
-- Create: `app/pages/admin/plugins.vue`
+**文件：**
+- 新建：`app/pages/admin/plugins.vue`
 
-- [ ] **Step 1: Create the page with auth guard and master-detail layout shell**
+- [ ] **步骤 1：创建页面，包含权限守卫和主从布局骨架**
 
 ```vue
 <script setup lang="ts">
 const { data: user } = useUser();
 const router = useRouter();
 
-// Auth guard: redirect non-admins to home
+// 权限守卫：非管理员重定向到首页
 watch(
   () => user.value,
   (u) => {
@@ -200,7 +200,7 @@ watch(
   { immediate: true },
 );
 
-// Plugin list data
+// 插件列表数据
 const plugins = ref<any[]>([]);
 const loading = ref(true);
 const loadError = ref("");
@@ -212,7 +212,7 @@ async function fetchPlugins() {
   loadError.value = "";
   try {
     plugins.value = await $fetch<any[]>("/api/admin/plugins");
-    // Auto-select first plugin if none selected
+    // 如果未选中任何插件，自动选中第一个
     if (!selectedId.value && plugins.value.length > 0) {
       selectedId.value = plugins.value[0].id;
     }
@@ -236,14 +236,14 @@ async function handleOrderUpdate(newList: any[]) {
 }
 
 async function handlePluginAction() {
-  // Refresh list after enable/disable/config change
+  // 启用/禁用/配置变更后刷新列表
   await fetchPlugins();
 }
 </script>
 
 <template>
   <div v-if="user?.isAdmin" class="flex gap-0 mx-4 my-6" style="min-height: calc(100dvh - 200px)">
-    <!-- Left Panel -->
+    <!-- 左面板 -->
     <div class="w-[300px] shrink-0 border border-base-300 bg-base-200 flex flex-col">
       <PluginHostStatus class="p-3 border-b border-base-300" />
       <div class="flex-1 overflow-y-auto">
@@ -266,7 +266,7 @@ async function handlePluginAction() {
       </div>
     </div>
 
-    <!-- Right Panel -->
+    <!-- 右面板 -->
     <div class="flex-1 border border-l-0 border-base-300 bg-base-200">
       <PluginDetail
         v-if="selectedPlugin"
@@ -279,14 +279,14 @@ async function handlePluginAction() {
     </div>
   </div>
 
-  <!-- System Settings Modal -->
+  <!-- 系统设置弹窗 -->
   <ClientOnly>
     <PluginSystemSettingsModal ref="settingsRef" />
   </ClientOnly>
 </template>
 ```
 
-- [ ] **Step 2: Commit**
+- [ ] **步骤 2：提交**
 
 ```bash
 git add app/pages/admin/plugins.vue
@@ -295,14 +295,14 @@ git commit -m "feat(plugin-admin): add plugins page with auth guard and master-d
 
 ---
 
-## Task 4: PluginHostStatus Component
+## 任务 4：PluginHostStatus component
 
-**Files:**
-- Create: `app/components/admin/PluginHostStatus.vue`
+**文件：**
+- 新建：`app/components/admin/PluginHostStatus.vue`
 
-- [ ] **Step 1: Implement Host status display**
+- [ ] **步骤 1：实现 Host 状态展示**
 
-Fetches `GET /api/admin/plugins/host/status` on mount. Shows status badge (running=green, dirty=warning, crashed=error, stopped=neutral). When dirty, lists reasons and shows restart button.
+在挂载时通过 `GET /api/admin/plugins/host/status` 获取数据。显示状态徽标（running=绿色, dirty=警告, crashed=错误, stopped=中性）。当状态为 dirty 时，列出原因并显示重启按钮。
 
 ```vue
 <script setup lang="ts">
@@ -320,7 +320,7 @@ async function fetchStatus() {
 
 onMounted(fetchStatus);
 
-// Refresh periodically
+// 定时刷新
 const interval = setInterval(fetchStatus, 5000);
 onBeforeUnmount(() => clearInterval(interval));
 
@@ -394,7 +394,7 @@ const reasonLabel = (reason: string) => {
 </template>
 ```
 
-- [ ] **Step 2: Commit**
+- [ ] **步骤 2：提交**
 
 ```bash
 git add app/components/admin/PluginHostStatus.vue
@@ -403,14 +403,14 @@ git commit -m "feat(plugin-admin): add PluginHostStatus component with polling a
 
 ---
 
-## Task 5: PluginList Component
+## 任务 5：PluginList component
 
-**Files:**
-- Create: `app/components/admin/PluginList.vue`
+**文件：**
+- 新建：`app/components/admin/PluginList.vue`
 
-- [ ] **Step 1: Implement sortable plugin list**
+- [ ] **步骤 1：实现可排序的插件列表**
 
-Uses `SortableList` for drag reorder. Each item shows name, version, status badge. Click selects.
+使用 `SortableList` 实现拖拽排序。每个条目显示名称、版本、状态徽标。点击选中。
 
 ```vue
 <script setup lang="ts">
@@ -465,7 +465,7 @@ const statusBadge = (status: string) => {
 </template>
 ```
 
-- [ ] **Step 2: Commit**
+- [ ] **步骤 2：提交**
 
 ```bash
 git add app/components/admin/PluginList.vue
@@ -474,15 +474,15 @@ git commit -m "feat(plugin-admin): add PluginList component with drag-to-reorder
 
 ---
 
-## Task 6: PluginDetail + PluginInfoTab
+## 任务 6：PluginDetail + PluginInfoTab
 
-**Files:**
-- Create: `app/components/admin/PluginDetail.vue`
-- Create: `app/components/admin/PluginInfoTab.vue`
+**文件：**
+- 新建：`app/components/admin/PluginDetail.vue`
+- 新建：`app/components/admin/PluginInfoTab.vue`
 
-- [ ] **Step 1: Implement PluginDetail (container with tabs)**
+- [ ] **步骤 1：实现 PluginDetail（带标签页的容器）**
 
-Fetches plugin detail via `GET /api/admin/plugins/:id`. Renders title bar with enable/disable button. Tab bar switches between config/logs/info. Uses `v-show` for tab content (same pattern as `AdminPanelModal`).
+通过 `GET /api/admin/plugins/:id` 获取插件详情。渲染标题栏和启用/禁用按钮。标签栏在配置/日志/信息之间切换。使用 `v-show` 渲染标签页内容（与 `AdminPanelModal` 相同的模式）。
 
 ```vue
 <script setup lang="ts">
@@ -536,7 +536,7 @@ async function toggleEnabled() {
     </div>
   </div>
   <div v-else-if="plugin" class="flex flex-col h-full">
-    <!-- Title bar -->
+    <!-- 标题栏 -->
     <div class="flex items-center justify-between p-4 border-b border-base-300">
       <div>
         <h3 class="text-lg font-bold">{{ plugin.name }}</h3>
@@ -553,14 +553,14 @@ async function toggleEnabled() {
       </button>
     </div>
 
-    <!-- Error display -->
+    <!-- 错误展示 -->
     <div v-if="plugin.error" class="px-4 pt-3">
       <div role="alert" class="alert alert-error alert-soft text-sm">
         <span>{{ plugin.error }}</span>
       </div>
     </div>
 
-    <!-- Tab bar -->
+    <!-- 标签栏 -->
     <div class="px-4 pt-3">
       <div class="join w-full">
         <button
@@ -581,7 +581,7 @@ async function toggleEnabled() {
       </div>
     </div>
 
-    <!-- Tab content -->
+    <!-- 标签页内容 -->
     <div class="flex-1 overflow-y-auto p-4">
       <PluginConfigTab
         v-show="activeTab === 'config'"
@@ -604,9 +604,9 @@ async function toggleEnabled() {
 </template>
 ```
 
-- [ ] **Step 2: Implement PluginInfoTab**
+- [ ] **步骤 2：实现 PluginInfoTab**
 
-Simple metadata display.
+简单的元数据展示。
 
 ```vue
 <script setup lang="ts">
@@ -643,7 +643,7 @@ defineProps<{ plugin: any }>();
 </template>
 ```
 
-- [ ] **Step 3: Commit**
+- [ ] **步骤 3：提交**
 
 ```bash
 git add app/components/admin/PluginDetail.vue app/components/admin/PluginInfoTab.vue
@@ -652,14 +652,14 @@ git commit -m "feat(plugin-admin): add PluginDetail container and PluginInfoTab"
 
 ---
 
-## Task 7: PluginConfigTab — Dynamic Config Form
+## 任务 7：PluginConfigTab — 动态配置表单
 
-**Files:**
-- Create: `app/components/admin/PluginConfigTab.vue`
+**文件：**
+- 新建：`app/components/admin/PluginConfigTab.vue`
 
-- [ ] **Step 1: Implement dynamic config form**
+- [ ] **步骤 1：实现动态配置表单**
 
-This is the most complex component. It dynamically renders a form from `configSchema`, evaluates conditions in real-time, and handles save with per-field error display.
+这是最复杂的 component。它根据 `configSchema` 动态渲染表单，实时求值条件，并处理保存和逐字段错误展示。
 
 ```vue
 <script setup lang="ts">
@@ -671,15 +671,15 @@ const props = defineProps<{
 
 const emit = defineEmits<{ saved: [] }>();
 
-// Form state — initialized from config prop
+// 表单状态 — 从 config prop 初始化
 const formData = ref<Record<string, unknown>>({});
 const snapshot = ref<Record<string, unknown>>({});
 const saving = ref(false);
 const errors = ref<Record<string, string>>({});
 
-// Initialize form data from config, applying defaults for missing fields
+// 从 config 初始化表单数据，对缺失字段应用默认值
 function resolveDefault(field: any, currentData: Record<string, unknown>): unknown {
-  // default_when takes priority over static default
+  // default_when 优先于静态 default
   if (field.default_when) {
     for (const cond of field.default_when) {
       if (evaluateCondition(cond.when, currentData)) return cond.value;
@@ -690,7 +690,7 @@ function resolveDefault(field: any, currentData: Record<string, unknown>): unkno
 
 function initForm() {
   const data: Record<string, unknown> = {};
-  // First pass: populate with config values or static defaults
+  // 第一遍：使用配置值或静态默认值填充
   for (const field of props.configSchema) {
     data[field.key] = props.config[field.key] ?? resolveDefault(field, data);
   }
@@ -701,7 +701,7 @@ function initForm() {
 
 watch(() => props.pluginId, initForm, { immediate: true });
 
-// Group fields by group property
+// 按 group 属性分组字段
 const groupedFields = computed(() => {
   const groups = new Map<string, any[]>();
   for (const field of props.configSchema) {
@@ -712,7 +712,7 @@ const groupedFields = computed(() => {
   return [...groups.entries()];
 });
 
-// Condition evaluation helpers
+// 条件求值辅助函数
 function isVisible(field: any): boolean {
   if (!field.visible_when) return true;
   return evaluateCondition(field.visible_when, formData.value as Record<string, unknown>);
@@ -741,7 +741,7 @@ function getOptions(field: any): { label: string; value: unknown }[] {
   return field.options ?? [];
 }
 
-// Dirty checking
+// 脏检查
 const dirty = computed(() => {
   for (const field of props.configSchema) {
     if (formData.value[field.key] !== snapshot.value[field.key]) return true;
@@ -749,12 +749,12 @@ const dirty = computed(() => {
   return false;
 });
 
-// Save
+// 保存
 async function save() {
   saving.value = true;
   errors.value = {};
   try {
-    // Don't send password fields that are still "****" (unchanged)
+    // 跳过值仍为 "****" 的密码字段（未修改）
     const body: Record<string, unknown> = {};
     for (const field of props.configSchema) {
       const val = formData.value[field.key];
@@ -793,7 +793,7 @@ async function save() {
         <div class="grid grid-cols-2 gap-3">
           <template v-for="field in fields" :key="field.key">
             <div v-if="isVisible(field)" :class="field.type === 'textarea' ? 'col-span-2' : ''">
-              <!-- Boolean: checkbox -->
+              <!-- 布尔值：复选框 -->
               <label v-if="field.type === 'boolean'" class="flex cursor-pointer items-center gap-2 text-sm">
                 <input
                   v-model="formData[field.key]"
@@ -805,7 +805,7 @@ async function save() {
                 <Icon v-if="field.restart" name="hugeicons:refresh" class="text-warning text-xs" title="修改此项需要重启 Plugin Host" />
               </label>
 
-              <!-- Select -->
+              <!-- 下拉选择 -->
               <fieldset v-else-if="field.type === 'select'" class="fieldset">
                 <legend class="fieldset-legend text-xs">
                   {{ field.label }}
@@ -820,7 +820,7 @@ async function save() {
                 <p v-if="errors[field.key]" class="text-xs text-error mt-1">{{ errors[field.key] }}</p>
               </fieldset>
 
-              <!-- Textarea -->
+              <!-- 多行文本 -->
               <fieldset v-else-if="field.type === 'textarea'" class="fieldset">
                 <legend class="fieldset-legend text-xs">
                   {{ field.label }}
@@ -836,7 +836,7 @@ async function save() {
                 <p v-if="errors[field.key]" class="text-xs text-error mt-1">{{ errors[field.key] }}</p>
               </fieldset>
 
-              <!-- Text / Password / Number -->
+              <!-- 文本 / 密码 / 数字 -->
               <fieldset v-else class="fieldset">
                 <legend class="fieldset-legend text-xs">
                   {{ field.label }}
@@ -872,14 +872,14 @@ async function save() {
 </template>
 ```
 
-Key implementation details:
-- `evaluateCondition` is auto-imported from `app/utils/plugin-condition.ts` (Task 1)
-- Password fields with value `"****"` are skipped in save body (only changed passwords are sent)
-- Server validation errors (`err.data.data`) are mapped to per-field `errors` object and rendered inline below each field
-- `v-model` with number type inputs works because Vue auto-coerces via `.number` modifier on the underlying input
-- Fields without a `group` are rendered in a default unnamed group
+关键实现细节：
+- `evaluateCondition` 从 `app/utils/plugin-condition.ts`（任务 1）自动导入
+- 值为 `"****"` 的密码字段在保存时跳过（仅发送已修改的密码）
+- 服务端验证错误（`err.data.data`）映射到逐字段的 `errors` 对象，并在每个字段下方内联渲染
+- 数字类型输入上的 v-model 正常工作，因为 Vue 通过底层 input 的 `.number` 修饰符自动转换类型
+- 没有 `group` 的字段渲染在默认的未命名分组中
 
-- [ ] **Step 2: Commit**
+- [ ] **步骤 2：提交**
 
 ```bash
 git add app/components/admin/PluginConfigTab.vue
@@ -888,29 +888,29 @@ git commit -m "feat(plugin-admin): add PluginConfigTab with dynamic form renderi
 
 ---
 
-## Task 8: PluginLogTab — Real-time Log Viewer
+## 任务 8：PluginLogTab — 实时日志查看器
 
-**Files:**
-- Create: `app/components/admin/PluginLogTab.vue`
+**文件：**
+- 新建：`app/components/admin/PluginLogTab.vue`
 
-- [ ] **Step 1: Implement log viewer with SSE + history**
+- [ ] **步骤 1：实现带 SSE + 历史记录的日志查看器**
 
-Key behaviors:
-- On mount (when `active` becomes true): connect SSE + load initial history
-- SSE via `new EventSource('/api/admin/plugins/:id/logs/stream?level=&type=')`
-- New log entries appended to bottom of list
-- Auto-scroll to bottom when user is at bottom
-- Scroll to top triggers history loading (`GET .../logs/history?before=cursor&limit=50`)
-- Level and type filter dropdowns — changing reconnects SSE and reloads history
-- Clear logs button + download button
-- On unmount or `active` becomes false: close EventSource
+关键行为：
+- 挂载时（当 `active` 变为 true 时）：连接 SSE + 加载初始历史记录
+- 通过 `new EventSource('/api/admin/plugins/:id/logs/stream?level=&type=')` 建立 SSE
+- 新日志条目追加到列表底部
+- 用户在底部时自动滚动到最新
+- 滚动到顶部触发历史加载（`GET .../logs/history?before=cursor&limit=50`）
+- 级别和类型过滤下拉框 — 更改时重新连接 SSE 并重新加载历史
+- 清空日志按钮 + 下载按钮
+- 卸载时或 `active` 变为 false 时：关闭 EventSource
 
-Log entry rendering:
-- Timestamp in `HH:mm:ss.SSS` format (full ISO on hover via `title`)
-- Level badge (info=`badge-info`, warn=`badge-warning`, error=`badge-error`, debug=`badge-neutral`)
-- Type tag (event/console) in small text
-- Message text
-- Data as expandable `<pre>` block (if present)
+日志条目渲染：
+- 时间戳使用 `HH:mm:ss.SSS` 格式（悬停时通过 `title` 显示完整 ISO 格式）
+- 级别徽标（info=`badge-info`, warn=`badge-warning`, error=`badge-error`, debug=`badge-neutral`）
+- 类型标签（event/console）小号文字
+- 消息文本
+- 数据作为可展开的 `<pre>` 块（如有）
 
 ```vue
 <script setup lang="ts">
@@ -1035,7 +1035,7 @@ const levelBadge = (level: string) => {
 
 <template>
   <div class="flex flex-col h-full">
-    <!-- Toolbar -->
+    <!-- 工具栏 -->
     <div class="flex items-center gap-2 mb-3">
       <select v-model="levelFilter" class="select select-bordered select-xs">
         <option value="">全部级别</option>
@@ -1060,7 +1060,7 @@ const levelBadge = (level: string) => {
       </button>
     </div>
 
-    <!-- Log container -->
+    <!-- 日志容器 -->
     <div
       ref="logContainerRef"
       class="flex-1 overflow-y-auto border border-base-300 bg-base-100 font-mono text-xs"
@@ -1084,7 +1084,7 @@ const levelBadge = (level: string) => {
 </template>
 ```
 
-- [ ] **Step 2: Commit**
+- [ ] **步骤 2：提交**
 
 ```bash
 git add app/components/admin/PluginLogTab.vue
@@ -1093,22 +1093,22 @@ git commit -m "feat(plugin-admin): add PluginLogTab with SSE streaming and histo
 
 ---
 
-## Task 9: PluginSystemSettingsModal
+## 任务 9：PluginSystemSettingsModal
 
-**Files:**
-- Create: `app/components/admin/PluginSystemSettingsModal.vue`
+**文件：**
+- 新建：`app/components/admin/PluginSystemSettingsModal.vue`
 
-- [ ] **Step 1: Implement system settings modal**
+- [ ] **步骤 1：实现系统设置弹窗**
 
-Standard DaisyUI dialog modal. Fetches `GET /api/admin/plugins/settings`, allows editing watcher/logBufferSize/logRetentionDays, saves via `PUT`.
+标准 DaisyUI dialog 弹窗。通过 `GET /api/admin/plugins/settings` 获取数据，允许编辑 watcher/logBufferSize/logRetentionDays，通过 `PUT` 保存。
 
-Follows the existing modal pattern:
+遵循现有弹窗模式：
 - `useTemplateRef<HTMLDialogElement>("dialogRef")`
 - `defineExpose({ open })`
 - `<Teleport to="body">`
-- Close button with `hugeicons:cancel-01` icon
-- Form with `fieldset`/`fieldset-legend` pattern
-- Save button right-aligned
+- 使用 `hugeicons:cancel-01` 图标的关闭按钮
+- 使用 `fieldset`/`fieldset-legend` 模式的表单
+- 保存按钮右对齐
 
 ```vue
 <script setup lang="ts">
@@ -1212,11 +1212,11 @@ defineExpose({ open });
 </template>
 ```
 
-- [ ] **Step 2: Verify wiring**
+- [ ] **步骤 2：验证连接**
 
-The settings button and `<ClientOnly><PluginSystemSettingsModal ref="settingsRef" /></ClientOnly>` are already in the page template from Task 3. Verify they reference this component correctly.
+设置按钮和 `<ClientOnly><PluginSystemSettingsModal ref="settingsRef" /></ClientOnly>` 已在任务 3 的页面模板中。验证它们正确引用了此 component。
 
-- [ ] **Step 3: Commit**
+- [ ] **步骤 3：提交**
 
 ```bash
 git add app/components/admin/PluginSystemSettingsModal.vue app/pages/admin/plugins.vue
@@ -1225,25 +1225,25 @@ git commit -m "feat(plugin-admin): add PluginSystemSettingsModal and wire into p
 
 ---
 
-## Task 10: Integration + Polish
+## 任务 10：集成 + 完善
 
-**Files:**
-- Modify: `app/pages/admin/plugins.vue` (finalize)
+**文件：**
+- 修改：`app/pages/admin/plugins.vue`（最终确认）
 
-- [ ] **Step 1: Verify all components integrate**
+- [ ] **步骤 1：验证所有 component 正确集成**
 
-Ensure the page renders correctly with:
-- Left panel: HostStatus + sortable PluginList + settings button
-- Right panel: PluginDetail with all three tabs working
-- Auth guard redirects non-admin users
+确保页面正确渲染：
+- 左面板：HostStatus + 可排序 PluginList + 设置按钮
+- 右面板：PluginDetail 三个标签页均正常工作
+- 权限守卫正确重定向非管理员用户
 
-- [ ] **Step 2: Add a navigation link**
+- [ ] **步骤 2：添加导航链接**
 
-Add a link to `/admin/plugins` somewhere accessible to admins. Options:
-- Add a button in `AdminPanelModal.vue` that links to the plugins page (e.g., "插件管理 →")
-- Or add a link in `ShortcutCard.vue` next to the admin panel button
+在管理员可访问的位置添加到 `/admin/plugins` 的链接。可选方案：
+- 在 `AdminPanelModal.vue` 中添加指向插件页面的按钮（例如 "插件管理 ->"）
+- 或在 `ShortcutCard.vue` 中管理面板按钮旁添加链接
 
-Add a NuxtLink in `AdminPanelModal.vue` as a third tab or a prominent link:
+在 `AdminPanelModal.vue` 中添加 NuxtLink 作为第三个标签页或醒目链接：
 
 ```html
 <NuxtLink to="/admin/plugins" class="btn btn-sm btn-ghost gap-1" @click="dialogRef?.close()">
@@ -1253,7 +1253,7 @@ Add a NuxtLink in `AdminPanelModal.vue` as a third tab or a prominent link:
 </NuxtLink>
 ```
 
-- [ ] **Step 3: Final commit**
+- [ ] **步骤 3：最终提交**
 
 ```bash
 git add -A
@@ -1262,19 +1262,19 @@ git commit -m "feat(plugin-admin): finalize plugin admin page with navigation"
 
 ---
 
-## Summary
+## 总结
 
-| Task | Component | Description |
-|------|-----------|-------------|
-| 1 | Setup | SortableJS dependency + frontend condition evaluator |
-| 2 | SortableList | Generic SortableJS wrapper component |
-| 3 | Page Entry | `/admin/plugins` page with auth guard and layout |
-| 4 | HostStatus | Plugin Host status badge + restart |
-| 5 | PluginList | Sortable plugin list with status badges |
-| 6 | Detail + Info | Right panel container with tabs + info tab |
-| 7 | ConfigTab | Dynamic config form with conditions |
-| 8 | LogTab | SSE real-time logs + history scroll-back |
-| 9 | Settings Modal | System settings modal |
-| 10 | Integration | Wire everything together + navigation link |
+| 任务 | component | 描述 |
+|------|-----------|------|
+| 1 | 初始设置 | SortableJS 依赖 + 前端条件求值器 |
+| 2 | SortableList | 通用 SortableJS 封装 component |
+| 3 | 页面入口 | `/admin/plugins` 页面，带权限守卫和布局 |
+| 4 | HostStatus | Plugin Host 状态徽标 + 重启 |
+| 5 | PluginList | 可排序的插件列表，带状态徽标 |
+| 6 | Detail + Info | 右面板容器，带标签页 + 信息标签页 |
+| 7 | ConfigTab | 带条件求值的动态配置表单 |
+| 8 | LogTab | SSE 实时日志 + 历史回滚 |
+| 9 | 设置弹窗 | 系统设置弹窗 |
+| 10 | 集成 | 整合所有部分 + 导航链接 |
 
-**Total: 10 tasks**, each independently committable.
+**共计：10 个任务**，每个可独立提交。
