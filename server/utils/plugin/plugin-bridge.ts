@@ -1,4 +1,4 @@
-import { resolve } from "node:path";
+import { join } from "node:path";
 import type { MainToWorkerMessage, WorkerToMainMessage } from "./types";
 
 interface PendingCall {
@@ -32,11 +32,13 @@ export class PluginBridge {
   }
 
   start(): void {
-    const workerPath = resolve(process.cwd(), "server/worker/plugin-host.ts");
+    // import.meta.url points to .nuxt/dev/index.mjs in Nitro dev, making relative
+    // URLs unreliable. Use process.cwd() which always points to the project root.
+    const workerPath = join(process.cwd(), "server", "worker", "plugin-host.ts");
     this.worker = new Worker(workerPath, {
       smol: true,
     });
-    this.worker.unref();
+    (this.worker as any).unref();
     this.worker.onmessage = (e: MessageEvent<WorkerToMainMessage>) =>
       this.handleMessage(e.data);
     this.worker.onerror = (e: ErrorEvent) =>

@@ -450,11 +450,32 @@ export class PluginManager {
     this.logManager.push(entry);
   }
 
-  private handleCrash(_error: string): void {
+  private crashCount = 0;
+  private lastCrashTime = 0;
+
+  private handleCrash(error: string): void {
+    const now = Date.now();
+    // eslint-disable-next-line no-console
+    console.error(`[plugin-manager] Host crashed: ${error}`);
+
     this.hostStatus = "crashed";
     this.hookRegistry.clear();
 
-    // Auto-restart
+    // Prevent infinite restart loop: max 3 restarts within 30 seconds
+    if (now - this.lastCrashTime < 30_000) {
+      this.crashCount++;
+    } else {
+      this.crashCount = 1;
+    }
+    this.lastCrashTime = now;
+
+    if (this.crashCount > 3) {
+      // eslint-disable-next-line no-console
+      console.error("[plugin-manager] Too many crashes, giving up auto-restart");
+      return;
+    }
+
+    // Auto-restart after delay
     setTimeout(async () => {
       try {
         this.bridge.start();
@@ -474,8 +495,9 @@ export class PluginManager {
         }
 
         this.dirtyReasons = [];
-      } catch {
-        // Recovery failed, stay in crashed state
+      } catch (restartErr) {
+        // eslint-disable-next-line no-console
+        console.error(`[plugin-manager] Recovery failed: ${restartErr}`);
       }
     }, 1000);
   }
