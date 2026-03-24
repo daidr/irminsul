@@ -30,37 +30,63 @@ PluginManager (server/utils/plugin-manager.ts)
   └── PluginWorker      — Worker 端运行时（构造 ctx、执行 setup）
 ```
 
-### Worker 架构
+### Plugin Host 架构（VS Code Extension Host 模式）
 
-每个启用的插件运行在独立的 Bun Worker 线程中，通过 `postMessage` 与主线程通信：
+所有启用的插件共享一个 Bun Worker 线程（Plugin Host），通过 `postMessage` 与主线程通信：
 
 ```
-Main Thread                          Worker Thread (per plugin)
-┌──────────────┐                    ┌──────────────────────┐
-│ PluginManager│                    │ PluginWorker Runtime │
-│              │  postMessage       │                      │
-│  HookRegistry├───────────────────►│  index.js (plugin)   │
-│              │◄───────────────────┤  ctx proxy           │
-│  PluginBridge│  postMessage       │  console interception│
-└──────────────┘                    └──────────────────────┘
+Main Thread                          Plugin Host Worker (单一)
+┌──────────────┐                    ┌─────────────────────────┐
+│ PluginManager│  postMessage       │  plugin-a (setup+hooks) │
+│ PluginBridge ├───────────────────►│  plugin-b (setup+hooks) │
+│ HookRegistry │◄───────────────────┤  plugin-c (setup+hooks) │
+└──────────────┘                    │  共享全局, 独立模块作用域 │
+                                    └─────────────────────────┘
 ```
 
 **优势：**
-- **真正隔离** — 插件无法访问主线程的全局对象、数据库连接、请求上下文
-- **干净卸载** — `worker.terminate()` 完全释放资源，无模块缓存问题
-- **稳定性** — 插件崩溃不影响主进程
+- **低内存** — 只有 1 个 Worker，而非 N 个
+- **简单管理** — 单通道 IPC，无需管理多个 Worker
+- **隔离主线程** — 插件无法访问主线程的数据库连接、请求上下文等
+- **干净卸载** — `worker.terminate()` 重启 Host，完全释放模块缓存
 - **console 天然隔离** — Worker 内的 console 输出自然与主线程分离
+
+**Trade-off：**
+- 一个插件崩溃会导致整个 Host 重启（所有插件短暂不可用）
+- 插件之间共享 `globalThis`（模块作用域独立，全局变量可相互影响）
 
 ### Plugin State Machine
 
 ```
 [未发现] → 文件监听/手动扫描 → [已发现/已禁用]
-[已发现/已禁用] → 管理面板启用 → [加载中] → setup() 成功 → 调用 app:started → [已启用]
-                                            → setup() 失败 → [错误] (保持禁用，记录错误)
-[已启用] → 管理面板禁用 → 调用 app:shutdown → [卸载中] → worker.terminate() → [已禁用]
-[已启用] → 文件变更检测 → 调用 app:shutdown → [卸载中] → worker.terminate() → [加载中] → [已启用] (热重载)
-[任意状态] → 插件目录被删除 → 调用 app:shutdown → [卸载中] → worker.terminate() → 从 registry 移除
+[已发现/已禁用] → 管理面板启用 → 向 Host 发送 load 指令 → setup() 成功 → app:started → [已启用]
+                                                         → setup() 失败 → [错误] (保持禁用)
+[已启用] → 管理面板禁用 → 标脏（pending restart）
+[已启用] → 文件变更检测 → 标脏（pending restart）
+[任意状态] → 插件目录被删除 → 标脏 + 从 registry 移除
+[标脏] → 管理员手动重启 Host → terminate Worker → 新 Worker → 加载所有 enabled 插件
+[Host 崩溃] → 自动重启 Host → 加载所有 enabled 插件
 ```
+
+### Dirty（标脏）机制
+
+当发生以下变更时，Plugin Host 被标记为 dirty，管理面板显示提示：
+
+- 禁用已启用的插件
+- 已启用插件的文件发生变更
+- 已启用插件的 `restart: true` 配置项被修改
+- 已启用插件的目录被删除
+
+管理面板显示：
+
+```
+⚠ Plugin Host 需要重启以应用变更：
+  - my-axiom-drain（已禁用）
+  - geo-enricher（文件已变更）
+  [重启 Plugin Host]
+```
+
+管理员点击重启后，Host Worker 被 terminate 并重新创建，按 order 加载所有当前 enabled 的插件。dirty 状态清除。
 
 ## Plugin Metadata — plugin.yaml
 
@@ -126,6 +152,7 @@ config:
 | `options` | `Option[]` | 可选，静态选项列表（select 类型） |
 | `options_when` | `ConditionalOptions[]` | 可选，条件选项覆盖 |
 | `validation` | `Validation` | 可选，校验规则 |
+| `restart` | `boolean` | 可选，此配置项变更时是否需要重启 Host（默认 `false`） |
 
 ### Condition System
 
@@ -359,10 +386,13 @@ interface PluginContext {
     dir: string;         // 插件目录绝对路径
   };
 
-  // 已存储的用户配置（只读）
-  config: Record<string, any>;
+  // 配置读取（始终返回最新值）
+  config: {
+    get(key: string): any;              // 读取单个配置项
+    getAll(): Record<string, any>;      // 读取所有配置
+  };
 
-  // 注册 hook（仅限 plugin.yaml 中声明的 hook）
+  // 注册 hook（仅限 plugin.yaml 中声明的 hook + 生命周期 hook）
   hook(name: string, handler: Function): void;
 
   // 结构化日志（evlog 风格）
@@ -377,6 +407,11 @@ interface PluginContext {
 
   // HTTP 请求（Worker 内原生 fetch，无需代理）
   fetch(url: string, options?: RequestInit): Promise<Response>;
+}
+
+interface ConfigChanges {
+  changes: Record<string, { old: any; new: any }>;  // 变更的 key → 新旧值
+  config: Record<string, any>;                       // 完整的最新配置
 }
 ```
 
@@ -435,8 +470,9 @@ export function setup(ctx) {
 |------|------|------|------|
 | `evlog:enricher` | `(events: WideEvent[])` | `Patch[]` | 接收一批事件，返回每个事件要追加的字段（增量 patch） |
 | `evlog:drain` | `(events: WideEvent[])` | `Promise<void>` | 消费一批 wide event |
-| `app:started` | `()` | `void` | 服务启动完成 |
-| `app:shutdown` | `()` | `Promise<void>` | 服务关闭前 |
+| `app:started` | `()` | `void` | 服务启动完成 / 插件被启用 |
+| `app:shutdown` | `()` | `Promise<void>` | 服务关闭前 / Host 重启前 |
+| `config:changed` | `(changes: ConfigChanges)` | `void` | 非 restart 配置项变更时调用 |
 
 > **enricher 数据流说明：** 由于插件运行在 Worker 中，事件通过 structured clone 传递。为减少序列化开销，enricher 不返回完整事件，而是返回一个 `Patch[]` 数组（与输入事件等长），每项是要浅合并到对应事件上的字段对象。主线程收到 patch 后执行 `Object.assign(events[i], patches[i])` 原地合并，再传给下一个 enricher 或 drain。这样返回数据只包含新增字段，而非完整事件副本。
 
@@ -444,7 +480,7 @@ export function setup(ctx) {
 
 ### Lifecycle Hooks
 
-`app:started` 和 `app:shutdown` 是生命周期 hook，**隐式对所有插件可用**，无需在 `plugin.yaml` 的 `hooks` 数组中声明。只有功能性 hook（如 `evlog:enricher`、`evlog:drain`）需要显式声明。
+`app:started`、`app:shutdown` 和 `config:changed` 是生命周期 hook，**隐式对所有插件可用**，无需在 `plugin.yaml` 的 `hooks` 数组中声明。只有功能性 hook（如 `evlog:enricher`、`evlog:drain`）需要显式声明。
 
 ### Execution Order
 
@@ -452,7 +488,7 @@ export function setup(ctx) {
 
 ### Hook Registration Validation
 
-`ctx.hook()` 调用时校验 hook 名称：生命周期 hook（`app:started`、`app:shutdown`）始终允许；功能性 hook 必须在 `plugin.yaml` 的 `hooks` 数组中声明，未声明的注册会被拒绝并记录错误日志。
+`ctx.hook()` 调用时校验 hook 名称：生命周期 hook（`app:started`、`app:shutdown`、`config:changed`）始终允许；功能性 hook 必须在 `plugin.yaml` 的 `hooks` 数组中声明，未声明的注册会被拒绝并记录错误日志。
 
 ### Bridge to Nitro Hooks
 
@@ -488,12 +524,19 @@ nitroApp.hooks.hook('evlog:drain', async (events) => {
 **主线程 → Worker：**
 
 ```typescript
-// 初始化（Worker 创建后首条消息）
-{ type: 'init', pluginId: string, pluginDir: string, entryPath: string,
+// 初始化 Host Worker（Worker 创建后首条消息）
+{ type: 'init' }
+
+// 加载插件（启用时动态加载到 Host）
+{ type: 'plugin:load', pluginId: string, pluginDir: string, entryPath: string,
   config: Record<string, any>, meta: PluginMeta, allowedHooks: string[] }
 
 // 调用 hook
 { type: 'hook:call', hookName: string, args: any[], callId: string }
+
+// 配置热更新（非 restart 配置项变更）
+{ type: 'config:update', pluginId: string, config: Record<string, any>,
+  changes: Record<string, { old: any, new: any }> }
 
 // 通知关闭
 { type: 'shutdown' }
@@ -502,19 +545,19 @@ nitroApp.hooks.hook('evlog:drain', async (events) => {
 **Worker → 主线程：**
 
 ```typescript
+// 插件加载完成
+{ type: 'plugin:loaded', pluginId: string, ok: true }
+{ type: 'plugin:loaded', pluginId: string, ok: false, error: string }
+
 // hook 调用完成
 { type: 'hook:result', callId: string, ok: true, result?: any }
 { type: 'hook:result', callId: string, ok: false, error: string }
 
 // hook 注册（setup 阶段）
-{ type: 'hook:register', hookName: string }
+{ type: 'hook:register', pluginId: string, hookName: string }
 
 // 日志
-{ type: 'log', level: string, logType: 'event' | 'console', message?: string, data?: any }
-
-// setup 完成
-{ type: 'setup:done', ok: true }
-{ type: 'setup:done', ok: false, error: string }
+{ type: 'log', pluginId: string, level: string, logType: 'event' | 'console', message?: string, data?: any }
 ```
 
 Bun 的 `postMessage` 对简单对象有优化的快速路径（绕过 structured clone），性能开销极小。
@@ -535,7 +578,7 @@ Bun 的 `postMessage` 对简单对象有优化的快速路径（绕过 structure
 
 ### Strategy
 
-每个插件运行在独立的 Bun Worker 线程中（`new Worker()`），提供**进程级隔离**。插件代码天然无法访问主线程的内存空间，所有通信必须通过 `postMessage` 序列化消息。
+所有启用的插件运行在同一个 Bun Worker 线程（Plugin Host）中，提供**主线程隔离**。插件代码天然无法访问主线程的内存空间，所有通信必须通过 `postMessage` 序列化消息。插件之间共享 Worker 全局作用域，但各自拥有独立的 ESM 模块作用域。
 
 ### Isolation Guarantees
 
@@ -543,9 +586,9 @@ Bun 的 `postMessage` 对简单对象有优化的快速路径（绕过 structure
 |------|------|------|
 | `ctx.hook()` | 允许 | 通过 IPC 注册到主线程 HookRegistry |
 | `ctx.log` | 允许 | 通过 IPC 发送到主线程日志管道 |
-| `ctx.config` | 允许 | Worker 启动时由主线程注入（只读副本） |
+| `ctx.config` | 允许 | 加载时由主线程注入，热更新通过 IPC 推送 |
 | `ctx.fetch()` | 允许 | Worker 内原生 `fetch`，无需代理 |
-| `ctx.meta` | 允许 | Worker 启动时由主线程注入（只读副本） |
+| `ctx.meta` | 允许 | 加载时由主线程注入（只读副本） |
 | `console.*` | 拦截 | Worker 内全局替换，通过 IPC 收集 |
 | `import` 第三方包 | 允许 | 插件目录下自带的 node_modules |
 | 主线程内存 | 不可访问 | Worker 天然隔离 |
@@ -554,52 +597,65 @@ Bun 的 `postMessage` 对简单对象有优化的快速路径（绕过 structure
 
 **注意：** Worker 内仍可使用 Node 内置模块（如 `node:fs`）和 `Bun` 全局对象，这是 Bun Worker 的特性。但插件无法通过这些模块访问主线程的状态（数据库、请求上下文等），隔离边界在于**数据**而非**能力**。
 
-### Worker Lifecycle
+### Plugin Host Lifecycle
 
-每个插件对应一个 Worker 实例：
+主线程创建单一 Plugin Host Worker：
 
 ```typescript
-// 主线程创建 Worker
-const worker = new Worker('./server/utils/plugin-worker.ts', {
+// 主线程创建 Plugin Host
+const host = new Worker('./server/utils/plugin-host.ts', {
   smol: true,  // 减少内存占用
 });
 
-// 通过 postMessage 传入初始化数据
-worker.postMessage({
-  type: 'init',
-  pluginId: 'my-axiom-drain',
-  pluginDir: '/path/to/irminsul-data/plugins/my-axiom-drain',
-  entryPath: '/path/to/irminsul-data/plugins/my-axiom-drain/index.js',
-  config: { apiKey: '...', dataset: '...' },
-  meta: { id: 'my-axiom-drain', name: 'My Axiom Drain', version: '1.0.0' },
-  allowedHooks: ['evlog:drain'],  // plugin.yaml 声明的 hooks
-});
+// 初始化 Host
+host.postMessage({ type: 'init' });
+
+// 逐个加载启用的插件
+for (const plugin of enabledPlugins) {
+  host.postMessage({
+    type: 'plugin:load',
+    pluginId: plugin.id,
+    pluginDir: plugin.dir,
+    entryPath: plugin.entryPath,
+    config: plugin.config,
+    meta: plugin.meta,
+    allowedHooks: plugin.hooks,
+  });
+}
 ```
 
-Worker 端 (`plugin-worker.ts`) 是一个通用的运行时，负责：
+Worker 端 (`plugin-host.ts`) 是一个通用运行时，负责：
 
-1. 接收 `init` 消息，构造 `ctx` 对象
-2. 全局替换 `console.*` 为 IPC 日志收集
-3. 动态 `import()` 插件的 `index.js`，调用 `setup(ctx)`
-4. 监听 `hook:call` 消息，执行对应 handler 并返回结果
-5. 监听 `shutdown` 消息，执行 `app:shutdown` handler
+1. 接收 `init` 消息，全局替换 `console.*` 为 IPC 日志收集
+2. 接收 `plugin:load` 消息，为该插件构造 `ctx` 对象，`import()` 其 `index.js` 并调用 `setup(ctx)`
+3. 监听 `hook:call` 消息，根据 pluginId 和 hookName 执行对应 handler 并返回结果
+4. 监听 `config:update` 消息，更新对应插件的内部 config 存储，调用其 `config:changed` handler
+5. 监听 `shutdown` 消息，依次调用所有插件的 `app:shutdown` handler
 
 ### Console Interception
 
-Worker 启动时**全局替换** `console` 对象，所有 `console.log/warn/error/debug` 调用通过 IPC 发送到主线程：
+Plugin Host 启动时**全局替换** `console` 对象。由于所有插件共享同一 Worker，需要追踪当前正在执行的插件 ID，以便将 console 输出关联到正确的插件：
 
 ```typescript
-// plugin-worker.ts 中
-const originalConsole = globalThis.console;
+// plugin-host.ts 中
+let currentPluginId: string | null = null;
+
 globalThis.console = {
-  log:   (...args) => postMessage({ type: 'log', level: 'info',  logType: 'console', message: formatArgs(args) }),
-  warn:  (...args) => postMessage({ type: 'log', level: 'warn',  logType: 'console', message: formatArgs(args) }),
-  error: (...args) => postMessage({ type: 'log', level: 'error', logType: 'console', message: formatArgs(args) }),
-  debug: (...args) => postMessage({ type: 'log', level: 'debug', logType: 'console', message: formatArgs(args) }),
+  log:   (...args) => postMessage({ type: 'log', pluginId: currentPluginId, level: 'info',  logType: 'console', message: formatArgs(args) }),
+  warn:  (...args) => postMessage({ type: 'log', pluginId: currentPluginId, level: 'warn',  logType: 'console', message: formatArgs(args) }),
+  error: (...args) => postMessage({ type: 'log', pluginId: currentPluginId, level: 'error', logType: 'console', message: formatArgs(args) }),
+  debug: (...args) => postMessage({ type: 'log', pluginId: currentPluginId, level: 'debug', logType: 'console', message: formatArgs(args) }),
 };
+
+// hook handler 调用时设置 currentPluginId
+function callHandler(pluginId: string, handler: Function, ...args: any[]) {
+  currentPluginId = pluginId;
+  try { return handler(...args); }
+  finally { currentPluginId = null; }
+}
 ```
 
-由于是 Worker 全局替换，异步代码中的 `console` 调用也能被正确捕获，没有之前软沙箱的局限性。
+由于是 Worker 全局替换，异步代码中的 `console` 调用也能被捕获。但在异步回调中 `currentPluginId` 可能已恢复为 `null`，此时 console 日志会标记为 `pluginId: null`（归入 Host 级别日志）。文档中建议插件作者使用 `ctx.log` 以确保准确的插件归属。
 
 ## Plugin Logging
 
@@ -640,42 +696,60 @@ globalThis.console = {
    - 新插件 → 加入 registry，默认 `enabled: false`
    - 已有插件 → 保持原状态
    - 目录已删除的插件 → 从 registry 移除
-4. 按 `order` 排序，依次加载所有 `enabled` 的插件（每个插件创建一个 Bun Worker）
-5. 所有插件 `setup()` 完成后，调用各插件的 `app:started` hook
-6. 如果 `plugin.system.watcher` 为 `true` → 启动文件监听
+4. 创建 Plugin Host Worker（`smol: true`）
+5. 按 `order` 排序，逐个向 Host 发送 `plugin:load` 消息加载 enabled 的插件
+6. 所有插件 `setup()` 完成后，调用各插件的 `app:started` hook
+7. 如果 `plugin.system.watcher` 为 `true` → 启动文件监听
 
-### Hot-Reload Triggers
+### Enable Plugin（启用插件）
 
-**文件监听（可在管理面板关闭）：**
+1. 向当前 Plugin Host 发送 `plugin:load` 消息
+2. Host 内构造 `ctx`，`import()` 插件 `index.js`，调用 `setup(ctx)`
+3. 等待 Host 返回 `plugin:loaded` 消息
+4. 成功 → 将 Host 中注册的 hook handler 记录到主线程 HookRegistry → 调用 `app:started`
+5. 失败 → 记录错误日志，插件状态设为错误
+6. **无需重启 Host**，已启用的其他插件不受影响
+
+### Disable Plugin（禁用插件）
+
+1. 标记 Plugin Host 为 dirty
+2. 管理面板显示需要重启的原因（"xxx 已禁用"）
+3. 从主线程 HookRegistry 中移除该插件的 hook 记录（主线程不再向 Host 转发该插件的 hook 调用）
+4. 管理员手动重启 Host 时才真正卸载
+
+### Config Update（配置变更）
+
+1. 检查变更的 key 是否有 `restart: true` 标记
+2. **有 restart 标记的 key**：标脏，管理面板提示需要重启
+3. **无 restart 标记的 key**：向 Host 发送 `config:update` 消息 → Host 更新插件内部 config 存储 → 调用插件的 `config:changed` hook
+
+### Restart Host（重启 Plugin Host）
+
+1. 向 Host 发送 `shutdown` 消息，Host 依次调用所有插件的 `app:shutdown` handler（设超时）
+2. `worker.terminate()` — 完全释放 Worker 线程及其模块缓存
+3. 创建新的 Plugin Host Worker
+4. 按 `order` 排序，逐个加载所有当前 enabled 的插件
+5. 调用各插件的 `app:started` hook
+6. 清除 dirty 状态
+
+### File Watcher（文件监听）
+
+可在管理面板开关（`plugin.system.watcher`）：
 
 - 新增子目录 → 发现新插件，加入 registry（`enabled: false`）
-- 已启用插件的文件变更 → 卸载后重新加载（防抖 500ms）
-- 子目录删除 → 卸载并从 registry 移除
+- 已启用插件的文件变更 → 标脏（防抖 500ms）
+- 子目录删除 → 标脏 + 从 registry 移除
 - 忽略：node_modules、.git、临时文件
 
-**管理 API：**
+### Host Crash Recovery（崩溃恢复）
 
-- `POST /api/admin/plugins/:id/enable` → 加载插件
-- `POST /api/admin/plugins/:id/disable` → 卸载插件
-- `POST /api/admin/plugins/:id/reload` → 卸载后重新加载
-- `PUT /api/admin/plugins/:id/config` → 更新配置，已启用的插件自动重载
+监听 Host Worker 的 `error` / `close` 事件。崩溃时：
 
-### Load Procedure (启用插件)
-
-1. 创建 Bun Worker（`smol: true` 减少内存）
-2. 通过 `postMessage` 发送 `init` 消息（pluginId、config、meta、allowedHooks）
-3. Worker 构造 `ctx`，替换 `console`，`import()` 插件 `index.js`，调用 `setup(ctx)`
-4. 等待 Worker 返回 `setup:done` 消息
-5. 成功 → 将 Worker 中注册的 hook handler 记录到主线程 HookRegistry
-6. 成功 → 通过 IPC 调用插件的 `app:started` hook
-7. 失败 → 记录错误日志，`worker.terminate()`，插件状态设为错误
-
-### Unload Procedure (禁用/卸载插件)
-
-1. 通过 IPC 调用插件的 `app:shutdown` hook（设超时，防止插件不响应）
-2. 从主线程 HookRegistry 移除该插件的所有 hook 记录
-3. `worker.terminate()` — 完全释放 Worker 线程及其模块缓存
-4. 清除主线程对该 Worker 的引用
+1. 记录错误日志
+2. 清空 HookRegistry 中所有插件的 hook 记录
+3. 自动创建新的 Plugin Host Worker
+4. 重新加载所有 enabled 的插件
+5. 管理面板显示崩溃通知
 
 ## Admin API
 
@@ -685,11 +759,12 @@ globalThis.console = {
 |------|------|------|
 | `GET` | `/api/admin/plugins` | 列出所有已发现的插件 |
 | `GET` | `/api/admin/plugins/:id` | 获取单个插件详情 |
-| `POST` | `/api/admin/plugins/:id/enable` | 启用插件 |
-| `POST` | `/api/admin/plugins/:id/disable` | 禁用插件 |
-| `POST` | `/api/admin/plugins/:id/reload` | 热重载插件 |
-| `PUT` | `/api/admin/plugins/:id/config` | 更新插件配置 |
+| `POST` | `/api/admin/plugins/:id/enable` | 启用插件（动态加载到 Host） |
+| `POST` | `/api/admin/plugins/:id/disable` | 禁用插件（标脏） |
+| `PUT` | `/api/admin/plugins/:id/config` | 更新插件配置（restart key 标脏，其他走热更新） |
 | `PUT` | `/api/admin/plugins/order` | 更新排序，请求体：`{ "order": ["pluginId-a", "pluginId-b", ...] }`（数组顺序即排序） |
+| `POST` | `/api/admin/plugins/host/restart` | 手动重启 Plugin Host |
+| `GET` | `/api/admin/plugins/host/status` | 获取 Host 状态（running/dirty/crashed），dirty 时返回原因列表 |
 
 ### Plugin Logs
 
@@ -769,11 +844,12 @@ globalThis.console = {
 
 ## Error Handling
 
-- 每个 hook 调用通过 IPC 发送到 Worker，设置超时（默认 30 秒），超时视为失败
+- 每个 hook 调用通过 IPC 发送到 Plugin Host，设置超时（默认 30 秒），超时视为失败
 - hook 调用失败（异常或超时）记录到插件日志，不影响其他插件执行，也不影响内置 fsDrain
 - 插件保持启用状态，下次 hook 触发时继续调用
 - 多个插件注册同一 hook 时，按 order 依次调用，互不干扰
-- **Worker 崩溃**（`error` 事件或意外退出）：记录错误日志，主线程从 HookRegistry 移除该插件的 hook 记录，插件状态设为错误，管理面板可见。管理员可手动重新启用（会创建新 Worker）
+- **Plugin Host 崩溃**（`error` / `close` 事件）：记录错误日志，清空 HookRegistry，自动创建新 Host 并重新加载所有 enabled 插件，管理面板显示崩溃通知
+- **单个插件 setup 失败**：不影响 Host 和其他插件，该插件状态设为错误
 
 ## Config Validation
 
