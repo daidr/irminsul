@@ -23,21 +23,43 @@ irminsul-data/plugins/
 
 ```
 PluginManager (server/utils/plugin-manager.ts)
-  ├── PluginLoader      — 加载/卸载插件（动态 import、沙箱创建）
+  ├── PluginLoader      — 加载/卸载插件（Bun Worker 生命周期管理）
   ├── PluginWatcher     — 监听 irminsul-data/plugins/ 目录变化
   ├── HookRegistry      — hook → handler[] 映射，支持排序
-  └── PluginSandbox     — 构造受限 ctx 对象
+  ├── PluginBridge      — 主线程 ↔ Worker 消息协议
+  └── PluginWorker      — Worker 端运行时（构造 ctx、执行 setup）
 ```
+
+### Worker 架构
+
+每个启用的插件运行在独立的 Bun Worker 线程中，通过 `postMessage` 与主线程通信：
+
+```
+Main Thread                          Worker Thread (per plugin)
+┌──────────────┐                    ┌──────────────────────┐
+│ PluginManager│                    │ PluginWorker Runtime │
+│              │  postMessage       │                      │
+│  HookRegistry├───────────────────►│  index.js (plugin)   │
+│              │◄───────────────────┤  ctx proxy           │
+│  PluginBridge│  postMessage       │  console interception│
+└──────────────┘                    └──────────────────────┘
+```
+
+**优势：**
+- **真正隔离** — 插件无法访问主线程的全局对象、数据库连接、请求上下文
+- **干净卸载** — `worker.terminate()` 完全释放资源，无模块缓存问题
+- **稳定性** — 插件崩溃不影响主进程
+- **console 天然隔离** — Worker 内的 console 输出自然与主线程分离
 
 ### Plugin State Machine
 
 ```
 [未发现] → 文件监听/手动扫描 → [已发现/已禁用]
-[已发现/已禁用] → 管理面板启用 → [加载中] → setup() 成功 → [已启用]
+[已发现/已禁用] → 管理面板启用 → [加载中] → setup() 成功 → 调用 app:started → [已启用]
                                             → setup() 失败 → [错误] (保持禁用，记录错误)
-[已启用] → 管理面板禁用 → [卸载中] → 清除所有 hook handler → [已禁用]
-[已启用] → 文件变更检测 → [卸载中] → [加载中] → [已启用] (热重载)
-[任意状态] → 插件目录被删除 → [卸载中] → 从 registry 移除
+[已启用] → 管理面板禁用 → 调用 app:shutdown → [卸载中] → worker.terminate() → [已禁用]
+[已启用] → 文件变更检测 → 调用 app:shutdown → [卸载中] → worker.terminate() → [加载中] → [已启用] (热重载)
+[任意状态] → 插件目录被删除 → 调用 app:shutdown → [卸载中] → worker.terminate() → 从 registry 移除
 ```
 
 ## Plugin Metadata — plugin.yaml
@@ -353,7 +375,7 @@ interface PluginContext {
     debug(message: string, data?: Record<string, any>): void;
   };
 
-  // HTTP 请求（受限 fetch 封装）
+  // HTTP 请求（Worker 内原生 fetch，无需代理）
   fetch(url: string, options?: RequestInit): Promise<Response>;
 }
 ```
@@ -416,22 +438,59 @@ export function setup(ctx) {
 
 ### Bridge to Nitro Hooks
 
-PluginManager 在 Nitro hook 中调用插件 handler：
+PluginManager 在 Nitro hook 中通过 IPC 调用 Worker 中的插件 handler：
 
 ```typescript
 nitroApp.hooks.hook('evlog:drain', async (events) => {
-  // 先执行 enricher 插件（按 order）
-  for (const handler of hookRegistry.get('evlog:enricher')) {
-    for (const event of events) {
-      try { handler(event); } catch (e) { /* 记录到插件日志 */ }
-    }
+  // 先执行 enricher 插件（按 order，串行）
+  for (const plugin of hookRegistry.get('evlog:enricher')) {
+    try {
+      // 向 Worker 发送 hook 调用消息，等待返回
+      await pluginBridge.callHook(plugin.id, 'evlog:enricher', events);
+    } catch (e) { /* 记录到插件日志 */ }
   }
-  // 再执行 drain 插件（按 order）
-  for (const handler of hookRegistry.get('evlog:drain')) {
-    try { await handler(events); } catch (e) { /* 记录到插件日志 */ }
+  // 再执行 drain 插件（按 order，串行）
+  for (const plugin of hookRegistry.get('evlog:drain')) {
+    try {
+      await pluginBridge.callHook(plugin.id, 'evlog:drain', events);
+    } catch (e) { /* 记录到插件日志 */ }
   }
 });
 ```
+
+### IPC Message Protocol
+
+主线程与 Worker 之间使用结构化消息通信：
+
+**主线程 → Worker：**
+
+```typescript
+// 调用 hook
+{ type: 'hook:call', hookName: string, args: any[], callId: string }
+
+// 通知关闭
+{ type: 'shutdown' }
+```
+
+**Worker → 主线程：**
+
+```typescript
+// hook 调用完成
+{ type: 'hook:result', callId: string, ok: true, result?: any }
+{ type: 'hook:result', callId: string, ok: false, error: string }
+
+// hook 注册（setup 阶段）
+{ type: 'hook:register', hookName: string }
+
+// 日志
+{ type: 'log', level: string, logType: 'event' | 'console', message?: string, data?: any }
+
+// setup 完成
+{ type: 'setup:done', ok: true }
+{ type: 'setup:done', ok: false, error: string }
+```
+
+Bun 的 `postMessage` 对简单对象有优化的快速路径（绕过 structured clone），性能开销极小。
 
 ## Plugin State Persistence
 
@@ -445,47 +504,75 @@ nitroApp.hooks.hook('evlog:drain', async (events) => {
 | `plugin.system.logRetentionDays` | `7` | 日志文件保留天数 |
 | `plugin.custom.<pluginId>.config` | `{...}` | 插件的用户配置 |
 
-## Sandbox
+## Sandbox — Bun Worker 隔离
 
 ### Strategy
 
-软沙箱（约定级别），非 VM 级硬隔离。目标是防止意外误用，而非防恶意代码。
+每个插件运行在独立的 Bun Worker 线程中（`new Worker()`），提供**进程级隔离**。插件代码天然无法访问主线程的内存空间，所有通信必须通过 `postMessage` 序列化消息。
 
-### Enforcement Mechanism
+### Isolation Guarantees
 
-由于插件通过动态 `import()` 在同一 Bun 进程中加载，ESM 模块默认可访问所有 Node 内置模块和全局对象。沙箱采用以下策略：
-
-1. **ctx 是唯一官方接口** — 插件文档和示例中只展示 `ctx` 的使用方式，不暴露任何主程序内部模块路径
-2. **console 拦截** — hook handler 调用期间临时替换 `globalThis.console`
-3. **hook 注册校验** — 只接受声明过的 hook 名称
-4. **配置只读** — `ctx.config` 返回冻结副本
-
-**已知局限：** 这是约定级沙箱，无法阻止插件通过 `import('node:fs')` 或 `globalThis.process` 绕过限制。如果未来需要强隔离，可以引入 Bun worker 或 Node `vm` 模块，但当前设计优先考虑简单性和性能。
-
-### Capability Table
-
-| 能力 | 允许 | 说明 |
+| 能力 | 状态 | 说明 |
 |------|------|------|
-| `ctx.hook()` | 是 | 仅限 plugin.yaml 中声明的 hook |
-| `ctx.log` | 是 | 结构化日志 |
-| `ctx.config` | 是 | 只读，仅声明过的 key |
-| `ctx.fetch()` | 是 | HTTP 请求，用于调外部 API |
-| `ctx.meta` | 是 | 只读元数据 |
-| `console.*` | 拦截 | 收集为普通日志（`type: "console"`） |
-| `import` 第三方包 | 是 | 插件目录下自带的 node_modules |
-| `import` 主程序模块 | 否 | 不暴露内部模块路径 |
-| Node 内置模块 | 否 | fs/child_process/net 等不可用 |
-| 全局对象 | 否 | process/Bun 等不暴露 |
-| 数据库连接 | 否 | 不暴露 MongoDB/Redis 实例 |
-| 请求上下文 | 否 | 不暴露 session/user 等 |
+| `ctx.hook()` | 允许 | 通过 IPC 注册到主线程 HookRegistry |
+| `ctx.log` | 允许 | 通过 IPC 发送到主线程日志管道 |
+| `ctx.config` | 允许 | Worker 启动时由主线程注入（只读副本） |
+| `ctx.fetch()` | 允许 | Worker 内原生 `fetch`，无需代理 |
+| `ctx.meta` | 允许 | Worker 启动时由主线程注入（只读副本） |
+| `console.*` | 拦截 | Worker 内全局替换，通过 IPC 收集 |
+| `import` 第三方包 | 允许 | 插件目录下自带的 node_modules |
+| 主线程内存 | 不可访问 | Worker 天然隔离 |
+| 数据库连接 | 不可访问 | 主线程对象无法跨 Worker 传递 |
+| 请求上下文 | 不可访问 | session/user 等不跨 Worker |
 
-> **注意：** 表中标记为"否"的项是约定级限制，非硬隔离。详见上方 Enforcement Mechanism 的已知局限说明。
+**注意：** Worker 内仍可使用 Node 内置模块（如 `node:fs`）和 `Bun` 全局对象，这是 Bun Worker 的特性。但插件无法通过这些模块访问主线程的状态（数据库、请求上下文等），隔离边界在于**数据**而非**能力**。
+
+### Worker Lifecycle
+
+每个插件对应一个 Worker 实例：
+
+```typescript
+// 主线程创建 Worker
+const worker = new Worker('./server/utils/plugin-worker.ts', {
+  smol: true,  // 减少内存占用
+});
+
+// 通过 postMessage 传入初始化数据
+worker.postMessage({
+  type: 'init',
+  pluginId: 'my-axiom-drain',
+  pluginDir: '/path/to/irminsul-data/plugins/my-axiom-drain',
+  entryPath: '/path/to/irminsul-data/plugins/my-axiom-drain/index.js',
+  config: { apiKey: '...', dataset: '...' },
+  meta: { id: 'my-axiom-drain', name: 'My Axiom Drain', version: '1.0.0' },
+  allowedHooks: ['evlog:drain'],  // plugin.yaml 声明的 hooks
+});
+```
+
+Worker 端 (`plugin-worker.ts`) 是一个通用的运行时，负责：
+
+1. 接收 `init` 消息，构造 `ctx` 对象
+2. 全局替换 `console.*` 为 IPC 日志收集
+3. 动态 `import()` 插件的 `index.js`，调用 `setup(ctx)`
+4. 监听 `hook:call` 消息，执行对应 handler 并返回结果
+5. 监听 `shutdown` 消息，执行 `app:shutdown` handler
 
 ### Console Interception
 
-`console.*` 调用被拦截为普通文本日志（`type: "console"`），区别于 `ctx.log` 产生的结构化 wide event 日志（`type: "event"`）。
+Worker 启动时**全局替换** `console` 对象，所有 `console.log/warn/error/debug` 调用通过 IPC 发送到主线程：
 
-实现方式：hook handler 每次调用时临时替换 `globalThis.console`，调用完成后恢复。异步代码中 `console` 恢复为原始对象——这是软沙箱的已知局限。文档中建议插件作者使用 `ctx.log`。
+```typescript
+// plugin-worker.ts 中
+const originalConsole = globalThis.console;
+globalThis.console = {
+  log:   (...args) => postMessage({ type: 'log', level: 'info',  logType: 'console', message: formatArgs(args) }),
+  warn:  (...args) => postMessage({ type: 'log', level: 'warn',  logType: 'console', message: formatArgs(args) }),
+  error: (...args) => postMessage({ type: 'log', level: 'error', logType: 'console', message: formatArgs(args) }),
+  debug: (...args) => postMessage({ type: 'log', level: 'debug', logType: 'console', message: formatArgs(args) }),
+};
+```
+
+由于是 Worker 全局替换，异步代码中的 `console` 调用也能被正确捕获，没有之前软沙箱的局限性。
 
 ## Plugin Logging
 
@@ -526,8 +613,9 @@ nitroApp.hooks.hook('evlog:drain', async (events) => {
    - 新插件 → 加入 registry，默认 `enabled: false`
    - 已有插件 → 保持原状态
    - 目录已删除的插件 → 从 registry 移除
-4. 按 `order` 排序，依次加载所有 `enabled` 的插件
-5. 如果 `plugin.system.watcher` 为 `true` → 启动文件监听
+4. 按 `order` 排序，依次加载所有 `enabled` 的插件（每个插件创建一个 Bun Worker）
+5. 所有插件 `setup()` 完成后，调用各插件的 `app:started` hook
+6. 如果 `plugin.system.watcher` 为 `true` → 启动文件监听
 
 ### Hot-Reload Triggers
 
@@ -545,11 +633,22 @@ nitroApp.hooks.hook('evlog:drain', async (events) => {
 - `POST /api/admin/plugins/:id/reload` → 卸载后重新加载
 - `PUT /api/admin/plugins/:id/config` → 更新配置，已启用的插件自动重载
 
-### Unload Procedure
+### Load Procedure (启用插件)
 
-1. 如果插件注册了 `app:shutdown` hook，先调用它
-2. 清除该插件注册的所有 hook handler
-3. 清除 import 缓存（确保下次重载拿到新代码）
+1. 创建 Bun Worker（`smol: true` 减少内存）
+2. 通过 `postMessage` 发送 `init` 消息（pluginId、config、meta、allowedHooks）
+3. Worker 构造 `ctx`，替换 `console`，`import()` 插件 `index.js`，调用 `setup(ctx)`
+4. 等待 Worker 返回 `setup:done` 消息
+5. 成功 → 将 Worker 中注册的 hook handler 记录到主线程 HookRegistry
+6. 成功 → 通过 IPC 调用插件的 `app:started` hook
+7. 失败 → 记录错误日志，`worker.terminate()`，插件状态设为错误
+
+### Unload Procedure (禁用/卸载插件)
+
+1. 通过 IPC 调用插件的 `app:shutdown` hook（设超时，防止插件不响应）
+2. 从主线程 HookRegistry 移除该插件的所有 hook 记录
+3. `worker.terminate()` — 完全释放 Worker 线程及其模块缓存
+4. 清除主线程对该 Worker 的引用
 
 ## Admin API
 
@@ -643,10 +742,11 @@ nitroApp.hooks.hook('evlog:drain', async (events) => {
 
 ## Error Handling
 
-- 每个 hook handler 调用独立 try-catch，错误捕获后记录到插件日志
-- 一个插件报错不影响其他插件执行，也不影响内置 fsDrain
+- 每个 hook 调用通过 IPC 发送到 Worker，设置超时（默认 30 秒），超时视为失败
+- hook 调用失败（异常或超时）记录到插件日志，不影响其他插件执行，也不影响内置 fsDrain
 - 插件保持启用状态，下次 hook 触发时继续调用
 - 多个插件注册同一 hook 时，按 order 依次调用，互不干扰
+- **Worker 崩溃**（`error` 事件或意外退出）：记录错误日志，主线程从 HookRegistry 移除该插件的 hook 记录，插件状态设为错误，管理面板可见。管理员可手动重新启用（会创建新 Worker）
 
 ## Config Validation
 
