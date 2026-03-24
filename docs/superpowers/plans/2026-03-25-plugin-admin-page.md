@@ -205,6 +205,7 @@ const plugins = ref<any[]>([]);
 const loading = ref(true);
 const loadError = ref("");
 const selectedId = ref<string | null>(null);
+const settingsRef = useTemplateRef<{ open: () => void }>("settingsRef");
 
 async function fetchPlugins() {
   loading.value = true;
@@ -284,8 +285,6 @@ async function handlePluginAction() {
   </ClientOnly>
 </template>
 ```
-
-Add `const settingsRef = useTemplateRef<{ open: () => void }>("settingsRef");` to the `<script setup>` block.
 
 - [ ] **Step 2: Commit**
 
@@ -679,12 +678,21 @@ const saving = ref(false);
 const errors = ref<Record<string, string>>({});
 
 // Initialize form data from config, applying defaults for missing fields
+function resolveDefault(field: any, currentData: Record<string, unknown>): unknown {
+  // default_when takes priority over static default
+  if (field.default_when) {
+    for (const cond of field.default_when) {
+      if (evaluateCondition(cond.when, currentData)) return cond.value;
+    }
+  }
+  return field.default ?? (field.type === "boolean" ? false : "");
+}
+
 function initForm() {
   const data: Record<string, unknown> = {};
+  // First pass: populate with config values or static defaults
   for (const field of props.configSchema) {
-    const value = props.config[field.key];
-    // Password fields come as "****" — keep as placeholder, only send if user changes
-    data[field.key] = value ?? field.default ?? (field.type === "boolean" ? false : "");
+    data[field.key] = props.config[field.key] ?? resolveDefault(field, data);
   }
   formData.value = { ...data };
   snapshot.value = { ...data };
@@ -992,11 +1000,89 @@ watch(() => props.pluginId, () => {
 onMounted(() => { if (props.active) resetAndReload(); });
 onBeforeUnmount(disconnectSSE);
 
-// ... clear and download handlers
-</script>
-```
+const clearing = ref(false);
+async function clearLogs() {
+  if (!confirm("确定清空所有日志？")) return;
+  clearing.value = true;
+  try {
+    await $fetch(`/api/admin/plugins/${props.pluginId}/logs`, { method: "DELETE" });
+    logs.value = [];
+  } catch {} finally {
+    clearing.value = false;
+  }
+}
 
-Template renders a toolbar (filters + clear + download) and the scrollable log list.
+function downloadLogs() {
+  const date = new Date().toISOString().slice(0, 10);
+  window.open(`/api/admin/plugins/${props.pluginId}/logs/download?date=${date}`, "_blank");
+}
+
+function formatTime(ts: string): string {
+  const d = new Date(ts);
+  return d.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 3 });
+}
+
+const levelBadge = (level: string) => {
+  switch (level) {
+    case "info": return "badge-info";
+    case "warn": return "badge-warning";
+    case "error": return "badge-error";
+    case "debug": return "badge-neutral";
+    default: return "badge-neutral";
+  }
+};
+</script>
+
+<template>
+  <div class="flex flex-col h-full">
+    <!-- Toolbar -->
+    <div class="flex items-center gap-2 mb-3">
+      <select v-model="levelFilter" class="select select-bordered select-xs">
+        <option value="">全部级别</option>
+        <option value="info">info</option>
+        <option value="warn">warn</option>
+        <option value="error">error</option>
+        <option value="debug">debug</option>
+      </select>
+      <select v-model="typeFilter" class="select select-bordered select-xs">
+        <option value="">全部类型</option>
+        <option value="event">event</option>
+        <option value="console">console</option>
+      </select>
+      <div class="flex-1" />
+      <button class="btn btn-xs btn-ghost" :disabled="clearing" @click="clearLogs">
+        <Icon name="hugeicons:delete-02" class="text-sm" />
+        清空
+      </button>
+      <button class="btn btn-xs btn-ghost" @click="downloadLogs">
+        <Icon name="hugeicons:download-04" class="text-sm" />
+        下载
+      </button>
+    </div>
+
+    <!-- Log container -->
+    <div
+      ref="logContainerRef"
+      class="flex-1 overflow-y-auto border border-base-300 bg-base-100 font-mono text-xs"
+      style="min-height: 300px; max-height: calc(100dvh - 400px)"
+      @scroll="handleScroll"
+    >
+      <div v-if="loadingHistory" class="flex justify-center py-2">
+        <span class="loading loading-spinner loading-xs" />
+      </div>
+      <div v-if="logs.length === 0 && !loadingHistory" class="flex items-center justify-center h-full text-base-content/30">
+        暂无日志
+      </div>
+      <div v-for="(entry, i) in logs" :key="i" class="flex gap-2 px-2 py-0.5 border-b border-base-200 hover:bg-base-200/50">
+        <span class="text-base-content/40 shrink-0" :title="entry.timestamp">{{ formatTime(entry.timestamp) }}</span>
+        <span class="badge badge-xs shrink-0" :class="levelBadge(entry.level)">{{ entry.level }}</span>
+        <span class="text-base-content/30 shrink-0">{{ entry.type }}</span>
+        <span class="flex-1 break-all">{{ entry.message }}</span>
+      </div>
+    </div>
+  </div>
+</template>
+```
 
 - [ ] **Step 2: Commit**
 
@@ -1126,24 +1212,9 @@ defineExpose({ open });
 </template>
 ```
 
-- [ ] **Step 2: Wire into the plugins page**
+- [ ] **Step 2: Verify wiring**
 
-In `app/pages/admin/plugins.vue`, add the settings button at the bottom of the left panel and the modal:
-
-```html
-<!-- Bottom of left panel -->
-<div class="p-3 border-t border-base-300">
-  <button class="btn btn-sm btn-ghost w-full justify-start gap-2" @click="settingsRef?.open()">
-    <Icon name="hugeicons:settings-02" class="text-base" />
-    系统设置
-  </button>
-</div>
-
-<!-- Modal (at end of template) -->
-<ClientOnly>
-  <PluginSystemSettingsModal ref="settingsRef" />
-</ClientOnly>
-```
+The settings button and `<ClientOnly><PluginSystemSettingsModal ref="settingsRef" /></ClientOnly>` are already in the page template from Task 3. Verify they reference this component correctly.
 
 - [ ] **Step 3: Commit**
 
