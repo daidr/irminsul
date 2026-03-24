@@ -91,6 +91,10 @@ const BUILTIN_SETTINGS: Record<string, unknown> = {
   "smtp.from": "",
   "auth.requireEmailVerification": false,
   "general.announcement": "",
+  "plugin.system.registry": [],
+  "plugin.system.watcher": true,
+  "plugin.system.logBufferSize": 200,
+  "plugin.system.logRetentionDays": 7,
 };
 
 /**
