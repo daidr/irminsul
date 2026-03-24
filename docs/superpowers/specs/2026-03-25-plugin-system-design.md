@@ -380,7 +380,9 @@ interface PluginContext {
 }
 ```
 
-### Plugin Example
+### Plugin Examples
+
+**Drain 插件：**
 
 ```js
 // irminsul-data/plugins/axiom-drain/index.js
@@ -411,16 +413,33 @@ export function setup(ctx) {
 }
 ```
 
+**Enricher 插件：**
+
+```js
+// irminsul-data/plugins/geo-enricher/index.js
+export function setup(ctx) {
+  ctx.hook('evlog:enricher', (events) => {
+    // enricher 必须返回修改后的事件数组
+    return events.map(event => ({
+      ...event,
+      geo: { region: 'asia', datacenter: 'tokyo' },
+    }));
+  });
+}
+```
+
 ## Hook System
 
 ### Initial Hook Points
 
 | Hook | 参数 | 返回 | 说明 |
 |------|------|------|------|
-| `evlog:enricher` | `(event: WideEvent)` | `void` | 往 wide event 上追加字段 |
+| `evlog:enricher` | `(events: WideEvent[])` | `WideEvent[]` | 接收一批事件，追加字段后返回修改后的数组 |
 | `evlog:drain` | `(events: WideEvent[])` | `Promise<void>` | 消费一批 wide event |
 | `app:started` | `()` | `void` | 服务启动完成 |
 | `app:shutdown` | `()` | `Promise<void>` | 服务关闭前 |
+
+> **enricher 数据流说明：** 由于插件运行在 Worker 中，事件通过 structured clone 传递。Worker 内对事件的修改不会反映到主线程。因此 enricher 必须返回修改后的事件数组，主线程用返回值替换原数组后传给下一个 enricher 或 drain。
 
 未来可扩展更多 hook 点（如 `auth:login`、`user:created` 等），只需在主程序相应位置调用 `hookRegistry.call(hookName, ...args)` 即可。
 
@@ -442,17 +461,20 @@ PluginManager 在 Nitro hook 中通过 IPC 调用 Worker 中的插件 handler：
 
 ```typescript
 nitroApp.hooks.hook('evlog:drain', async (events) => {
-  // 先执行 enricher 插件（按 order，串行）
+  let enrichedEvents = events;
+
+  // 先执行 enricher 插件（按 order，串行，链式传递）
   for (const plugin of hookRegistry.get('evlog:enricher')) {
     try {
-      // 向 Worker 发送 hook 调用消息，等待返回
-      await pluginBridge.callHook(plugin.id, 'evlog:enricher', events);
-    } catch (e) { /* 记录到插件日志 */ }
+      // enricher 返回修改后的事件数组，作为下一个 enricher 的输入
+      enrichedEvents = await pluginBridge.callHook(plugin.id, 'evlog:enricher', enrichedEvents);
+    } catch (e) { /* 记录到插件日志，继续使用当前 enrichedEvents */ }
   }
-  // 再执行 drain 插件（按 order，串行）
+
+  // 再执行 drain 插件（按 order，串行，消费 enriched 后的事件）
   for (const plugin of hookRegistry.get('evlog:drain')) {
     try {
-      await pluginBridge.callHook(plugin.id, 'evlog:drain', events);
+      await pluginBridge.callHook(plugin.id, 'evlog:drain', enrichedEvents);
     } catch (e) { /* 记录到插件日志 */ }
   }
 });
@@ -465,6 +487,10 @@ nitroApp.hooks.hook('evlog:drain', async (events) => {
 **主线程 → Worker：**
 
 ```typescript
+// 初始化（Worker 创建后首条消息）
+{ type: 'init', pluginId: string, pluginDir: string, entryPath: string,
+  config: Record<string, any>, meta: PluginMeta, allowedHooks: string[] }
+
 // 调用 hook
 { type: 'hook:call', hookName: string, args: any[], callId: string }
 
