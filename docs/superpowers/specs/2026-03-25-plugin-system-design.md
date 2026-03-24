@@ -419,9 +419,8 @@ export function setup(ctx) {
 // irminsul-data/plugins/geo-enricher/index.js
 export function setup(ctx) {
   ctx.hook('evlog:enricher', (events) => {
-    // enricher 必须返回修改后的事件数组
+    // 返回 patch 数组：每项是要合并到对应事件上的字段
     return events.map(event => ({
-      ...event,
       geo: { region: 'asia', datacenter: 'tokyo' },
     }));
   });
@@ -434,12 +433,12 @@ export function setup(ctx) {
 
 | Hook | 参数 | 返回 | 说明 |
 |------|------|------|------|
-| `evlog:enricher` | `(events: WideEvent[])` | `WideEvent[]` | 接收一批事件，追加字段后返回修改后的数组 |
+| `evlog:enricher` | `(events: WideEvent[])` | `Patch[]` | 接收一批事件，返回每个事件要追加的字段（增量 patch） |
 | `evlog:drain` | `(events: WideEvent[])` | `Promise<void>` | 消费一批 wide event |
 | `app:started` | `()` | `void` | 服务启动完成 |
 | `app:shutdown` | `()` | `Promise<void>` | 服务关闭前 |
 
-> **enricher 数据流说明：** 由于插件运行在 Worker 中，事件通过 structured clone 传递。Worker 内对事件的修改不会反映到主线程。因此 enricher 必须返回修改后的事件数组，主线程用返回值替换原数组后传给下一个 enricher 或 drain。
+> **enricher 数据流说明：** 由于插件运行在 Worker 中，事件通过 structured clone 传递。为减少序列化开销，enricher 不返回完整事件，而是返回一个 `Patch[]` 数组（与输入事件等长），每项是要浅合并到对应事件上的字段对象。主线程收到 patch 后执行 `Object.assign(events[i], patches[i])` 原地合并，再传给下一个 enricher 或 drain。这样返回数据只包含新增字段，而非完整事件副本。
 
 未来可扩展更多 hook 点（如 `auth:login`、`user:created` 等），只需在主程序相应位置调用 `hookRegistry.call(hookName, ...args)` 即可。
 
@@ -461,20 +460,22 @@ PluginManager 在 Nitro hook 中通过 IPC 调用 Worker 中的插件 handler：
 
 ```typescript
 nitroApp.hooks.hook('evlog:drain', async (events) => {
-  let enrichedEvents = events;
 
-  // 先执行 enricher 插件（按 order，串行，链式传递）
+  // 先执行 enricher 插件（按 order，串行）
   for (const plugin of hookRegistry.get('evlog:enricher')) {
     try {
-      // enricher 返回修改后的事件数组，作为下一个 enricher 的输入
-      enrichedEvents = await pluginBridge.callHook(plugin.id, 'evlog:enricher', enrichedEvents);
-    } catch (e) { /* 记录到插件日志，继续使用当前 enrichedEvents */ }
+      // enricher 返回 patch 数组，主线程原地合并到事件上
+      const patches = await pluginBridge.callHook(plugin.id, 'evlog:enricher', events);
+      for (let i = 0; i < events.length; i++) {
+        if (patches[i]) Object.assign(events[i], patches[i]);
+      }
+    } catch (e) { /* 记录到插件日志 */ }
   }
 
-  // 再执行 drain 插件（按 order，串行，消费 enriched 后的事件）
+  // 再执行 drain 插件（按 order，串行）
   for (const plugin of hookRegistry.get('evlog:drain')) {
     try {
-      await pluginBridge.callHook(plugin.id, 'evlog:drain', enrichedEvents);
+      await pluginBridge.callHook(plugin.id, 'evlog:drain', events);
     } catch (e) { /* 记录到插件日志 */ }
   }
 });
