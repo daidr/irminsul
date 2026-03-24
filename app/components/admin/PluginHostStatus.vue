@@ -11,10 +11,16 @@ async function fetchStatus() {
   } catch {}
 }
 
-onMounted(fetchStatus);
+let interval: ReturnType<typeof setInterval> | null = null;
 
-const interval = setInterval(fetchStatus, 5000);
-onBeforeUnmount(() => clearInterval(interval));
+onMounted(() => {
+  fetchStatus();
+  interval = setInterval(fetchStatus, 5000);
+});
+
+onBeforeUnmount(() => {
+  if (interval) clearInterval(interval);
+});
 
 async function restartHost() {
   restarting.value = true;

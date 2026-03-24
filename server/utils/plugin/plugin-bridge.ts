@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import type { MainToWorkerMessage, WorkerToMainMessage } from "./types";
 
 interface PendingCall {
@@ -31,12 +32,10 @@ export class PluginBridge {
   }
 
   start(): void {
-    this.worker = new Worker(
-      new URL("../../worker/plugin-host.ts", import.meta.url).href,
-      {
-        smol: true,
-      },
-    );
+    const workerPath = resolve(process.cwd(), "server/worker/plugin-host.ts");
+    this.worker = new Worker(workerPath, {
+      smol: true,
+    });
     this.worker.unref();
     this.worker.onmessage = (e: MessageEvent<WorkerToMainMessage>) =>
       this.handleMessage(e.data);
