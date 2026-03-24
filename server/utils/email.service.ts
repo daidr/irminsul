@@ -1,8 +1,6 @@
 import { createTransport } from "nodemailer";
 import type { Transporter } from "nodemailer";
-import { getLogger } from "@logtape/logtape";
-
-const logger = getLogger(["irminsul", "email"]);
+import { useLogger } from "evlog";
 
 const SMTP_KEYS = ["smtp.host", "smtp.port", "smtp.secure", "smtp.user", "smtp.pass", "smtp.from"];
 
@@ -10,7 +8,7 @@ function getSmtpTransporter(): Transporter | null {
   const settings = getSettingsMap(SMTP_KEYS);
   const host = settings["smtp.host"] as string;
   if (!host) {
-    logger.warn`SMTP host not configured, email sending disabled.`;
+    useLogger().set({ email: { warning: "smtp_not_configured" } });
     return null;
   }
 
@@ -34,10 +32,10 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
 
   try {
     await transporter.sendMail({ from, to, subject, html });
-    logger.info`Email sent to ${to}: ${subject}`;
+    useLogger().set({ email: { sent: true, to, subject } });
     return true;
   } catch (err) {
-    logger.error`Failed to send email to ${to}: ${err}`;
+    useLogger().error(err as Error, { step: "email_send", to });
     return false;
   }
 }

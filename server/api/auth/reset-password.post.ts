@@ -1,9 +1,8 @@
-import { getLogger } from "@logtape/logtape";
+import { useLogger } from "evlog";
 import { hasActiveBan } from "~~/server/types/user.schema";
 
-const logger = getLogger(["irminsul", "auth"]);
-
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event);
   const body = await readBody<{
     token?: string;
     password?: string;
@@ -70,6 +69,6 @@ export default defineEventHandler(async (event) => {
   // Delete all existing sessions
   await destroyAllSessions(user.uuid);
 
-  logger.info`Password reset completed for user ${user.uuid}`;
+  log.set({ auth: { action: "password_reset_completed", userId: user.uuid } });
   return { success: true };
 });

@@ -1,7 +1,5 @@
 import type { EventHandler, H3Event } from "h3";
-import { getLogger } from "@logtape/logtape";
-
-const logger = getLogger(["irminsul", "yggdrasil"]);
+import { useLogger } from "evlog";
 
 export class YggdrasilError extends Error {
   constructor(
@@ -26,7 +24,7 @@ export function defineYggdrasilHandler<T>(handler: (event: H3Event) => Promise<T
         setResponseStatus(event, err.httpStatus);
         return err.toJSON();
       }
-      logger.error`Unhandled Yggdrasil error: ${err}`;
+      useLogger(event).error(err as Error, { step: "yggdrasil_handler" });
       setResponseStatus(event, 500);
       return { error: "InternalError", errorMessage: "Internal server error" };
     }

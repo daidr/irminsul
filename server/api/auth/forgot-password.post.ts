@@ -1,7 +1,5 @@
-import { getLogger } from "@logtape/logtape";
+import { useLogger } from "evlog";
 import { hasActiveBan } from "~~/server/types/user.schema";
-
-const logger = getLogger(["irminsul", "auth"]);
 
 const SUCCESS_MESSAGE = "如果该邮箱已注册，我们已发送密码重置链接，请检查收件箱。";
 
@@ -18,6 +16,7 @@ async function checkEmailResetRateLimit(email: string): Promise<boolean> {
 }
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event);
   const body = await readBody<{
     email?: string;
     altchaPayload?: string;
@@ -78,11 +77,11 @@ export default defineEventHandler(async (event) => {
       const resetLink = `${baseUrl}/reset-password?token=${token}`;
       const sent = await sendPasswordResetEmail(user.email, resetLink);
       if (!sent) {
-        logger.error`Failed to send password reset email to ${user.email}`;
+        log.set({ passwordReset: { emailSendFailed: true, email: user.email } });
       }
     }
   } catch (err) {
-    logger.error`Error during password reset for ${email}: ${err}`;
+    log.error(err as Error, { step: "password_reset", email });
   }
 
   return { success: true, message: SUCCESS_MESSAGE };

@@ -1,7 +1,9 @@
-// secrets.ts uses lazy initialization via a Proxy.
-// This plugin calls loadSecrets() to load or generate secrets from disk,
-// after directories have been created by plugin 01.
+import { createLogger } from "evlog";
+
 export default defineNitroPlugin(() => {
-  console.log("[Plugin 07] Init secrets");
+  const log = createLogger({ category: "startup" });
+  log.set({ plugin: "07.init-secrets" });
   loadSecrets();
+  log.set({ status: "ok" });
+  log.emit();
 });

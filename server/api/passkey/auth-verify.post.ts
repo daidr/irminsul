@@ -1,10 +1,9 @@
-import { getLogger } from "@logtape/logtape";
 import type { AuthenticationResponseJSON } from "@simplewebauthn/server";
+import { useLogger } from "evlog";
 import type { SessionData } from "~~/server/utils/session";
 
-const logger = getLogger(["irminsul", "passkey"]);
-
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event);
   const body = await readBody<{
     credential?: AuthenticationResponseJSON;
     challengeId?: string;
@@ -20,14 +19,14 @@ export default defineEventHandler(async (event) => {
   const credentialId = credential.id;
   const user = await findUserByPasskeyCredentialId(credentialId);
   if (!user) {
-    logger.debug`Passkey login failed: no user found for credentialId ${credentialId}`;
+    log.set({ passkey: { failure: "no_user_found", credentialId } });
     return { success: false, error: "通行密钥验证失败" };
   }
 
   // Find the specific passkey record
   const passkey = user.passkeys.find((pk) => pk.credentialId === credentialId);
   if (!passkey) {
-    logger.debug`Passkey login failed: credential ${credentialId} not in user ${user.uuid} passkeys`;
+    log.set({ passkey: { failure: "credential_not_in_user", credentialId, userId: user.uuid } });
     return { success: false, error: "通行密钥验证失败" };
   }
 
@@ -35,7 +34,7 @@ export default defineEventHandler(async (event) => {
   if (credential.response.userHandle) {
     const decoded = new TextDecoder().decode(base64URLToUint8Array(credential.response.userHandle));
     if (decoded !== user.uuid) {
-      logger.debug`Passkey login failed: userHandle mismatch for user ${user.uuid}, got ${decoded}`;
+      log.set({ passkey: { failure: "user_handle_mismatch", userId: user.uuid } });
       return { success: false, error: "通行密钥验证失败" };
     }
   }
@@ -50,12 +49,12 @@ export default defineEventHandler(async (event) => {
       transports: passkey.transports,
     });
   } catch (e) {
-    logger.debug`Passkey login verification threw for user ${user.uuid}: ${e}`;
+    log.error(e as Error, { step: "passkey_verify", userId: user.uuid });
     return { success: false, error: "通行密钥验证失败" };
   }
 
   if (!verified.verified) {
-    logger.debug`Passkey login verification returned not verified for user ${user.uuid}`;
+    log.set({ passkey: { failure: "verification_not_passed", userId: user.uuid } });
     return { success: false, error: "通行密钥验证失败" };
   }
 

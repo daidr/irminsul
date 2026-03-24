@@ -1,8 +1,12 @@
+import { createLogger } from "evlog";
+
 export default defineNitroPlugin((nitroApp) => {
-  console.log("[Plugin 03] DB connections");
-  // Trigger lazy connections by accessing once
+  const log = createLogger({ category: "startup" });
+  log.set({ plugin: "03.db", action: "connect" });
   getDb();
   getRedisClient();
+  log.set({ status: "ok" });
+  log.emit();
 
   nitroApp.hooks.hook("close", async () => {
     await gracefulCloseDB();

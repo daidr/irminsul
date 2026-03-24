@@ -1,8 +1,7 @@
-import { getLogger } from "@logtape/logtape";
-
-const logger = getLogger(["irminsul", "auth"]);
+import { useLogger } from "evlog";
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event);
   if (!event.context.user) {
     return { success: false, error: "未登录" };
   }
@@ -42,11 +41,11 @@ export default defineEventHandler(async (event) => {
     const verifyLink = `${baseUrl}/verify-email?token=${token}`;
     const sent = await sendEmailVerificationEmail(user.email, verifyLink);
     if (!sent) {
-      logger.error`Failed to send verification email to ${user.email}`;
+      log.set({ emailVerification: { emailSendFailed: true, email: user.email } });
       return { success: false, error: "邮件发送失败，请稍后重试" };
     }
   } catch (err) {
-    logger.error`Error sending verification email for ${user.email}: ${err}`;
+    log.error(err as Error, { step: "send_verification_email", email: user.email });
     return { success: false, error: "邮件发送失败，请稍后重试" };
   }
 

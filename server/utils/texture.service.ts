@@ -1,10 +1,8 @@
-import { getLogger } from "@logtape/logtape";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { useLogger } from "evlog";
 //@ts-expect-error pngjs-nozlib 没有类型定义
 import { PNG } from "pngjs-nozlib";
-
-const logger = getLogger(["irminsul", "texture"]);
 
 const TEXTURES_DIR = "./irminsul-data/textures";
 
@@ -55,7 +53,7 @@ export async function tryRemoveUnusedTexture(hash: string): Promise<void> {
   if (!inUse) {
     const filePath = path.join(TEXTURES_DIR, `${hash}.png`);
     await fs.unlink(filePath).catch(() => {});
-    logger.info`Unused texture removed: ${hash}`;
+    useLogger().set({ texture: { unusedRemoved: true, hash } });
   }
 }
 
@@ -115,7 +113,7 @@ export async function processTextureUpload(params: {
     await tryRemoveUnusedTexture(oldHash);
   }
 
-  logger.info`Texture uploaded: ${textureType} for ${uuid}`;
+  useLogger().set({ texture: { action: "upload", type: textureType, userId: uuid, hash } });
   return { hash };
 }
 
@@ -144,5 +142,5 @@ export async function processTextureDelete(params: {
     await tryRemoveUnusedTexture(oldHash);
   }
 
-  logger.info`Texture deleted: ${textureType} for ${uuid}`;
+  useLogger().set({ texture: { action: "delete", type: textureType, userId: uuid } });
 }

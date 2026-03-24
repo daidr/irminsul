@@ -1,8 +1,7 @@
-import { getLogger } from "@logtape/logtape";
-
-const logger = getLogger(["irminsul", "auth"]);
+import { useLogger } from "evlog";
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event);
   const user = requireAuth(event);
 
   const body = await readBody<{
@@ -77,6 +76,6 @@ export default defineEventHandler(async (event) => {
     secure: process.env.NODE_ENV !== "development",
   });
 
-  logger.info`Password changed for user ${userDoc.uuid}, all sessions and tokens invalidated`;
+  log.set({ auth: { action: "password_changed", userId: userDoc.uuid } });
   return { success: true };
 });
