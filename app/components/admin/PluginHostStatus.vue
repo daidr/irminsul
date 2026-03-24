@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const status = ref<string>("stopped");
+const status = ref<string | null>(null);
 const dirtyReasons = ref<any[]>([]);
 const restarting = ref(false);
 
@@ -66,7 +66,8 @@ const reasonLabel = (reason: string) => {
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2">
         <span class="text-xs font-semibold">Plugin Host</span>
-        <span class="badge badge-xs" :class="statusColor">{{ statusLabel }}</span>
+        <span v-if="status === null" class="loading loading-spinner loading-xs" />
+        <span v-else class="badge badge-xs" :class="statusColor">{{ statusLabel }}</span>
       </div>
       <button
         v-if="status === 'dirty' || status === 'crashed'"
