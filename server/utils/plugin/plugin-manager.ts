@@ -126,9 +126,7 @@ export class PluginManager {
     }
 
     this.plugins = discovered;
-
-    // Save updated registry
-    await this.saveRegistry();
+    // Registry is saved in start() after plugins are loaded and statuses are correct.
   }
 
   async start(): Promise<void> {
@@ -155,6 +153,9 @@ export class PluginManager {
     if (watcherEnabled !== false) {
       this.startWatcher();
     }
+
+    // Now save registry with correct statuses (enabled plugins have status "enabled")
+    await this.saveRegistry();
 
     // Cleanup expired logs
     const retentionDays =
