@@ -639,6 +639,10 @@ defineProps<{ plugin: any }>();
       <div class="text-xs text-base-content/50 mb-1">状态</div>
       <div class="text-sm">{{ plugin.status }}</div>
     </div>
+    <div>
+      <div class="text-xs text-base-content/50 mb-1">插件目录</div>
+      <div class="text-sm font-mono text-base-content/70 break-all">{{ plugin.id }}</div>
+    </div>
   </div>
 </template>
 ```
@@ -836,7 +840,24 @@ async function save() {
                 <p v-if="errors[field.key]" class="text-xs text-error mt-1">{{ errors[field.key] }}</p>
               </fieldset>
 
-              <!-- 文本 / 密码 / 数字 -->
+              <!-- 数字 -->
+              <fieldset v-else-if="field.type === 'number'" class="fieldset">
+                <legend class="fieldset-legend text-xs">
+                  {{ field.label }}
+                  <span v-if="isRequired(field)" class="text-error">*</span>
+                  <Icon v-if="field.restart" name="hugeicons:refresh" class="text-warning text-xs" title="修改此项需要重启 Plugin Host" />
+                </legend>
+                <input
+                  v-model.number="formData[field.key]"
+                  type="number"
+                  class="input input-bordered w-full"
+                  :placeholder="field.description ?? ''"
+                  :disabled="isDisabled(field)"
+                />
+                <p v-if="errors[field.key]" class="text-xs text-error mt-1">{{ errors[field.key] }}</p>
+              </fieldset>
+
+              <!-- 文本 / 密码 -->
               <fieldset v-else class="fieldset">
                 <legend class="fieldset-legend text-xs">
                   {{ field.label }}
@@ -845,7 +866,7 @@ async function save() {
                 </legend>
                 <input
                   v-model="formData[field.key]"
-                  :type="field.type === 'number' ? 'number' : field.type === 'password' ? 'password' : 'text'"
+                  :type="field.type === 'password' ? 'password' : 'text'"
                   class="input input-bordered w-full"
                   :placeholder="field.description ?? ''"
                   :disabled="isDisabled(field)"
@@ -1073,11 +1094,17 @@ const levelBadge = (level: string) => {
       <div v-if="logs.length === 0 && !loadingHistory" class="flex items-center justify-center h-full text-base-content/30">
         暂无日志
       </div>
-      <div v-for="(entry, i) in logs" :key="i" class="flex gap-2 px-2 py-0.5 border-b border-base-200 hover:bg-base-200/50">
-        <span class="text-base-content/40 shrink-0" :title="entry.timestamp">{{ formatTime(entry.timestamp) }}</span>
-        <span class="badge badge-xs shrink-0" :class="levelBadge(entry.level)">{{ entry.level }}</span>
-        <span class="text-base-content/30 shrink-0">{{ entry.type }}</span>
-        <span class="flex-1 break-all">{{ entry.message }}</span>
+      <div v-for="(entry, i) in logs" :key="i" class="px-2 py-0.5 border-b border-base-200 hover:bg-base-200/50">
+        <div class="flex gap-2">
+          <span class="text-base-content/40 shrink-0" :title="entry.timestamp">{{ formatTime(entry.timestamp) }}</span>
+          <span class="badge badge-xs shrink-0" :class="levelBadge(entry.level)">{{ entry.level }}</span>
+          <span class="text-base-content/30 shrink-0">{{ entry.type }}</span>
+          <span class="flex-1 break-all">{{ entry.message }}</span>
+        </div>
+        <details v-if="entry.data && Object.keys(entry.data).length > 0" class="ml-20 mt-0.5">
+          <summary class="text-base-content/30 cursor-pointer text-[10px]">data</summary>
+          <pre class="text-[10px] text-base-content/50 whitespace-pre-wrap break-all mt-0.5">{{ JSON.stringify(entry.data, null, 2) }}</pre>
+        </details>
       </div>
     </div>
   </div>
