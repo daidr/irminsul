@@ -24,3 +24,5 @@ node_modules
 
 # Runtime data
 irminsul-data/
+
+.superpowers/
