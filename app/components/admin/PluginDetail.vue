@@ -1,6 +1,6 @@
 <script setup lang="ts">
-const props = defineProps<{ pluginId: string }>();
-const emit = defineEmits<{ action: [] }>();
+const props = defineProps<{ pluginId: string; showBack?: boolean }>();
+const emit = defineEmits<{ action: []; back: [] }>();
 
 const plugin = ref<any>(null);
 const loading = ref(true);
@@ -51,12 +51,17 @@ async function toggleEnabled() {
   </div>
   <div v-else-if="plugin" class="flex flex-col h-full">
     <!-- 标题栏 -->
-    <div class="flex items-center justify-between p-4 border-b border-base-300">
-      <div>
-        <h3 class="text-lg font-bold">{{ plugin.name }}</h3>
-        <span class="text-xs text-base-content/50">v{{ plugin.version }}</span>
+    <div class="flex items-center justify-between p-4 border-b border-base-300 gap-2">
+      <div class="flex items-center gap-2 min-w-0">
+        <button v-if="showBack" class="btn btn-sm btn-square btn-ghost md:hidden shrink-0" @click="emit('back')">
+          <Icon name="hugeicons:arrow-left-01" class="text-lg" />
+        </button>
+        <div class="min-w-0">
+          <h3 class="text-lg font-bold truncate">{{ plugin.name }}</h3>
+          <span class="text-xs text-base-content/50">v{{ plugin.version }}</span>
+        </div>
       </div>
-      <button class="btn btn-sm" :class="plugin.status === 'enabled' ? 'btn-warning' : 'btn-success'"
+      <button class="btn btn-sm shrink-0" :class="plugin.status === 'enabled' ? 'btn-warning' : 'btn-success'"
         :disabled="toggling || plugin.status === 'error'" @click="toggleEnabled">
         <span v-if="toggling" class="loading loading-spinner loading-xs" />
         {{ plugin.status === "enabled" ? "禁用" : "启用" }}

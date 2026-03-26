@@ -126,9 +126,9 @@ async function save() {
         <h4 v-if="group" class="flex items-center gap-1.5 text-sm font-semibold text-primary mb-3">
           {{ group }}
         </h4>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <template v-for="field in fields" :key="field.key">
-            <div v-if="isVisible(field)" :class="field.type === 'textarea' ? 'col-span-2' : ''">
+            <div v-if="isVisible(field)" :class="field.type === 'textarea' ? 'md:col-span-2' : ''">
               <!-- 布尔值：复选框 -->
               <label v-if="field.type === 'boolean'" class="flex cursor-pointer items-center gap-2 text-sm">
                 <input

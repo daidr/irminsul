@@ -121,7 +121,7 @@ const levelBadge = (level: string) => {
 <template>
   <div class="flex flex-col h-full">
     <!-- 工具栏 -->
-    <div class="flex items-center gap-2 mb-3">
+    <div class="flex flex-wrap items-center gap-2 mb-3">
       <select v-model="levelFilter" class="select select-bordered select-xs">
         <option value="">全部级别</option>
         <option value="info">info</option>

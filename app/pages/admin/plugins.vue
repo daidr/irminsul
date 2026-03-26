@@ -20,12 +20,24 @@ const loadError = ref("");
 const selectedId = ref<string | null>(null);
 const settingsRef = useTemplateRef<{ open: () => void }>("settingsRef");
 
+// 移动端视图状态：是否显示详情面板
+const mobileShowDetail = ref(false);
+
+function selectPlugin(id: string) {
+  selectedId.value = id;
+  mobileShowDetail.value = true;
+}
+
+function handleBack() {
+  mobileShowDetail.value = false;
+}
+
 async function fetchPlugins() {
   loading.value = true;
   loadError.value = "";
   try {
     plugins.value = await $fetch<any[]>("/api/admin/plugins");
-    // 未选中时自动选择第一个
+    // 未选中时自动选择第一个（仅桌面端）
     if (!selectedId.value && plugins.value.length > 0) {
       selectedId.value = plugins.value[0].id;
     }
@@ -54,16 +66,19 @@ async function handlePluginAction() {
 </script>
 
 <template>
-  <div v-if="user?.isAdmin" class="flex flex-1 min-h-0 mx-4">
-    <!-- 左侧面板 -->
-    <div class="w-[300px] shrink-0 border-x border-base-300 bg-base-200 flex flex-col">
+  <div v-if="user?.isAdmin" class="flex flex-1 min-h-0 mx-0 md:mx-4">
+    <!-- 左侧面板：移动端全宽，选中插件后隐藏 -->
+    <div
+      class="w-full md:w-[300px] shrink-0 border-x border-base-300 bg-base-200 flex flex-col"
+      :class="mobileShowDetail ? 'hidden md:flex' : 'flex'"
+    >
       <AdminPluginHostStatus class="p-3 border-b border-base-300" @restarted="fetchPlugins" />
       <div class="flex-1 overflow-y-auto">
         <AdminPluginList
           v-if="!loading"
           v-model="plugins"
           :selected-id="selectedId"
-          @select="selectedId = $event"
+          @select="selectPlugin"
           @update:model-value="handleOrderUpdate"
         />
         <div v-else class="flex justify-center p-6">
@@ -78,12 +93,17 @@ async function handlePluginAction() {
       </div>
     </div>
 
-    <!-- 右侧面板 -->
-    <div class="flex-1 border-r border-base-300 bg-base-200">
+    <!-- 右侧面板：移动端全宽，未选中时隐藏 -->
+    <div
+      class="flex-1 border-r border-base-300 bg-base-200"
+      :class="mobileShowDetail ? 'flex flex-col' : 'hidden md:block'"
+    >
       <AdminPluginDetail
         v-if="selectedPlugin"
         :plugin-id="selectedPlugin.id"
+        :show-back="mobileShowDetail"
         @action="handlePluginAction"
+        @back="handleBack"
       />
       <div v-else class="flex items-center justify-center h-full text-base-content/40">
         选择一个插件查看详情
