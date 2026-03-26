@@ -113,6 +113,6 @@ async function handlePluginAction() {
 
   <!-- 系统设置弹窗 -->
   <ClientOnly>
-    <AdminPluginSystemSettingsModal ref="settingsRef" />
+    <LazyAdminPluginSystemSettingsModal ref="settingsRef" />
   </ClientOnly>
 </template>

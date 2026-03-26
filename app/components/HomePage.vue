@@ -83,11 +83,11 @@ async function handleSendVerification() {
   </div>
 
   <ClientOnly>
-    <ChangePasswordModal ref="changePasswordRef" />
-    <SessionManageModal ref="sessionManageRef" />
-    <BanHistoryModal ref="banHistoryRef" />
-    <PasskeyModal ref="passkeyRef" />
-    <AdminPanelModal ref="adminPanelRef" />
+    <LazyChangePasswordModal ref="changePasswordRef" />
+    <LazySessionManageModal ref="sessionManageRef" />
+    <LazyBanHistoryModal ref="banHistoryRef" />
+    <LazyPasskeyModal ref="passkeyRef" />
+    <LazyAdminPanelModal ref="adminPanelRef" />
   </ClientOnly>
 </template>
 
