@@ -1,8 +1,9 @@
 import { createLogger } from "evlog";
+import type { NitroApp } from "nitropack/types";
 
-export default defineNitroPlugin((nitroApp) => {
+export function initDb(nitroApp: NitroApp) {
   const log = createLogger({ category: "startup" });
-  log.set({ plugin: "03.db", action: "connect" });
+  log.set({ step: "db", action: "connect" });
   getDb();
   getRedisClient();
   log.set({ status: "ok" });
@@ -12,4 +13,4 @@ export default defineNitroPlugin((nitroApp) => {
     await gracefulCloseDB();
     await gracefulCloseRedis();
   });
-});
+}

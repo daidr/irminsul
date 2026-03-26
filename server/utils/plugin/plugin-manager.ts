@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { createLogger } from "evlog";
 import type {
   PluginState,
   PluginRegistryEntry,
@@ -24,6 +25,12 @@ export function getPluginManager(): PluginManager {
 
 export function setPluginManager(manager: PluginManager): void {
   (globalThis as any)[PLUGIN_MANAGER_KEY] = manager;
+}
+
+function emitPluginEvent(action: string, data?: Record<string, unknown>): void {
+  const log = createLogger({ category: "plugin" });
+  log.set({ action, ...data });
+  log.emit();
 }
 
 export class PluginManager {
@@ -58,112 +65,142 @@ export class PluginManager {
   // === Scan & Startup ===
 
   async scan(): Promise<void> {
-    if (!existsSync(this.pluginsDir)) return;
-
-    const dirs = readdirSync(this.pluginsDir, { withFileTypes: true }).filter(
-      (d) => d.isDirectory(),
-    );
-
-    const discovered = new Map<string, PluginState>();
-
-    for (const dir of dirs) {
-      const pluginDir = join(this.pluginsDir, dir.name);
-      const yamlPath = existsSync(join(pluginDir, "plugin.yaml"))
-        ? join(pluginDir, "plugin.yaml")
-        : existsSync(join(pluginDir, "plugin.yml"))
-          ? join(pluginDir, "plugin.yml")
-          : null;
-
-      if (!yamlPath) continue;
-
-      const yamlContent = readFileSync(yamlPath, "utf-8");
-      const result = parsePluginYaml(yamlContent);
-
-      if (!result.ok) {
-        discovered.set(dir.name, {
-          id: dir.name,
-          meta: { name: dir.name, version: "0.0.0", hooks: [] },
-          status: "error",
-          order: 0,
-          error: result.errors.join("; "),
-          dir: pluginDir,
-        });
-        continue;
-      }
-
-      discovered.set(dir.name, {
-        id: dir.name,
-        meta: result.meta,
-        status: "disabled",
-        order: 0,
-        dir: pluginDir,
-      });
-    }
-
-    // Sync with registry
+    // 1. Collect enabled state from DB
     const registry =
       ((getSetting("plugin.system.registry") as PluginRegistryEntry[]) ?? []);
     const registryMap = new Map(registry.map((e) => [e.id, e]));
+    emitPluginEvent("scan:registry_loaded", {
+      count: registry.length,
+      entries: registry.map((e) => ({ id: e.id, enabled: e.enabled, order: e.order })),
+    });
 
-    // Update discovered plugins with registry state
-    let maxOrder = 0;
-    for (const entry of registry) {
-      if (entry.order > maxOrder) maxOrder = entry.order;
-      const plugin = discovered.get(entry.id);
-      if (plugin && plugin.status !== "error") {
-        plugin.order = entry.order;
-        plugin.status = "disabled"; // will be set to enabled on load
-        // Store enabled flag temporarily
-        (plugin as any)._shouldEnable = entry.enabled;
+    // 2. Scan plugin directories for available plugins
+    const discovered = new Map<string, PluginState>();
+
+    if (existsSync(this.pluginsDir)) {
+      const dirs = readdirSync(this.pluginsDir, { withFileTypes: true }).filter(
+        (d) => d.isDirectory(),
+      );
+      let maxOrder = Math.max(0, ...registry.map((e) => e.order));
+
+      for (const dir of dirs) {
+        const pluginDir = join(this.pluginsDir, dir.name);
+        const yamlPath = existsSync(join(pluginDir, "plugin.yaml"))
+          ? join(pluginDir, "plugin.yaml")
+          : existsSync(join(pluginDir, "plugin.yml"))
+            ? join(pluginDir, "plugin.yml")
+            : null;
+
+        if (!yamlPath) continue;
+
+        const yamlContent = readFileSync(yamlPath, "utf-8");
+        const result = parsePluginYaml(yamlContent);
+        const entry = registryMap.get(dir.name);
+
+        if (!result.ok) {
+          const enabled = entry?.enabled ?? false;
+          discovered.set(dir.name, {
+            id: dir.name,
+            meta: { name: dir.name, version: "0.0.0", hooks: [] },
+            enabled,
+            status: "error",
+            order: entry?.order ?? ++maxOrder,
+            error: result.errors.join("; "),
+            dir: pluginDir,
+          });
+          emitPluginEvent("scan:plugin_error", {
+            pluginId: dir.name,
+            error: result.errors.join("; "),
+          });
+          continue;
+        }
+
+        const enabled = entry?.enabled ?? false;
+        discovered.set(dir.name, {
+          id: dir.name,
+          meta: result.meta,
+          enabled,
+          status: "disabled",
+          order: entry?.order ?? ++maxOrder,
+          dir: pluginDir,
+        });
+        emitPluginEvent("scan:plugin_found", {
+          pluginId: dir.name,
+          version: result.meta.version,
+          enabled,
+          isNew: !entry,
+          hooks: result.meta.hooks,
+        });
       }
     }
 
-    // New plugins get next order
-    for (const [id, plugin] of discovered) {
-      if (!registryMap.has(id) && plugin.status !== "error") {
-        maxOrder++;
-        plugin.order = maxOrder;
+    // 3. Remove DB state/config for plugins no longer on disk, detect structural changes
+    let registryChanged = false;
+    for (const entry of registry) {
+      if (!discovered.has(entry.id)) {
+        emitPluginEvent("scan:plugin_removed", { pluginId: entry.id });
+        await deleteSetting(`plugin.custom.${entry.id}.config`);
+        registryChanged = true;
+      }
+    }
+    for (const id of discovered.keys()) {
+      if (!registryMap.has(id)) {
+        registryChanged = true;
       }
     }
 
     this.plugins = discovered;
-    // Registry is saved in start() after plugins are loaded and statuses are correct.
+
+    // Only write registry when structure changed (new/deleted plugins)
+    if (registryChanged) {
+      await this.saveRegistry();
+    }
+
+    emitPluginEvent("scan:complete", {
+      total: discovered.size,
+      enabled: [...discovered.values()].filter((p) => p.enabled).length,
+      errors: [...discovered.values()].filter((p) => p.status === "error").length,
+      registryChanged,
+    });
   }
 
   async start(): Promise<void> {
+    emitPluginEvent("host:starting");
     this.bridge.start();
     this.setHostStatus("running");
 
-    // Load enabled plugins in order
+    // 4. Load enabled plugins in order
     const toLoad = [...this.plugins.values()]
-      .filter((p) => (p as any)._shouldEnable && p.status !== "error")
+      .filter((p) => p.enabled && p.status !== "error")
       .sort((a, b) => a.order - b.order);
+
+    emitPluginEvent("host:started", {
+      pluginsToLoad: toLoad.map((p) => p.id),
+    });
 
     for (const plugin of toLoad) {
       try {
         await this.loadPluginIntoHost(plugin);
+        emitPluginEvent("plugin:loaded", {
+          pluginId: plugin.id,
+          hooks: plugin.meta.hooks,
+        });
       } catch (err: unknown) {
         plugin.status = "error";
         plugin.error = err instanceof Error ? err.message : String(err);
-        // eslint-disable-next-line no-console
-        console.error(`[plugin-manager] Failed to load ${plugin.id}: ${plugin.error}`);
+        emitPluginEvent("plugin:load_failed", {
+          pluginId: plugin.id,
+          error: plugin.error,
+        });
       }
-      delete (plugin as any)._shouldEnable;
-    }
-
-    // Clean up _shouldEnable on remaining
-    for (const plugin of this.plugins.values()) {
-      delete (plugin as any)._shouldEnable;
     }
 
     // Start watcher if enabled
     const watcherEnabled = getSetting("plugin.system.watcher") as boolean;
     if (watcherEnabled !== false) {
       this.startWatcher();
+      emitPluginEvent("watcher:started");
     }
-
-    // Now save registry with correct statuses (enabled plugins have status "enabled")
-    await this.saveRegistry();
 
     // Cleanup expired logs
     const retentionDays =
@@ -178,10 +215,9 @@ export class PluginManager {
     if (!plugin) return { ok: false, error: "Plugin not found" };
     if (plugin.status === "enabled") return { ok: true };
 
-    // If the plugin was just marked disabled (still running in Host), just flip the flag.
-    // Remove from dirty reasons if it was pending restart due to disable.
-    if (plugin.status === "disabled" && this.hookRegistry.get("evlog:enricher").some(h => h.pluginId === id)
-      || this.hookRegistry.get("evlog:drain").some(h => h.pluginId === id)) {
+    // If the plugin was just marked pending_disable (still running in Host), just flip the flag.
+    if (plugin.status === "pending_disable") {
+      plugin.enabled = true;
       plugin.status = "enabled";
       plugin.error = undefined;
       this.dirtyReasons = this.dirtyReasons.filter(
@@ -198,17 +234,16 @@ export class PluginManager {
 
     try {
       await this.loadPluginIntoHost(plugin);
-
-      // Update registry
-      plugin.status = "enabled";
+      plugin.enabled = true;
       plugin.error = undefined;
       await this.saveRegistry();
-
+      emitPluginEvent("plugin:enabled", { pluginId: id });
       return { ok: true };
     } catch (err: unknown) {
       plugin.status = "error";
       plugin.error = err instanceof Error ? err.message : String(err);
       await this.saveRegistry();
+      emitPluginEvent("plugin:enable_failed", { pluginId: id, error: plugin.error });
       return { ok: false, error: plugin.error };
     }
   }
@@ -217,12 +252,14 @@ export class PluginManager {
     const plugin = this.plugins.get(id);
     if (!plugin || plugin.status !== "enabled") return;
 
-    // Just mark as disabled + dirty. The plugin keeps running in the Host
-    // until the admin restarts the Host. Hooks are NOT removed here.
-    plugin.status = "disabled";
+    // Mark as pending_disable + dirty. The plugin keeps running in the Host
+    // until the admin restarts the Host.
+    plugin.enabled = false;
+    plugin.status = "pending_disable";
     this.addDirtyReason(id, "disabled");
 
     await this.saveRegistry();
+    emitPluginEvent("plugin:disabled", { pluginId: id });
   }
 
   async updateConfig(
@@ -301,7 +338,7 @@ export class PluginManager {
 
   async updateOrder(ids: string[]): Promise<void> {
     for (let i = 0; i < ids.length; i++) {
-      const plugin = this.plugins.get(ids[i]);
+      const plugin = this.plugins.get(ids[i]!);
       if (plugin) plugin.order = i + 1;
     }
     await this.saveRegistry();
@@ -310,10 +347,18 @@ export class PluginManager {
   // === Host Management ===
 
   async restartHost(): Promise<void> {
-    // Shutdown existing Host
+    emitPluginEvent("host:restarting");
     await this.bridge.shutdown();
     this.hookRegistry.clear();
     this.setHostStatus("stopped");
+
+    // Finalize pending_disable → disabled
+    for (const plugin of this.plugins.values()) {
+      if (plugin.status === "pending_disable") {
+        emitPluginEvent("plugin:finalize_disable", { pluginId: plugin.id });
+        plugin.status = "disabled";
+      }
+    }
 
     // Create new Host
     this.bridge.start();
@@ -321,23 +366,30 @@ export class PluginManager {
 
     // Reload all enabled plugins
     const toLoad = [...this.plugins.values()]
-      .filter((p) => p.status === "enabled")
+      .filter((p) => p.enabled && p.status !== "error")
       .sort((a, b) => a.order - b.order);
 
     for (const plugin of toLoad) {
       try {
         await this.loadPluginIntoHost(plugin);
+        emitPluginEvent("plugin:reloaded", { pluginId: plugin.id });
       } catch (err: unknown) {
         plugin.status = "error";
         plugin.error = err instanceof Error ? err.message : String(err);
-        // eslint-disable-next-line no-console
-        console.error(`[plugin-manager] Failed to reload ${plugin.id}: ${plugin.error}`);
+        emitPluginEvent("plugin:reload_failed", {
+          pluginId: plugin.id,
+          error: plugin.error,
+        });
       }
     }
 
     // Clear dirty state
     this.dirtyReasons = [];
     this.notifyStatusChange();
+    emitPluginEvent("host:restarted", {
+      loaded: toLoad.filter((p) => p.status === "enabled").length,
+      failed: toLoad.filter((p) => p.status === "error").length,
+    });
   }
 
   getPlugins(): PluginState[] {
@@ -447,14 +499,16 @@ export class PluginManager {
   // === Cleanup ===
 
   async destroy(): Promise<void> {
+    emitPluginEvent("host:shutting_down");
     this.watcher?.stop();
     await this.bridge.shutdown();
     this.logManager.destroy();
     this.hookRegistry.clear();
     for (const controller of this.statusSubscribers) {
-      try { controller.close(); } catch {}
+      try { controller.close(); } catch { }
     }
     this.statusSubscribers.clear();
+    emitPluginEvent("host:shutdown");
   }
 
   // === Watcher Management ===
@@ -520,8 +574,6 @@ export class PluginManager {
 
   private handleCrash(error: string): void {
     const now = Date.now();
-    // eslint-disable-next-line no-console
-    console.error(`[plugin-manager] Host crashed: ${error}`);
 
     this.setHostStatus("crashed");
     this.hookRegistry.clear();
@@ -534,20 +586,26 @@ export class PluginManager {
     }
     this.lastCrashTime = now;
 
+    emitPluginEvent("host:crashed", {
+      error,
+      crashCount: this.crashCount,
+      willRestart: this.crashCount <= 3,
+    });
+
     if (this.crashCount > 3) {
-      // eslint-disable-next-line no-console
-      console.error("[plugin-manager] Too many crashes, giving up auto-restart");
+      emitPluginEvent("host:crash_limit_reached", { crashCount: this.crashCount });
       return;
     }
 
     // Auto-restart after delay
     setTimeout(async () => {
       try {
+        emitPluginEvent("host:crash_recovery_start", { attempt: this.crashCount });
         this.bridge.start();
         this.setHostStatus("running");
 
         const toLoad = [...this.plugins.values()]
-          .filter((p) => p.status === "enabled")
+          .filter((p) => p.enabled)
           .sort((a, b) => a.order - b.order);
 
         for (const plugin of toLoad) {
@@ -561,9 +619,14 @@ export class PluginManager {
 
         this.dirtyReasons = [];
         this.notifyStatusChange();
+        emitPluginEvent("host:crash_recovery_done", {
+          loaded: toLoad.filter((p) => p.status === "enabled").length,
+          failed: toLoad.filter((p) => p.status === "error").length,
+        });
       } catch (restartErr) {
-        // eslint-disable-next-line no-console
-        console.error(`[plugin-manager] Recovery failed: ${restartErr}`);
+        emitPluginEvent("host:crash_recovery_failed", {
+          error: restartErr instanceof Error ? restartErr.message : String(restartErr),
+        });
       }
     }, 1000);
   }
@@ -614,10 +677,13 @@ export class PluginManager {
     const existing = this.plugins.get(pluginId);
     const order = existing?.order ?? this.plugins.size + 1;
 
+    const enabled = existing?.enabled ?? false;
+
     if (!result.ok) {
       this.plugins.set(pluginId, {
         id: pluginId,
         meta: { name: pluginId, version: "0.0.0", hooks: [] },
+        enabled,
         status: "error",
         order,
         error: result.errors.join("; "),
@@ -627,6 +693,7 @@ export class PluginManager {
       this.plugins.set(pluginId, {
         id: pluginId,
         meta: result.meta,
+        enabled,
         status: "disabled",
         order,
         dir: pluginDir,
@@ -653,10 +720,9 @@ export class PluginManager {
 
   private async saveRegistry(): Promise<void> {
     const registry: PluginRegistryEntry[] = [...this.plugins.values()]
-      .filter((p) => p.status !== "error" || p.meta.hooks.length > 0)
       .map((p) => ({
         id: p.id,
-        enabled: p.status === "enabled",
+        enabled: p.enabled,
         order: p.order,
       }));
     await setSetting(

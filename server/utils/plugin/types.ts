@@ -74,7 +74,7 @@ export type Condition =
 
 // ===== Plugin Runtime State =====
 
-export type PluginStatus = "disabled" | "enabled" | "error" | "loading";
+export type PluginStatus = "disabled" | "enabled" | "error" | "loading" | "pending_disable";
 
 export interface PluginRegistryEntry {
   id: string;
@@ -85,6 +85,7 @@ export interface PluginRegistryEntry {
 export interface PluginState {
   id: string;
   meta: PluginMeta;
+  enabled: boolean;
   status: PluginStatus;
   order: number;
   error?: string;
@@ -141,7 +142,8 @@ export type WorkerToMainMessage =
       logType: "event" | "console";
       message?: string;
       data?: Record<string, unknown>;
-    };
+    }
+  | { type: "shutdown:done" };
 
 // ===== Plugin Log Entry =====
 

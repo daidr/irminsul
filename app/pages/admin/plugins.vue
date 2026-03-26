@@ -55,7 +55,7 @@ async function handlePluginAction() {
   <div v-if="user?.isAdmin" class="flex gap-0 mx-4 my-6" style="min-height: calc(100dvh - 200px)">
     <!-- 左侧面板 -->
     <div class="w-[300px] shrink-0 border border-base-300 bg-base-200 flex flex-col">
-      <AdminPluginHostStatus class="p-3 border-b border-base-300" />
+      <AdminPluginHostStatus class="p-3 border-b border-base-300" @restarted="fetchPlugins" />
       <div class="flex-1 overflow-y-auto">
         <AdminPluginList
           v-if="!loading"

@@ -25,6 +25,15 @@ export class PluginBridge {
   private readonly onCrash: PluginBridgeOptions["onCrash"];
   private readonly hookTimeoutMs: number;
 
+  private boundOnMessage = (e: MessageEvent<WorkerToMainMessage>) =>
+    this.handleMessage(e.data);
+  private boundOnError = (e: ErrorEvent) => {
+    if (!this.shuttingDown) this.handleCrash(e.message ?? "Worker error");
+  };
+  private boundOnClose = () => {
+    if (this.worker && !this.shuttingDown) this.handleCrash("Worker closed unexpectedly");
+  };
+
   constructor(opts: PluginBridgeOptions) {
     this.onLog = opts.onLog;
     this.onHookRegister = opts.onHookRegister;
@@ -39,14 +48,9 @@ export class PluginBridge {
       smol: true,
     });
     (this.worker as any).unref();
-    this.worker.onmessage = (e: MessageEvent<WorkerToMainMessage>) =>
-      this.handleMessage(e.data);
-    this.worker.onerror = (e: ErrorEvent) => {
-      if (!this.shuttingDown) this.handleCrash(e.message ?? "Worker error");
-    };
-    this.worker.addEventListener("close", () => {
-      if (this.worker && !this.shuttingDown) this.handleCrash("Worker closed unexpectedly");
-    });
+    this.worker.addEventListener("message", this.boundOnMessage);
+    this.worker.addEventListener("error", this.boundOnError);
+    this.worker.addEventListener("close", this.boundOnClose);
     this.send({ type: "init" });
   }
 
@@ -105,14 +109,17 @@ export class PluginBridge {
     this.shuttingDown = true;
     this.send({ type: "shutdown" });
     await new Promise<void>((resolve) => {
-      const timer = setTimeout(() => {
-        this.terminate();
+      const timeout = setTimeout(() => {
+        this.worker?.removeEventListener("message", onDone);
         resolve();
-      }, 6000);
-      this.worker!.addEventListener("close", () => {
-        clearTimeout(timer);
+      }, 10_000);
+      const onDone = (e: MessageEvent<WorkerToMainMessage>) => {
+        if (e.data.type !== "shutdown:done") return;
+        clearTimeout(timeout);
+        this.worker?.removeEventListener("message", onDone);
         resolve();
-      });
+      };
+      this.worker!.addEventListener("message", onDone);
     });
     this.terminate();
   }
@@ -120,8 +127,11 @@ export class PluginBridge {
   terminate(): void {
     if (!this.worker) return;
     const w = this.worker;
-    // Set null BEFORE terminate to prevent close event from triggering handleCrash
     this.worker = null;
+    // Remove listeners before terminate to prevent stale event firing
+    w.removeEventListener("message", this.boundOnMessage);
+    w.removeEventListener("error", this.boundOnError);
+    w.removeEventListener("close", this.boundOnClose);
     // Reject all pending calls
     for (const [, pending] of this.pendingCalls) {
       clearTimeout(pending.timer);

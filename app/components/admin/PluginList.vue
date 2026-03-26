@@ -13,6 +13,7 @@ const statusBadge = (status: string) => {
   switch (status) {
     case "enabled": return { class: "badge-success", label: "已启用" };
     case "disabled": return { class: "badge-neutral", label: "已禁用" };
+    case "pending_disable": return { class: "badge-warning", label: "待重启" };
     case "error": return { class: "badge-error", label: "错误" };
     case "loading": return { class: "badge-info", label: "加载中" };
     default: return { class: "badge-neutral", label: status };

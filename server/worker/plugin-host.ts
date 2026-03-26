@@ -26,7 +26,7 @@ interface MainToWorkerMessage {
 }
 
 interface WorkerToMainMessage {
-  type: "plugin:loaded" | "hook:result" | "hook:register" | "log";
+  type: "plugin:loaded" | "hook:result" | "hook:register" | "log" | "shutdown:done";
   pluginId?: string | null;
   ok?: boolean;
   error?: string;
@@ -290,7 +290,8 @@ self.onmessage = async (event: MessageEvent<MainToWorkerMessage>) => {
           }
         }
       }
-      // Let the main thread terminate us
+      // Notify main thread that cleanup is done
+      send({ type: "shutdown:done" });
       break;
     }
   }

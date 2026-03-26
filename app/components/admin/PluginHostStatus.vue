@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const emit = defineEmits<{ restarted: [] }>();
+
 const status = ref<string | null>(null);
 const dirtyReasons = ref<any[]>([]);
 const restarting = ref(false);
@@ -31,6 +33,7 @@ async function restartHost() {
   restarting.value = true;
   try {
     await $fetch("/api/admin/plugins/host/restart", { method: "POST" });
+    emit("restarted");
   } catch {} finally {
     restarting.value = false;
   }

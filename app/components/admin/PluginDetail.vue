@@ -29,11 +29,12 @@ async function toggleEnabled() {
   if (!plugin.value) return;
   toggling.value = true;
   try {
+    // pending_disable → re-enable (cancel the pending disable)
     const action = plugin.value.status === "enabled" ? "disable" : "enable";
     await $fetch(`/api/admin/plugins/${props.pluginId}/${action}`, { method: "POST" });
     await fetchDetail();
     emit("action");
-  } catch {} finally {
+  } catch { } finally {
     toggling.value = false;
   }
 }
@@ -55,12 +56,8 @@ async function toggleEnabled() {
         <h3 class="text-lg font-bold">{{ plugin.name }}</h3>
         <span class="text-xs text-base-content/50">v{{ plugin.version }}</span>
       </div>
-      <button
-        class="btn btn-sm"
-        :class="plugin.status === 'enabled' ? 'btn-warning' : 'btn-success'"
-        :disabled="toggling || plugin.status === 'error'"
-        @click="toggleEnabled"
-      >
+      <button class="btn btn-sm" :class="plugin.status === 'enabled' ? 'btn-warning' : 'btn-success'"
+        :disabled="toggling || plugin.status === 'error'" @click="toggleEnabled">
         <span v-if="toggling" class="loading loading-spinner loading-xs" />
         {{ plugin.status === "enabled" ? "禁用" : "启用" }}
       </button>
@@ -76,42 +73,21 @@ async function toggleEnabled() {
     <!-- Tab 栏 -->
     <div class="px-4 pt-3">
       <div class="join w-full">
-        <button
-          class="btn btn-sm join-item flex-1"
-          :class="activeTab === 'config' ? 'btn-active' : ''"
-          @click="activeTab = 'config'"
-        >配置</button>
-        <button
-          class="btn btn-sm join-item flex-1"
-          :class="activeTab === 'logs' ? 'btn-active' : ''"
-          @click="activeTab = 'logs'"
-        >日志</button>
-        <button
-          class="btn btn-sm join-item flex-1"
-          :class="activeTab === 'info' ? 'btn-active' : ''"
-          @click="activeTab = 'info'"
-        >信息</button>
+        <button class="btn btn-sm join-item flex-1" :class="activeTab === 'config' ? 'btn-active' : ''"
+          @click="activeTab = 'config'">配置</button>
+        <button class="btn btn-sm join-item flex-1" :class="activeTab === 'logs' ? 'btn-active' : ''"
+          @click="activeTab = 'logs'">日志</button>
+        <button class="btn btn-sm join-item flex-1" :class="activeTab === 'info' ? 'btn-active' : ''"
+          @click="activeTab = 'info'">信息</button>
       </div>
     </div>
 
     <!-- Tab 内容 -->
     <div class="flex-1 overflow-y-auto p-4">
-      <AdminPluginConfigTab
-        v-show="activeTab === 'config'"
-        :plugin-id="plugin.id"
-        :config-schema="plugin.configSchema"
-        :config="plugin.config"
-        @saved="fetchDetail(); emit('action')"
-      />
-      <AdminPluginLogTab
-        v-show="activeTab === 'logs'"
-        :plugin-id="plugin.id"
-        :active="activeTab === 'logs'"
-      />
-      <AdminPluginInfoTab
-        v-show="activeTab === 'info'"
-        :plugin="plugin"
-      />
+      <AdminPluginConfigTab v-show="activeTab === 'config'" :plugin-id="plugin.id" :config-schema="plugin.configSchema"
+        :config="plugin.config" @saved="fetchDetail(); emit('action')" />
+      <AdminPluginLogTab v-show="activeTab === 'logs'" :plugin-id="plugin.id" :active="activeTab === 'logs'" />
+      <AdminPluginInfoTab v-show="activeTab === 'info'" :plugin="plugin" />
     </div>
   </div>
 </template>

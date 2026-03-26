@@ -1,8 +1,8 @@
 import { createLogger } from "evlog";
 
-export default defineNitroPlugin(() => {
+export function initRuntimeCheck() {
   const log = createLogger({ category: "startup" });
-  log.set({ plugin: "00.runtime-check" });
+  log.set({ step: "runtime-check" });
 
   if (typeof Bun === "undefined") {
     log.set({ error: "Irminsul requires Bun runtime" });
@@ -24,4 +24,4 @@ export default defineNitroPlugin(() => {
 
   log.set({ status: "ok" });
   log.emit();
-});
+}
