@@ -5,5 +5,5 @@ const { data: pageData } = await useAsyncData("index-data", () => $fetch("/api/p
 
 <template>
   <LazyHomePage v-if="user?.userId" :page-data="pageData" />
-  <LandingPage v-else />
+  <LazyLandingPage v-else />
 </template>

@@ -12,32 +12,20 @@ const activeTab = ref<ViewTab>("model");
       <!-- 标签页切换 -->
       <div class="basis-full md:basis-auto"></div>
       <div class="join">
-        <button
-          class="btn btn-xs join-item"
-          :class="activeTab === 'model' ? 'btn-active' : ''"
-          @click="activeTab = 'model'"
-        >
+        <button class="btn btn-xs join-item" :class="activeTab === 'model' ? 'btn-active' : ''"
+          @click="activeTab = 'model'">
           3D 模型
         </button>
-        <button
-          class="btn btn-xs join-item"
-          :class="activeTab === 'orthographic' ? 'btn-active' : ''"
-          @click="activeTab = 'orthographic'"
-        >
+        <button class="btn btn-xs join-item" :class="activeTab === 'orthographic' ? 'btn-active' : ''"
+          @click="activeTab = 'orthographic'">
           多面视图
         </button>
-        <button
-          class="btn btn-xs join-item"
-          :class="activeTab === 'raw' ? 'btn-active' : ''"
-          @click="activeTab = 'raw'"
-        >
+        <button class="btn btn-xs join-item" :class="activeTab === 'raw' ? 'btn-active' : ''"
+          @click="activeTab = 'raw'">
           原始图片
         </button>
-        <button
-          class="btn btn-xs join-item"
-          :class="activeTab === 'render' ? 'btn-active' : ''"
-          @click="activeTab = 'render'"
-        >
+        <button class="btn btn-xs join-item" :class="activeTab === 'render' ? 'btn-active' : ''"
+          @click="activeTab = 'render'">
           渲染图
         </button>
       </div>
@@ -45,9 +33,9 @@ const activeTab = ref<ViewTab>("model");
 
     <SkinPreviewModel v-if="activeTab === 'model'" />
     <ClientOnly>
-      <SkinPreviewOrtho v-if="activeTab === 'orthographic'" />
-      <SkinPreviewRaw v-if="activeTab === 'raw'" />
-      <SkinPreviewRender v-if="activeTab === 'render'" />
+      <LazySkinPreviewOrtho v-if="activeTab === 'orthographic'" />
+      <LazySkinPreviewRaw v-if="activeTab === 'raw'" />
+      <LazySkinPreviewRender v-if="activeTab === 'render'" />
     </ClientOnly>
   </div>
 </template>
