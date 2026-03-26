@@ -13,9 +13,9 @@ interface PasskeyItem {
 const dialogRef = useTemplateRef<HTMLDialogElement>("dialogRef");
 
 const passkeys = ref<PasskeyItem[]>([]);
+const toast = useToast();
 const loading = ref(false);
 const actionLoading = ref<string | null>(null);
-const errorMsg = ref("");
 
 // Rename state
 const renamingId = ref<string | null>(null);
@@ -29,7 +29,6 @@ function formatTime(iso: string): string {
 
 async function loadPasskeys() {
   loading.value = true;
-  errorMsg.value = "";
   try {
     const result = await $fetch<{ success: boolean; passkeys: PasskeyItem[] }>("/api/passkey/list");
     if (result.success) passkeys.value = result.passkeys;
@@ -40,7 +39,6 @@ async function loadPasskeys() {
 
 async function handleAdd() {
   actionLoading.value = "add";
-  errorMsg.value = "";
   try {
     const startResult = await $fetch<{ success: boolean; options?: any; error?: string }>(
       "/api/passkey/register-options",
@@ -49,7 +47,7 @@ async function handleAdd() {
       },
     );
     if (!startResult.success || !startResult.options) {
-      errorMsg.value = startResult.error || "获取注册选项失败";
+      toast.error(startResult.error || "获取注册选项失败");
       return;
     }
 
@@ -58,7 +56,7 @@ async function handleAdd() {
       credential = await startRegistration({ optionsJSON: startResult.options });
     } catch (e: any) {
       if (e.name === "NotAllowedError") return; // User cancelled
-      errorMsg.value = "浏览器验证失败";
+      toast.error("浏览器验证失败");
       return;
     }
 
@@ -70,7 +68,7 @@ async function handleAdd() {
       },
     );
     if (!finishResult.success) {
-      errorMsg.value = finishResult.error || "注册失败";
+      toast.error(finishResult.error || "注册失败");
       return;
     }
 
@@ -87,14 +85,13 @@ function startRename(pk: PasskeyItem) {
 
 async function confirmRename(credentialId: string) {
   actionLoading.value = credentialId;
-  errorMsg.value = "";
   try {
     const result = await $fetch<{ success: boolean; error?: string }>("/api/passkey/rename", {
       method: "POST",
       body: { credentialId, newLabel: renameValue.value },
     });
     if (!result.success) {
-      errorMsg.value = result.error || "重命名失败";
+      toast.error(result.error || "重命名失败");
       return;
     }
     renamingId.value = null;
@@ -110,14 +107,13 @@ function cancelRename() {
 
 async function handleDelete(credentialId: string) {
   actionLoading.value = credentialId;
-  errorMsg.value = "";
   try {
     const result = await $fetch<{ success: boolean; error?: string }>("/api/passkey/delete", {
       method: "POST",
       body: { credentialId },
     });
     if (!result.success) {
-      errorMsg.value = result.error || "删除失败";
+      toast.error(result.error || "删除失败");
       return;
     }
     await loadPasskeys();
@@ -128,7 +124,6 @@ async function handleDelete(credentialId: string) {
 
 function open() {
   passkeys.value = [];
-  errorMsg.value = "";
   renamingId.value = null;
   dialogRef.value?.showModal();
   loadPasskeys();
@@ -155,11 +150,6 @@ defineExpose({ open });
         <p class="mt-5 text-[13px] leading-relaxed opacity-50">
           管理你的通行密钥，用于快速安全登录。
         </p>
-
-        <!-- Error -->
-        <div v-if="errorMsg" class="mt-3 alert alert-error alert-soft text-sm">
-          <span>{{ errorMsg }}</span>
-        </div>
 
         <!-- Loading -->
         <div v-if="loading" class="mt-5 flex justify-center py-8">

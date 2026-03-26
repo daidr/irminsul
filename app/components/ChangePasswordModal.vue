@@ -6,8 +6,8 @@ const dialogRef = useTemplateRef<HTMLDialogElement>("dialogRef");
 const oldPassword = ref("");
 const newPassword = ref("");
 const confirmPassword = ref("");
+const toast = useToast();
 const altchaPayload = ref("");
-const errorMsg = ref("");
 const successMsg = ref("");
 const isLoading = ref(false);
 const altchaRef = ref<InstanceType<typeof AltchaField> | null>(null);
@@ -33,7 +33,6 @@ function resetForm() {
   newPassword.value = "";
   confirmPassword.value = "";
   altchaPayload.value = "";
-  errorMsg.value = "";
   successMsg.value = "";
   isLoading.value = false;
   altchaRef.value?.reset();
@@ -45,10 +44,8 @@ function open() {
 }
 
 async function handleSubmit() {
-  errorMsg.value = "";
-
   if (!altchaPayload.value) {
-    errorMsg.value = "请完成人机验证";
+    toast.error("请完成人机验证");
     return;
   }
 
@@ -69,11 +66,11 @@ async function handleSubmit() {
         navigateTo("/login");
       }, 1500);
     } else {
-      errorMsg.value = result.error || "修改失败";
+      toast.error(result.error || "修改失败");
       altchaRef.value?.reset();
     }
   } catch {
-    errorMsg.value = "网络错误，请稍后重试";
+    toast.error("网络错误，请稍后重试");
   } finally {
     isLoading.value = false;
   }
@@ -99,11 +96,6 @@ defineExpose({ open });
         <p class="mt-2 text-[13px] leading-relaxed opacity-60">
           修改密码后你可能需要重新登录你的游戏
         </p>
-
-        <!-- Error message -->
-        <div v-if="errorMsg" role="alert" class="alert alert-error alert-soft mt-6">
-          <span>{{ errorMsg }}</span>
-        </div>
 
         <!-- Success message -->
         <div v-if="successMsg" role="alert" class="alert alert-success alert-soft mt-6">
