@@ -8,9 +8,9 @@ const activeTab = ref<TextureTab>("skin");
 const selectedFile = ref<File | null>(null);
 const previewUrl = ref<string | null>(null);
 const isDragging = ref(false);
+const toast = useToast();
 const saving = ref(false);
 const deleting = ref(false);
-const error = ref("");
 
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const confirmDialogRef = useTemplateRef<HTMLDialogElement>("confirmDialogRef");
@@ -68,7 +68,6 @@ function resetSelection() {
   }
   selectedFile.value = null;
   previewUrl.value = null;
-  error.value = "";
   if (fileInputRef.value) {
     fileInputRef.value.value = "";
   }
@@ -114,17 +113,15 @@ async function validateDimensions(file: File): Promise<string | null> {
 }
 
 async function handleFile(file: File) {
-  error.value = "";
-
   const typeErr = validateFile(file);
   if (typeErr) {
-    error.value = typeErr;
+    toast.error(typeErr);
     return;
   }
 
   const dimErr = await validateDimensions(file);
   if (dimErr) {
-    error.value = dimErr;
+    toast.error(dimErr);
     return;
   }
 
@@ -135,7 +132,6 @@ async function handleFile(file: File) {
   selectedFile.value = file;
   const url = URL.createObjectURL(file);
   previewUrl.value = url;
-  error.value = "";
   if (fileInputRef.value) {
     fileInputRef.value.value = "";
   }
@@ -180,7 +176,6 @@ function cleanupFileState() {
 async function save() {
   if (!isDirty.value) return;
   saving.value = true;
-  error.value = "";
 
   try {
     if (selectedFile.value) {
@@ -207,7 +202,7 @@ async function save() {
         }
         cleanupFileState();
       } else {
-        error.value = result.error ?? "上传失败";
+        toast.error(result.error ?? "上传失败");
       }
     } else if (isModelDirty.value) {
       const result = await $fetch<{ success: boolean; error?: string }>("/api/user/skin-model", {
@@ -217,11 +212,11 @@ async function save() {
       if (result.success) {
         profileStore.setSkinSlim(selectedModelType.value === 1);
       } else {
-        error.value = result.error ?? "保存失败";
+        toast.error(result.error ?? "保存失败");
       }
     }
   } catch {
-    error.value = "网络错误";
+    toast.error("网络错误");
   } finally {
     saving.value = false;
   }
@@ -229,7 +224,6 @@ async function save() {
 
 async function deleteTexture() {
   deleting.value = true;
-  error.value = "";
 
   try {
     const result = await $fetch<{ success: boolean; fallbackSkinHash?: string; error?: string }>(
@@ -247,10 +241,10 @@ async function deleteTexture() {
       }
       resetSelection();
     } else {
-      error.value = result.error ?? "删除失败";
+      toast.error(result.error ?? "删除失败");
     }
   } catch {
-    error.value = "网络错误";
+    toast.error("网络错误");
   } finally {
     deleting.value = false;
   }
@@ -370,9 +364,6 @@ function cancelSwitchTab() {
         </button>
       </div>
     </div>
-
-    <!-- 错误提示 -->
-    <p v-if="error" class="mt-3 text-xs text-error">{{ error }}</p>
 
     <!-- 违规内容警告 -->
     <!-- <div class="mt-5 flex items-start gap-2 bg-error/10 p-2.5 px-3">

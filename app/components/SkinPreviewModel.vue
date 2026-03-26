@@ -8,7 +8,7 @@ type BackEquipment = "none" | "cape" | "elytra";
 const animationType = ref<AnimationType>("walk");
 const autoRotate = ref(true);
 const paused = ref(false);
-const backEquipment = ref<BackEquipment>("none");
+const backEquipment = ref<BackEquipment>("cape");
 </script>
 
 <template>
@@ -16,7 +16,7 @@ const backEquipment = ref<BackEquipment>("none");
     <ClientOnlySkinViewer
       v-if="skinUrl"
       :skin="skinUrl"
-      :cape="capeUrl ?? undefined"
+      :cape="capeUrl ?? null"
       :slim="effectiveSkinSlim ?? false"
       :zoom="38"
       :enable-rotate="true"
