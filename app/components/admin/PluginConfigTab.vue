@@ -12,6 +12,7 @@ const formData = ref<Record<string, unknown>>({});
 const snapshot = ref<Record<string, unknown>>({});
 const saving = ref(false);
 const errors = ref<Record<string, string>>({});
+const toast = useToast();
 
 // 从 config 初始化表单数据，对缺失字段应用默认值
 function resolveDefault(field: any, currentData: Record<string, unknown>): unknown {
@@ -107,7 +108,8 @@ async function save() {
     if (err?.data?.data) {
       errors.value = err.data.data;
     } else {
-      errors.value = { _general: err?.data?.message ?? "保存失败" };
+      errors.value = {};
+      toast.error(err?.data?.message ?? "保存失败");
     }
   } finally {
     saving.value = false;
@@ -210,10 +212,6 @@ async function save() {
         </div>
       </div>
     </template>
-
-    <div v-if="errors._general" role="alert" class="alert alert-error alert-soft mt-2">
-      <span>{{ errors._general }}</span>
-    </div>
 
     <div class="mt-3 flex justify-end">
       <button class="btn btn-primary btn-sm" :disabled="!dirty || saving" @click="save">

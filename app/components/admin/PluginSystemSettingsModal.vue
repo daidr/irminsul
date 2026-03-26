@@ -4,7 +4,7 @@ const watcher = ref(true);
 const logBufferSize = ref(200);
 const logRetentionDays = ref(7);
 const saving = ref(false);
-const error = ref("");
+const toast = useToast();
 const loading = ref(true);
 
 async function load() {
@@ -21,7 +21,6 @@ async function load() {
 
 async function save() {
   saving.value = true;
-  error.value = "";
   try {
     await $fetch("/api/admin/plugins/settings", {
       method: "PUT",
@@ -33,7 +32,7 @@ async function save() {
     });
     dialogRef.value?.close();
   } catch (err: any) {
-    error.value = err?.data?.message ?? "保存失败";
+    toast.error(err?.data?.message ?? "保存失败");
   } finally {
     saving.value = false;
   }
@@ -78,10 +77,6 @@ defineExpose({ open });
             <legend class="fieldset-legend text-xs">日志文件保留天数</legend>
             <input v-model.number="logRetentionDays" type="number" class="input input-bordered w-full" min="1" max="365" />
           </fieldset>
-
-          <div v-if="error" role="alert" class="alert alert-error alert-soft">
-            <span>{{ error }}</span>
-          </div>
 
           <div class="flex justify-end">
             <button class="btn btn-primary btn-sm" :disabled="saving" @click="save">
