@@ -22,4 +22,7 @@ watch(
   <NuxtLayout>
     <NuxtPage />
   </NuxtLayout>
+  <ClientOnly>
+    <ToastContainer />
+  </ClientOnly>
 </template>
