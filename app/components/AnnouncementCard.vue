@@ -6,7 +6,7 @@ defineProps<{
 
 <template>
   <div class="border border-base-300 bg-base-200 p-5">
-    <h2 class="text-lg">欢迎来到 Irminsul</h2>
+    <h1 class="text-lg">欢迎来到 Irminsul</h1>
     <div
       v-if="announcement"
       class="announcement-content mt-3 text-sm opacity-60"
