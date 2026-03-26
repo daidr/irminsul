@@ -11,8 +11,8 @@ const { data: tokenData } = await useAsyncData("reset-token", () =>
 const password = ref("");
 const confirmPassword = ref("");
 const altchaPayload = ref("");
-const errorMsg = ref("");
 const successMsg = ref("");
+const toast = useToast();
 const isLoading = ref(false);
 const altchaRef = ref<InstanceType<typeof AltchaField> | null>(null);
 const confirmPasswordRef = useTemplateRef<HTMLInputElement>("confirmPasswordRef");
@@ -28,11 +28,10 @@ watch([password, confirmPassword], () => {
 });
 
 async function handleSubmit() {
-  errorMsg.value = "";
   successMsg.value = "";
 
   if (!altchaPayload.value) {
-    errorMsg.value = "请完成人机验证";
+    toast.error("请完成人机验证");
     return;
   }
 
@@ -51,11 +50,11 @@ async function handleSubmit() {
       successMsg.value = "密码重置成功，正在跳转...";
       await navigateTo("/login");
     } else {
-      errorMsg.value = result.error || "重置失败";
+      toast.error(result.error || "重置失败");
       altchaRef.value?.reset();
     }
   } catch {
-    errorMsg.value = "网络错误，请稍后重试";
+    toast.error("网络错误，请稍后重试");
   } finally {
     isLoading.value = false;
   }
@@ -70,11 +69,6 @@ async function handleSubmit() {
       @submit.prevent="handleSubmit"
     >
       <h1 class="text-4xl text-base-content text-center">重置密码</h1>
-
-      <!-- Error message -->
-      <div v-if="errorMsg" role="alert" class="alert alert-error alert-soft">
-        <span>{{ errorMsg }}</span>
-      </div>
 
       <!-- Success message -->
       <div v-if="successMsg" role="alert" class="alert alert-success alert-soft">

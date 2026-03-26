@@ -6,13 +6,12 @@ const { data: tokenData } = await useAsyncData("verify-token", () =>
   $fetch("/api/page-data/verify-email", { query: { token: route.query.token } }),
 );
 
-const errorMsg = ref("");
 const successMsg = ref("");
 const isLoading = ref(false);
+const toast = useToast();
 let redirectTimer: ReturnType<typeof setTimeout> | undefined;
 
 async function handleConfirm() {
-  errorMsg.value = "";
   isLoading.value = true;
   try {
     const result = await $fetch("/api/auth/verify-email", {
@@ -25,10 +24,10 @@ async function handleConfirm() {
         navigateTo("/");
       }, 1500);
     } else {
-      errorMsg.value = result.error || "验证失败";
+      toast.error(result.error || "验证失败");
     }
   } catch {
-    errorMsg.value = "网络错误，请稍后重试";
+    toast.error("网络错误，请稍后重试");
   } finally {
     isLoading.value = false;
   }
@@ -45,17 +44,12 @@ onBeforeUnmount(() => {
     <div v-if="tokenData?.tokenValid" class="w-full max-w-105 flex flex-col gap-7 items-center">
       <h1 class="text-4xl text-base-content text-center">邮箱验证</h1>
 
-      <!-- Error message -->
-      <div v-if="errorMsg" role="alert" class="alert alert-error alert-soft w-full">
-        <span>{{ errorMsg }}</span>
-      </div>
-
       <!-- Success message -->
       <div v-if="successMsg" role="alert" class="alert alert-success alert-soft w-full">
         <span>{{ successMsg }}</span>
       </div>
 
-      <template v-if="!successMsg && !errorMsg">
+      <template v-if="!successMsg">
         <p class="text-base-content/70 text-center">点击下方按钮确认验证你的邮箱。</p>
         <button
           class="btn btn-primary w-full text-base"

@@ -5,21 +5,20 @@ useHead({ title: "忘记密码" });
 
 const email = ref("");
 const altchaPayload = ref("");
-const errorMsg = ref("");
 const successMsg = ref("");
+const toast = useToast();
 const isLoading = ref(false);
 const altchaRef = ref<InstanceType<typeof AltchaField> | null>(null);
 
 async function handleSubmit() {
-  errorMsg.value = "";
   successMsg.value = "";
 
   if (!email.value.trim()) {
-    errorMsg.value = "请输入邮箱";
+    toast.error("请输入邮箱");
     return;
   }
   if (!altchaPayload.value) {
-    errorMsg.value = "请完成人机验证";
+    toast.error("请完成人机验证");
     return;
   }
 
@@ -36,11 +35,11 @@ async function handleSubmit() {
       successMsg.value =
         result.message || "如果该邮箱已注册，我们已发送密码重置链接，请检查收件箱。";
     } else {
-      errorMsg.value = result.error || "操作失败";
+      toast.error(result.error || "操作失败");
       altchaRef.value?.reset();
     }
   } catch {
-    errorMsg.value = "网络错误，请稍后重试";
+    toast.error("网络错误，请稍后重试");
   } finally {
     isLoading.value = false;
   }
@@ -51,11 +50,6 @@ async function handleSubmit() {
   <div class="flex justify-center items-center px-4 min-h-dvh -mt-18 pt-22 pb-8 bg-base-100">
     <form class="w-full max-w-105 flex flex-col gap-7" @submit.prevent="handleSubmit">
       <h1 class="text-4xl text-base-content text-center">忘记密码</h1>
-
-      <!-- Error message -->
-      <div v-if="errorMsg" role="alert" class="alert alert-error alert-soft">
-        <span>{{ errorMsg }}</span>
-      </div>
 
       <!-- Success message -->
       <div v-if="successMsg" role="alert" class="alert alert-success alert-soft">

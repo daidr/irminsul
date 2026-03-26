@@ -11,23 +11,21 @@ useHead({ title: "登录" });
 const email = ref("");
 const password = ref("");
 const altchaPayload = ref("");
-const errorMsg = ref("");
 const isLoading = ref(false);
+const toast = useToast();
 const altchaRef = ref<InstanceType<typeof AltchaField> | null>(null);
 
 async function handleSubmit() {
-  errorMsg.value = "";
-
   if (!email.value.trim()) {
-    errorMsg.value = "请输入邮箱";
+    toast.error("请输入邮箱");
     return;
   }
   if (!password.value) {
-    errorMsg.value = "请输入密码";
+    toast.error("请输入密码");
     return;
   }
   if (!altchaPayload.value) {
-    errorMsg.value = "请完成人机验证";
+    toast.error("请完成人机验证");
     return;
   }
 
@@ -45,11 +43,11 @@ async function handleSubmit() {
       await refreshNuxtData("current-user");
       await navigateTo("/");
     } else {
-      errorMsg.value = result.error || "登录失败";
+      toast.error(result.error || "登录失败");
       altchaRef.value?.reset();
     }
   } catch {
-    errorMsg.value = "网络错误，请稍后重试";
+    toast.error("网络错误，请稍后重试");
   } finally {
     isLoading.value = false;
   }
@@ -63,7 +61,6 @@ async function handlePasskeyResult(
   challengeId: string,
 ) {
   passkeyLoading.value = true;
-  errorMsg.value = "";
   try {
     const result = await $fetch("/api/passkey/auth-verify", {
       method: "POST",
@@ -73,10 +70,10 @@ async function handlePasskeyResult(
       await refreshNuxtData("current-user");
       await navigateTo("/");
     } else {
-      errorMsg.value = result.error || "通行密钥验证失败";
+      toast.error(result.error || "通行密钥验证失败");
     }
   } catch {
-    errorMsg.value = "网络错误，请稍后重试";
+    toast.error("网络错误，请稍后重试");
   } finally {
     passkeyLoading.value = false;
   }
@@ -112,11 +109,10 @@ async function initConditionalUI() {
 
 async function handlePasskeyLogin() {
   passkeyLoading.value = true;
-  errorMsg.value = "";
   try {
     const startResult = await $fetch("/api/passkey/auth-options", { method: "POST" });
     if (!startResult.success || !startResult.options || !startResult.challengeId) {
-      errorMsg.value = startResult.error || "获取验证选项失败";
+      toast.error(startResult.error || "获取验证选项失败");
       return;
     }
 
@@ -127,7 +123,7 @@ async function handlePasskeyLogin() {
     await handlePasskeyResult(credential, startResult.challengeId);
   } catch (e: any) {
     if (e.name === "NotAllowedError") return;
-    errorMsg.value = "通行密钥验证失败";
+    toast.error("通行密钥验证失败");
   } finally {
     passkeyLoading.value = false;
   }
@@ -149,11 +145,6 @@ onBeforeUnmount(() => {
   <div class="flex justify-center items-center px-4 min-h-dvh -mt-18 pt-22 pb-8 bg-base-100">
     <form class="w-full max-w-105 flex flex-col gap-7" @submit.prevent="handleSubmit">
       <h1 class="text-4xl text-base-content text-center">登录</h1>
-
-      <!-- Error message -->
-      <div v-if="errorMsg" role="alert" class="alert alert-error alert-soft">
-        <span>{{ errorMsg }}</span>
-      </div>
 
       <!-- Email -->
       <fieldset class="fieldset">

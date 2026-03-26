@@ -8,8 +8,8 @@ const gameId = ref("");
 const password = ref("");
 const confirmPassword = ref("");
 const altchaPayload = ref("");
-const errorMsg = ref("");
 const isLoading = ref(false);
+const toast = useToast();
 const altchaRef = ref<InstanceType<typeof AltchaField> | null>(null);
 const confirmPasswordRef = useTemplateRef<HTMLInputElement>("confirmPasswordRef");
 
@@ -24,10 +24,8 @@ watch([password, confirmPassword], () => {
 });
 
 async function handleSubmit() {
-  errorMsg.value = "";
-
   if (!altchaPayload.value) {
-    errorMsg.value = "请完成人机验证";
+    toast.error("请完成人机验证");
     return;
   }
 
@@ -46,11 +44,11 @@ async function handleSubmit() {
     if (result.success) {
       await navigateTo("/login");
     } else {
-      errorMsg.value = result.error || "注册失败";
+      toast.error(result.error || "注册失败");
       altchaRef.value?.reset();
     }
   } catch {
-    errorMsg.value = "网络错误，请稍后重试";
+    toast.error("网络错误，请稍后重试");
   } finally {
     isLoading.value = false;
   }
@@ -61,11 +59,6 @@ async function handleSubmit() {
   <div class="flex justify-center items-center px-4 min-h-dvh -mt-18 pt-22 pb-8 bg-base-100">
     <form class="w-full max-w-105 flex flex-col gap-7" @submit.prevent="handleSubmit">
       <h1 class="text-4xl text-base-content text-center">注册</h1>
-
-      <!-- Error message -->
-      <div v-if="errorMsg" role="alert" class="alert alert-error alert-soft">
-        <span>{{ errorMsg }}</span>
-      </div>
 
       <!-- Email -->
       <fieldset class="fieldset">
