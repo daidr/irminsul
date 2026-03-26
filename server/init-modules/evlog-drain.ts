@@ -1,5 +1,6 @@
 import { createFsDrain } from "evlog/fs";
 import { createDrainPipeline } from "evlog/pipeline";
+import { createUserAgentEnricher } from "evlog/enrichers";
 import type { DrainContext } from "evlog";
 import type { NitroApp } from "nitropack/types";
 
@@ -24,6 +25,9 @@ export function initEvlogDrain(nitroApp: NitroApp) {
 
   nitroApp.hooks.hook("evlog:drain" as any, drain);
   nitroApp.hooks.hook("close", () => drain.flush());
+
+  const uaEnricher = createUserAgentEnricher();
+  nitroApp.hooks.hook("evlog:enrich" as any, uaEnricher);
 
   nitroApp.hooks.hook("evlog:emit:keep" as any, (ctx: any) => {
     const level = ctx.event?.level;
