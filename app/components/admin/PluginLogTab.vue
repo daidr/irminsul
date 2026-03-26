@@ -148,8 +148,7 @@ const levelBadge = (level: string) => {
     <!-- 日志容器 -->
     <div
       ref="logContainerRef"
-      class="flex-1 overflow-y-auto border border-base-300 bg-base-100 font-mono text-xs"
-      style="min-height: 300px; max-height: calc(100dvh - 400px)"
+      class="flex-1 min-h-0 overflow-y-auto border border-base-300 bg-base-100 font-mono text-xs"
       @scroll="handleScroll"
     >
       <div v-if="loadingHistory" class="flex justify-center py-2">

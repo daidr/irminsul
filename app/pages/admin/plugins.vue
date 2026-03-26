@@ -1,4 +1,6 @@
 <script setup lang="ts">
+definePageMeta({ hideFooter: true });
+
 const { data: user } = useUser();
 const router = useRouter();
 
@@ -52,9 +54,9 @@ async function handlePluginAction() {
 </script>
 
 <template>
-  <div v-if="user?.isAdmin" class="flex gap-0 mx-4 my-6" style="min-height: calc(100dvh - 200px)">
+  <div v-if="user?.isAdmin" class="flex flex-1 min-h-0 mx-4">
     <!-- 左侧面板 -->
-    <div class="w-[300px] shrink-0 border border-base-300 bg-base-200 flex flex-col">
+    <div class="w-[300px] shrink-0 border-x border-base-300 bg-base-200 flex flex-col">
       <AdminPluginHostStatus class="p-3 border-b border-base-300" @restarted="fetchPlugins" />
       <div class="flex-1 overflow-y-auto">
         <AdminPluginList
@@ -77,7 +79,7 @@ async function handlePluginAction() {
     </div>
 
     <!-- 右侧面板 -->
-    <div class="flex-1 border border-l-0 border-base-300 bg-base-200">
+    <div class="flex-1 border-r border-base-300 bg-base-200">
       <AdminPluginDetail
         v-if="selectedPlugin"
         :plugin-id="selectedPlugin.id"

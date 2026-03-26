@@ -34,7 +34,7 @@ async function restartHost() {
   try {
     await $fetch("/api/admin/plugins/host/restart", { method: "POST" });
     emit("restarted");
-  } catch {} finally {
+  } catch { } finally {
     restarting.value = false;
   }
 }
@@ -72,27 +72,19 @@ const reasonLabel = (reason: string) => {
   <div>
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <span class="text-xs font-semibold">Plugin Host</span>
+        <span class="text-sm font-semibold">Plugin Host</span>
         <span v-if="status === null" class="loading loading-spinner loading-xs" />
-        <span v-else class="badge badge-xs" :class="statusColor">{{ statusLabel }}</span>
+        <span v-else class="badge badge-sm" :class="statusColor">{{ statusLabel }}</span>
       </div>
-      <button
-        v-if="status === 'dirty' || status === 'crashed'"
-        class="btn btn-xs btn-warning"
-        :disabled="restarting"
-        @click="restartHost"
-      >
+      <button v-if="status === 'dirty' || status === 'crashed'" class="btn btn-xs btn-warning" :disabled="restarting"
+        @click="restartHost">
         <span v-if="restarting" class="loading loading-spinner loading-xs" />
         <Icon v-else name="hugeicons:refresh" class="text-sm" />
         重启
       </button>
     </div>
     <div v-if="dirtyReasons.length > 0" class="mt-1.5 space-y-0.5">
-      <div
-        v-for="r in dirtyReasons"
-        :key="r.pluginId + r.reason"
-        class="text-xs text-warning"
-      >
+      <div v-for="r in dirtyReasons" :key="r.pluginId + r.reason" class="text-xs text-warning">
         · {{ r.pluginId }}（{{ reasonLabel(r.reason) }}）
       </div>
     </div>
