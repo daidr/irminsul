@@ -21,7 +21,7 @@ async function handleConfirm() {
     if (result.success) {
       successMsg.value = "你的邮箱已成功验证，正在跳转...";
       redirectTimer = setTimeout(() => {
-        navigateTo("/");
+        navigateTo("/home");
       }, 1500);
     } else {
       toast.error(result.error || "验证失败");

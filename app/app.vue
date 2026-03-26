@@ -4,7 +4,12 @@ useHead({
   titleTemplate: (title) => (title ? `${title} · Irminsul` : "Irminsul"),
 });
 
-const { data: user } = await useFetch("/api/auth/me", { key: "current-user" });
+const { data: user, refresh: refreshUser } = await useFetch("/api/auth/me", { key: "current-user" });
+
+// Prerendered pages carry stale payload — refresh user data on client
+if (import.meta.client && useNuxtApp().payload.prerenderedAt) {
+  refreshUser();
+}
 const profileStore = useProfileStore();
 
 watch(
