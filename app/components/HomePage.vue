@@ -8,12 +8,61 @@ defineProps<{
   } | null;
 }>();
 
-const changePasswordRef = ref<{ open: () => void } | null>(null);
-const sessionManageRef = ref<{ open: () => void } | null>(null);
-const banHistoryRef = ref<{ open: () => void } | null>(null);
-const passkeyRef = ref<{ open: () => void } | null>(null);
-const adminPanelRef = ref<{ open: () => void } | null>(null);
+// ---- 共享 modal ----
+type ModalType = "change-password" | "session-manage" | "ban-history" | "passkey" | "admin-panel";
+// renderedModal 控制 v-if 渲染的内容，关闭时保留，避免动画期间闪白
+// activeModal 跟踪逻辑上的开关状态
+const activeModal = ref<ModalType | null>(null);
+const renderedModal = ref<ModalType | null>(null);
+const modalDialogRef = useTemplateRef<HTMLDialogElement>("modalDialogRef");
+const adminPanelRef = ref<{ canClose: () => boolean } | null>(null);
 
+const modalBoxClass = computed(() => {
+  switch (renderedModal.value) {
+    case "change-password":
+      return "sm:max-w-[480px]";
+    case "session-manage":
+    case "passkey":
+      return "sm:max-w-[560px]";
+    case "ban-history":
+      return "sm:max-w-[520px]";
+    case "admin-panel":
+      return "sm:max-w-[700px]";
+    default:
+      return "";
+  }
+});
+
+function openModal(type: ModalType) {
+  activeModal.value = type;
+  renderedModal.value = type;
+  nextTick(() => modalDialogRef.value?.showModal());
+}
+
+function closeModal() {
+  modalDialogRef.value?.close();
+}
+
+function onDialogClose() {
+  activeModal.value = null;
+  // renderedModal 保留，下次 openModal 时才更新
+}
+
+function requestClose() {
+  if (activeModal.value === "admin-panel" && adminPanelRef.value && !adminPanelRef.value.canClose()) {
+    return;
+  }
+  closeModal();
+}
+
+function onDialogCancel(e: Event) {
+  if (activeModal.value === "admin-panel" && adminPanelRef.value && !adminPanelRef.value.canClose()) {
+    e.preventDefault();
+    return;
+  }
+}
+
+// ---- 邮箱验证 ----
 const verifyLoading = ref(false);
 const verifyMsg = ref("");
 const verifyError = ref("");
@@ -66,11 +115,11 @@ async function handleSendVerification() {
         <AnnouncementCard :announcement="pageData?.announcement ?? ''" />
         <ShortcutCard
           :is-admin="user?.isAdmin"
-          @change-password="changePasswordRef?.open()"
-          @session-manage="sessionManageRef?.open()"
-          @passkey-manage="passkeyRef?.open()"
-          @ban-history="banHistoryRef?.open()"
-          @admin-panel="adminPanelRef?.open()"
+          @change-password="openModal('change-password')"
+          @session-manage="openModal('session-manage')"
+          @passkey-manage="openModal('passkey')"
+          @ban-history="openModal('ban-history')"
+          @admin-panel="openModal('admin-panel')"
         />
       </div>
       <!-- 右列 -->
@@ -82,12 +131,29 @@ async function handleSendVerification() {
     </div>
   </div>
 
+  <!-- 共享 modal 容器 -->
   <ClientOnly>
-    <LazyChangePasswordModal ref="changePasswordRef" />
-    <LazySessionManageModal ref="sessionManageRef" />
-    <LazyBanHistoryModal ref="banHistoryRef" />
-    <LazyPasskeyModal ref="passkeyRef" />
-    <LazyAdminPanelModal ref="adminPanelRef" />
+    <Teleport to="body">
+      <dialog
+        ref="modalDialogRef"
+        class="modal modal-bottom sm:modal-middle"
+        @close="onDialogClose"
+        @cancel="onDialogCancel"
+      >
+        <div class="modal-box" :class="modalBoxClass">
+          <LazyChangePasswordModal v-if="renderedModal === 'change-password'" />
+          <LazySessionManageModal v-if="renderedModal === 'session-manage'" />
+          <LazyBanHistoryModal v-if="renderedModal === 'ban-history'" />
+          <LazyPasskeyModal v-if="renderedModal === 'passkey'" />
+          <LazyAdminPanelModal
+            v-if="renderedModal === 'admin-panel'"
+            ref="adminPanelRef"
+            @close="closeModal"
+          />
+        </div>
+        <div class="modal-backdrop" @click="requestClose" />
+      </dialog>
+    </Teleport>
   </ClientOnly>
 </template>
 
