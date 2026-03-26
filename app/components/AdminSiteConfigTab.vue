@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const toast = useToast();
+
 // ---- 表单数据 ----
 const smtp = reactive({
   host: "",
@@ -25,11 +27,8 @@ const loading = ref(true);
 const loadError = ref("");
 
 const smtpSaving = ref(false);
-const smtpError = ref("");
 const authSaving = ref(false);
-const authError = ref("");
 const announcementSaving = ref(false);
-const announcementError = ref("");
 
 // ---- 脏检查 ----
 const smtpDirty = computed(
@@ -85,7 +84,6 @@ onMounted(async () => {
 
 // ---- 保存 ----
 async function saveSmtp() {
-  smtpError.value = "";
   smtpSaving.value = true;
   try {
     const result = await $fetch<{ success: boolean; error: string }>("/api/admin/settings", {
@@ -103,19 +101,18 @@ async function saveSmtp() {
       },
     });
     if (!result.success) {
-      smtpError.value = result.error;
+      toast.error(result.error);
     } else {
       smtpSnapshot.value = { ...smtp };
     }
   } catch {
-    smtpError.value = "保存失败";
+    toast.error("保存失败");
   } finally {
     smtpSaving.value = false;
   }
 }
 
 async function saveAuth() {
-  authError.value = "";
   authSaving.value = true;
   try {
     const result = await $fetch<{ success: boolean; error: string }>("/api/admin/settings", {
@@ -126,19 +123,18 @@ async function saveAuth() {
       },
     });
     if (!result.success) {
-      authError.value = result.error;
+      toast.error(result.error);
     } else {
       authSnapshot.value = { ...auth };
     }
   } catch {
-    authError.value = "保存失败";
+    toast.error("保存失败");
   } finally {
     authSaving.value = false;
   }
 }
 
 async function saveAnnouncement() {
-  announcementError.value = "";
   announcementSaving.value = true;
   try {
     const result = await $fetch<{ success: boolean; error: string }>("/api/admin/settings", {
@@ -149,12 +145,12 @@ async function saveAnnouncement() {
       },
     });
     if (!result.success) {
-      announcementError.value = result.error;
+      toast.error(result.error);
     } else {
       announcementSnapshot.value = announcement.value;
     }
   } catch {
-    announcementError.value = "保存失败";
+    toast.error("保存失败");
   } finally {
     announcementSaving.value = false;
   }
@@ -237,9 +233,6 @@ async function saveAnnouncement() {
           </label>
         </div>
       </div>
-      <div v-if="smtpError" role="alert" class="alert alert-error alert-soft mt-3">
-        <span>{{ smtpError }}</span>
-      </div>
       <div class="mt-3 flex justify-end">
         <button
           class="btn btn-primary btn-sm"
@@ -270,9 +263,6 @@ async function saveAnnouncement() {
         要求邮箱验证
       </label>
       <p class="ml-6 mt-1 text-xs opacity-50">开启后，未通过邮箱验证的用户将无法登录游戏</p>
-      <div v-if="authError" role="alert" class="alert alert-error alert-soft mt-3">
-        <span>{{ authError }}</span>
-      </div>
       <div class="mt-3 flex justify-end">
         <button
           class="btn btn-primary btn-sm"
@@ -303,9 +293,6 @@ async function saveAnnouncement() {
           rows="3"
         />
       </fieldset>
-      <div v-if="announcementError" role="alert" class="alert alert-error alert-soft mt-3">
-        <span>{{ announcementError }}</span>
-      </div>
       <div class="mt-3 flex justify-end">
         <button
           class="btn btn-primary btn-sm"
