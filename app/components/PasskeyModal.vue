@@ -175,6 +175,7 @@ defineExpose({ open });
                       v-model="renameValue"
                       class="input input-bordered input-sm w-full max-w-48"
                       maxlength="50"
+                      autocomplete="off"
                       @keyup.enter="confirmRename(pk.credentialId)"
                       @keyup.escape="cancelRename"
                     />
