@@ -391,7 +391,7 @@ export async function renamePasskey(
     { uuid, "passkeys.credentialId": credentialId },
     { $set: { "passkeys.$.label": newLabel } },
   );
-  return result.modifiedCount > 0;
+  return result.matchedCount > 0;
 }
 
 /**
