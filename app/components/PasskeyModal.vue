@@ -66,7 +66,7 @@ async function handleAdd() {
       "/api/passkey/register-verify",
       {
         method: "POST",
-        body: credential,
+        body: { credential },
       },
     );
     if (!finishResult.success) {
