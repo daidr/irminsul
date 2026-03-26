@@ -76,8 +76,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="toast-item" @mouseenter="paused = true" @mouseleave="paused = false">
-    <Icon :name="iconName" class="text-xl shrink-0"
+  <div
+    class="relative flex items-center gap-2 bg-base-100 border border-base-300 shadow-lg pl-3 pr-1 min-w-[10px] whitespace-nowrap overflow-hidden select-none"
+    @mouseenter="paused = true" @mouseleave="paused = false">
+    <Icon :name="iconName" class="text-base shrink-0"
       :class="[typeColor, info.type === 'loading' ? 'animate-spin' : '']" />
 
     <span class="flex-1 text-sm text-base-content leading-snug">{{ info.content }}</span>
@@ -92,9 +94,3 @@ onUnmounted(() => {
       :class="progressColor" :style="{ width: `${100 - progress}%`, transitionDuration: '50ms' }" />
   </div>
 </template>
-
-<style scoped lang="scss">
-.toast-item {
-  @apply relative flex items-center gap-3 bg-base-100 border border-base-300 shadow-lg pl-3 pr-2 py-2.5 min-w-[280px] max-w-[420px] overflow-hidden select-none;
-}
-</style>
