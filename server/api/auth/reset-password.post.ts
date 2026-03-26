@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Consume token (one-time use)
-  const tokenData = await consumePasswordResetToken(token);
+  const tokenData = await consumePasswordResetToken(event, token);
   if (!tokenData) {
     return { success: false, error: "重置链接无效或已过期，请重新发送" };
   }

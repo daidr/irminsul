@@ -1,10 +1,11 @@
+import type { H3Event } from "h3";
 import { useLogger } from "evlog";
 import type { YggdrasilToken } from "~~/server/types/user.schema";
 import { hasActiveBan } from "~~/server/types/user.schema";
 
 // --- authenticate ---
 
-export async function yggdrasilAuthenticate(params: {
+export async function yggdrasilAuthenticate(event: H3Event, params: {
   username: string;
   password: string;
   clientToken?: string;
@@ -21,7 +22,7 @@ export async function yggdrasilAuthenticate(params: {
     );
   }
 
-  const valid = await verifyPassword(params.password, user.passwordHash, user.hashVersion);
+  const valid = await verifyPassword(event, params.password, user.passwordHash, user.hashVersion);
   if (!valid) {
     throw new YggdrasilError(
       403,
@@ -34,7 +35,7 @@ export async function yggdrasilAuthenticate(params: {
   if (user.hashVersion !== "argon2id") {
     const newHash = await hashPassword(params.password);
     await updatePasswordHash(user.uuid, newHash, "argon2id");
-    useLogger().set({ auth: { passwordHashMigrated: true, userId: user.email, from: user.hashVersion } });
+    useLogger(event).set({ auth: { passwordHashMigrated: true, userId: user.email, from: user.hashVersion } });
   }
 
   // 邮箱验证检查
@@ -72,7 +73,7 @@ export async function yggdrasilAuthenticate(params: {
     response.user = buildYggdrasilUser(user);
   }
 
-  useLogger().set({ yggdrasil: { action: "authenticate", userId: user.email } });
+  useLogger(event).set({ yggdrasil: { action: "authenticate", userId: user.email } });
   return response;
 }
 
@@ -142,7 +143,7 @@ export async function yggdrasilInvalidate(params: { accessToken: string }): Prom
 
 // --- signout ---
 
-export async function yggdrasilSignout(params: {
+export async function yggdrasilSignout(event: H3Event, params: {
   username: string;
   password: string;
 }): Promise<void> {
@@ -155,7 +156,7 @@ export async function yggdrasilSignout(params: {
     );
   }
 
-  const valid = await verifyPassword(params.password, user.passwordHash, user.hashVersion);
+  const valid = await verifyPassword(event, params.password, user.passwordHash, user.hashVersion);
   if (!valid) {
     throw new YggdrasilError(
       403,
@@ -168,7 +169,7 @@ export async function yggdrasilSignout(params: {
   if (user.hashVersion !== "argon2id") {
     const newHash = await hashPassword(params.password);
     await updatePasswordHash(user.uuid, newHash, "argon2id");
-    useLogger().set({ auth: { passwordHashMigrated: true, userId: user.email, from: user.hashVersion } });
+    useLogger(event).set({ auth: { passwordHashMigrated: true, userId: user.email, from: user.hashVersion } });
   }
 
   await removeAllTokens(user.uuid);
@@ -252,7 +253,7 @@ async function authenticateBearer(authorization: string | undefined, ip?: string
 
 // --- 材质上传 ---
 
-export async function yggdrasilUploadTexture(params: {
+export async function yggdrasilUploadTexture(event: H3Event, params: {
   authorization: string | undefined;
   uuid: string;
   textureType: string;
@@ -280,7 +281,7 @@ export async function yggdrasilUploadTexture(params: {
 
   const buffer = Buffer.from(await params.file.arrayBuffer());
   try {
-    await processTextureUpload({
+    await processTextureUpload(event, {
       uuid: user.uuid,
       textureType: params.textureType,
       model: params.model === "slim" ? 1 : 0,
@@ -294,12 +295,12 @@ export async function yggdrasilUploadTexture(params: {
     );
   }
 
-  useLogger().set({ yggdrasil: { textureAction: "upload", type: params.textureType, gameId: user.gameId } });
+  useLogger(event).set({ yggdrasil: { textureAction: "upload", type: params.textureType, gameId: user.gameId } });
 }
 
 // --- 材质删除 ---
 
-export async function yggdrasilDeleteTexture(params: {
+export async function yggdrasilDeleteTexture(event: H3Event, params: {
   authorization: string | undefined;
   uuid: string;
   textureType: string;
@@ -318,7 +319,7 @@ export async function yggdrasilDeleteTexture(params: {
   }
 
   try {
-    await processTextureDelete({
+    await processTextureDelete(event, {
       uuid: user.uuid,
       textureType: params.textureType,
     });
@@ -330,7 +331,7 @@ export async function yggdrasilDeleteTexture(params: {
     );
   }
 
-  useLogger().set({ yggdrasil: { textureAction: "delete", type: params.textureType, gameId: user.gameId } });
+  useLogger(event).set({ yggdrasil: { textureAction: "delete", type: params.textureType, gameId: user.gameId } });
 }
 
 // --- batch profiles ---

@@ -32,7 +32,7 @@ export default defineYggdrasilHandler(async (event) => {
     throw new YggdrasilError(400, "IllegalArgumentException", "Missing texture file.");
   }
 
-  await yggdrasilUploadTexture({
+  await yggdrasilUploadTexture(event, {
     authorization: getHeader(event, "authorization"),
     uuid,
     textureType,

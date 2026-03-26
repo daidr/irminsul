@@ -10,7 +10,7 @@ export default defineYggdrasilHandler(async (event) => {
     );
   }
 
-  await yggdrasilDeleteTexture({
+  await yggdrasilDeleteTexture(event, {
     authorization: getHeader(event, "authorization"),
     uuid,
     textureType,

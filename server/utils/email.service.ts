@@ -1,14 +1,15 @@
 import { createTransport } from "nodemailer";
 import type { Transporter } from "nodemailer";
+import type { H3Event } from "h3";
 import { useLogger } from "evlog";
 
 const SMTP_KEYS = ["smtp.host", "smtp.port", "smtp.secure", "smtp.user", "smtp.pass", "smtp.from"];
 
-function getSmtpTransporter(): Transporter | null {
+function getSmtpTransporter(event: H3Event): Transporter | null {
   const settings = getSettingsMap(SMTP_KEYS);
   const host = settings["smtp.host"] as string;
   if (!host) {
-    useLogger().set({ email: { warning: "smtp_not_configured" } });
+    useLogger(event).set({ email: { warning: "smtp_not_configured" } });
     return null;
   }
 
@@ -23,8 +24,8 @@ function getSmtpTransporter(): Transporter | null {
   });
 }
 
-export async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
-  const transporter = getSmtpTransporter();
+export async function sendEmail(event: H3Event, to: string, subject: string, html: string): Promise<boolean> {
+  const transporter = getSmtpTransporter(event);
   if (!transporter) return false;
 
   const settings = getSettingsMap(["smtp.from"]);
@@ -32,15 +33,15 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
 
   try {
     await transporter.sendMail({ from, to, subject, html });
-    useLogger().set({ email: { sent: true, to, subject } });
+    useLogger(event).set({ email: { sent: true, to, subject } });
     return true;
   } catch (err) {
-    useLogger().error(err as Error, { step: "email_send", to });
+    useLogger(event).error(err as Error, { step: "email_send", to });
     return false;
   }
 }
 
-export async function sendPasswordResetEmail(to: string, resetLink: string): Promise<boolean> {
+export async function sendPasswordResetEmail(event: H3Event, to: string, resetLink: string): Promise<boolean> {
   const subject = "Irminsul - 密码重置";
   const html = `
 <!DOCTYPE html>
@@ -65,10 +66,10 @@ export async function sendPasswordResetEmail(to: string, resetLink: string): Pro
 </body>
 </html>`.trim();
 
-  return sendEmail(to, subject, html);
+  return sendEmail(event, to, subject, html);
 }
 
-export async function sendEmailVerificationEmail(to: string, verifyLink: string): Promise<boolean> {
+export async function sendEmailVerificationEmail(event: H3Event, to: string, verifyLink: string): Promise<boolean> {
   const subject = "Irminsul - 邮箱验证";
   const html = `
 <!DOCTYPE html>
@@ -93,5 +94,5 @@ export async function sendEmailVerificationEmail(to: string, verifyLink: string)
 </body>
 </html>`.trim();
 
-  return sendEmail(to, subject, html);
+  return sendEmail(event, to, subject, html);
 }

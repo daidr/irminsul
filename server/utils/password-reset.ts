@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import type { H3Event } from "h3";
 import { useLogger } from "evlog";
 
 const RESET_PREFIX = "password-reset";
@@ -36,11 +37,12 @@ export async function hasActivePasswordResetToken(userId: string): Promise<boole
  * 创建密码重置 token。如果用户已有未过期的 token，返回 null。
  */
 export async function createPasswordResetToken(
+  event: H3Event,
   userId: string,
   email: string,
 ): Promise<string | null> {
   if (await hasActivePasswordResetToken(userId)) {
-    useLogger().set({ passwordReset: { skipped: "token_already_active", userId } });
+    useLogger(event).set({ passwordReset: { skipped: "token_already_active", userId } });
     return null;
   }
 
@@ -59,7 +61,7 @@ export async function createPasswordResetToken(
   await redis.send("SET", [key, JSON.stringify(data), "EX", RESET_EXPIRY_SECONDS.toString()]);
   await redis.send("SET", [lockKey(userId), tokenHash, "EX", RESET_EXPIRY_SECONDS.toString()]);
 
-  useLogger().set({ passwordReset: { tokenCreated: true, userId } });
+  useLogger(event).set({ passwordReset: { tokenCreated: true, userId } });
   return rawToken;
 }
 
@@ -77,6 +79,7 @@ export async function verifyPasswordResetToken(
 }
 
 export async function consumePasswordResetToken(
+  event: H3Event,
   token: string,
 ): Promise<{ userId: string; email: string } | null> {
   const tokenHash = hashToken(token);
@@ -90,6 +93,6 @@ export async function consumePasswordResetToken(
   await redis.send("DEL", [key]);
   await redis.send("DEL", [lockKey(data.userId)]);
 
-  useLogger().set({ passwordReset: { tokenConsumed: true, userId: data.userId } });
+  useLogger(event).set({ passwordReset: { tokenConsumed: true, userId: data.userId } });
   return { userId: data.userId, email: data.email };
 }

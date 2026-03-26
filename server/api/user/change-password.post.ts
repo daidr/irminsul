@@ -50,6 +50,7 @@ export default defineEventHandler(async (event) => {
 
   // Verify old password
   const passwordValid = await verifyPassword(
+    event,
     oldPassword,
     userDoc.passwordHash,
     userDoc.hashVersion,

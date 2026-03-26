@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
   const fileBuffer = Buffer.from(fileBase64, "base64");
 
   try {
-    const result = await processTextureUpload({
+    const result = await processTextureUpload(event, {
       uuid: user.userId,
       textureType,
       model,

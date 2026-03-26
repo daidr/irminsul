@@ -1,3 +1,4 @@
+import type { H3Event } from "h3";
 import { useLogger } from "evlog";
 
 export interface RateLimitOptions {
@@ -48,6 +49,7 @@ function sleep(ms: number): Promise<void> {
  * Throws YggdrasilError(429) if exceeded.
  */
 export async function checkRateLimit(
+  event: H3Event,
   keyIdentifier: string,
   userOptions?: Partial<RateLimitOptions>,
 ): Promise<void> {
@@ -61,7 +63,7 @@ export async function checkRateLimit(
   if (!entry || now >= entry.resetAt) {
     // Reject new keys when store is at capacity
     if (!entry && store.size >= options.maxKeys) {
-      useLogger().set({ rateLimit: { warning: "store_full", storeSize: store.size, key } });
+      useLogger(event).set({ rateLimit: { warning: "store_full", storeSize: store.size, key } });
       throw new YggdrasilError(
         429,
         "TooManyRequestsException",
@@ -77,7 +79,7 @@ export async function checkRateLimit(
   // Reject if over max
   if (entry.count > options.max) {
     const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
-    useLogger().set({ rateLimit: { exceeded: true, key } });
+    useLogger(event).set({ rateLimit: { exceeded: true, key } });
     throw new YggdrasilError(
       429,
       "TooManyRequestsException",
@@ -88,7 +90,7 @@ export async function checkRateLimit(
   // Progressive delay after threshold
   if (entry.count > options.delayAfter) {
     const delay = (entry.count - options.delayAfter) * options.timeWait;
-    useLogger().set({ rateLimit: { delayed: true, delayMs: delay, key } });
+    useLogger(event).set({ rateLimit: { delayed: true, delayMs: delay, key } });
     await sleep(delay);
   }
 }

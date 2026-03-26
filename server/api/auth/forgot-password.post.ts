@@ -71,11 +71,11 @@ export default defineEventHandler(async (event) => {
 
   // Create reset token and send email
   try {
-    const token = await createPasswordResetToken(user.uuid, user.email);
+    const token = await createPasswordResetToken(event, user.uuid, user.email);
     if (token) {
       const baseUrl = useRuntimeConfig(event).yggdrasilBaseUrl;
       const resetLink = `${baseUrl}/reset-password?token=${token}`;
-      const sent = await sendPasswordResetEmail(user.email, resetLink);
+      const sent = await sendPasswordResetEmail(event, user.email, resetLink);
       if (!sent) {
         log.set({ passwordReset: { emailSendFailed: true, email: user.email } });
       }

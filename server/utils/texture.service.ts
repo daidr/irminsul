@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import type { H3Event } from "h3";
 import { useLogger } from "evlog";
 //@ts-expect-error pngjs-nozlib 没有类型定义
 import { PNG } from "pngjs-nozlib";
@@ -48,19 +49,19 @@ export function computeTextureHash(image: { width: number; height: number; data:
 /**
  * 检查指定哈希是否仍有用户使用，若无人使用则删除对应材质文件
  */
-export async function tryRemoveUnusedTexture(hash: string): Promise<void> {
+export async function tryRemoveUnusedTexture(event: H3Event, hash: string): Promise<void> {
   const inUse = await isTextureHashInUse(hash);
   if (!inUse) {
     const filePath = path.join(TEXTURES_DIR, `${hash}.png`);
     await fs.unlink(filePath).catch(() => {});
-    useLogger().set({ texture: { unusedRemoved: true, hash } });
+    useLogger(event).set({ texture: { unusedRemoved: true, hash } });
   }
 }
 
 /**
  * 处理材质上传（解析 PNG → 校验尺寸 → 算哈希 → 存文件 → 更新 DB → 清理旧文件）
  */
-export async function processTextureUpload(params: {
+export async function processTextureUpload(event: H3Event, params: {
   uuid: string;
   textureType: "skin" | "cape";
   model?: number; // 0 = Steve, 1 = Alex
@@ -110,17 +111,17 @@ export async function processTextureUpload(params: {
 
   // 清理旧材质文件（若无人使用）
   if (oldHash && oldHash !== hash) {
-    await tryRemoveUnusedTexture(oldHash);
+    await tryRemoveUnusedTexture(event, oldHash);
   }
 
-  useLogger().set({ texture: { action: "upload", type: textureType, userId: uuid, hash } });
+  useLogger(event).set({ texture: { action: "upload", type: textureType, userId: uuid, hash } });
   return { hash };
 }
 
 /**
  * 处理材质删除（置 null → 清理旧文件）
  */
-export async function processTextureDelete(params: {
+export async function processTextureDelete(event: H3Event, params: {
   uuid: string;
   textureType: "skin" | "cape";
 }): Promise<void> {
@@ -139,8 +140,8 @@ export async function processTextureDelete(params: {
 
   // 清理旧材质文件（若无人使用）
   if (oldHash) {
-    await tryRemoveUnusedTexture(oldHash);
+    await tryRemoveUnusedTexture(event, oldHash);
   }
 
-  useLogger().set({ texture: { action: "delete", type: textureType, userId: uuid } });
+  useLogger(event).set({ texture: { action: "delete", type: textureType, userId: uuid } });
 }

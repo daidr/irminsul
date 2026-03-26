@@ -1,8 +1,8 @@
 export default defineYggdrasilHandler(async (event) => {
   const body = await readValidatedBody(event, authenticateBodySchema.parse);
-  await checkRateLimit(extractClientIp(event));
+  await checkRateLimit(event, extractClientIp(event));
 
-  return yggdrasilAuthenticate({
+  return yggdrasilAuthenticate(event, {
     ...body,
     ip: extractClientIp(event),
     userAgent: getHeader(event, "user-agent") || "",

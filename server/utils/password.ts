@@ -1,5 +1,6 @@
 import { keccak_512 } from "js-sha3";
 import { timingSafeEqual } from "node:crypto";
+import type { H3Event } from "h3";
 import { useLogger } from "evlog";
 import type { HashVersion } from "~~/server/types/user.schema";
 
@@ -9,6 +10,7 @@ const LEGACY_PASSWORD_SUFFIX = "dKfkZh";
  * 验证密码，根据 hashVersion 分派到不同的验证逻辑
  */
 export async function verifyPassword(
+  event: H3Event,
   plaintext: string,
   storedHash: string,
   hashVersion: HashVersion,
@@ -21,7 +23,7 @@ export async function verifyPassword(
       return verifyLegacy(plaintext, storedHash);
 
     default:
-      useLogger().set({ auth: { warning: "unknown_hash_version", hashVersion } });
+      useLogger(event).set({ auth: { warning: "unknown_hash_version", hashVersion } });
       return false;
   }
 }

@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Verify password (with legacy migration support)
-  const passwordValid = await verifyPassword(password, user.passwordHash, user.hashVersion);
+  const passwordValid = await verifyPassword(event, password, user.passwordHash, user.hashVersion);
   if (!passwordValid) {
     return { success: false, error: "邮箱或密码错误" };
   }

@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
 
   // Create token (includes per-user lock / rate limiting)
   try {
-    const token = await createEmailVerificationToken(user.uuid, user.email);
+    const token = await createEmailVerificationToken(event, user.uuid, user.email);
     if (!token) {
       // Lock active — already sent recently
       return { success: true, message: "验证邮件已发送，请检查收件箱" };
@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
 
     const baseUrl = useRuntimeConfig(event).yggdrasilBaseUrl;
     const verifyLink = `${baseUrl}/verify-email?token=${token}`;
-    const sent = await sendEmailVerificationEmail(user.email, verifyLink);
+    const sent = await sendEmailVerificationEmail(event, user.email, verifyLink);
     if (!sent) {
       log.set({ emailVerification: { emailSendFailed: true, email: user.email } });
       return { success: false, error: "邮件发送失败，请稍后重试" };

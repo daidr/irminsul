@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    await processTextureDelete({
+    await processTextureDelete(event, {
       uuid: user.userId,
       textureType,
     });

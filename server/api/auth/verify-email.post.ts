@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
     return { success: false, error: "无效的验证链接" };
   }
 
-  const result = await consumeEmailVerificationToken(token);
+  const result = await consumeEmailVerificationToken(event, token);
   if (!result) {
     return { success: false, error: "验证链接无效或已过期" };
   }
