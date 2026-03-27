@@ -45,6 +45,15 @@ export class PluginManager {
   private watcher: PluginWatcher | null = null;
   private pluginsDir: string;
   private statusSubscribers = new Set<ReadableStreamDefaultController>();
+  private lifecycleLock: Promise<void> = Promise.resolve();
+  private crashRecoveryTimer: ReturnType<typeof setTimeout> | null = null;
+
+  private withLifecycleLock<T>(fn: () => Promise<T>): Promise<T> {
+    const prev = this.lifecycleLock;
+    let resolve: () => void;
+    this.lifecycleLock = new Promise<void>((r) => { resolve = r; });
+    return prev.then(fn).finally(() => resolve!());
+  }
 
   constructor(pluginsDir: string) {
     this.pluginsDir = resolve(pluginsDir);
@@ -216,59 +225,63 @@ export class PluginManager {
   // === Plugin Lifecycle ===
 
   async enablePlugin(id: string): Promise<{ ok: boolean; error?: string }> {
-    const plugin = this.plugins.get(id);
-    if (!plugin) return { ok: false, error: "Plugin not found" };
-    if (plugin.status === "enabled") return { ok: true };
+    return this.withLifecycleLock(async () => {
+      const plugin = this.plugins.get(id);
+      if (!plugin) return { ok: false, error: "Plugin not found" };
+      if (plugin.status === "enabled") return { ok: true };
 
-    // If the plugin was just marked pending_disable (still running in Host), just flip the flag.
-    if (plugin.status === "pending_disable") {
-      plugin.enabled = true;
-      plugin.status = "enabled";
-      plugin.error = undefined;
-      this.dirtyReasons = this.dirtyReasons.filter(
-        (r) => !(r.pluginId === id && r.reason === "disabled"),
-      );
-      this.notifyStatusChange();
-      await this.saveRegistry();
-      return { ok: true };
-    }
+      // If the plugin was just marked pending_disable (still running in Host), just flip the flag.
+      if (plugin.status === "pending_disable") {
+        plugin.enabled = true;
+        plugin.status = "enabled";
+        plugin.error = undefined;
+        this.dirtyReasons = this.dirtyReasons.filter(
+          (r) => !(r.pluginId === id && r.reason === "disabled"),
+        );
+        this.notifyStatusChange();
+        await this.saveRegistry();
+        return { ok: true };
+      }
 
-    if (plugin.status === "error" && plugin.meta.hooks.length === 0) {
-      return { ok: false, error: plugin.error ?? "Plugin has errors" };
-    }
+      if (plugin.status === "error" && plugin.meta.hooks.length === 0) {
+        return { ok: false, error: plugin.error ?? "Plugin has errors" };
+      }
 
-    try {
-      await this.loadPluginIntoHost(plugin);
-      plugin.enabled = true;
-      plugin.error = undefined;
-      await this.saveRegistry();
-      // 新插件启用后重新发现 OAuth provider
-      await this.discoverOAuthProviders();
-      emitPluginEvent("plugin:enabled", { pluginId: id });
-      return { ok: true };
-    } catch (err: unknown) {
-      plugin.status = "error";
-      plugin.error = err instanceof Error ? err.message : String(err);
-      await this.saveRegistry();
-      emitPluginEvent("plugin:enable_failed", { pluginId: id, error: plugin.error });
-      return { ok: false, error: plugin.error };
-    }
+      try {
+        await this.loadPluginIntoHost(plugin);
+        plugin.enabled = true;
+        plugin.error = undefined;
+        await this.saveRegistry();
+        // 新插件启用后重新发现 OAuth provider
+        await this.discoverOAuthProviders();
+        emitPluginEvent("plugin:enabled", { pluginId: id });
+        return { ok: true };
+      } catch (err: unknown) {
+        plugin.status = "error";
+        plugin.error = err instanceof Error ? err.message : String(err);
+        await this.saveRegistry();
+        emitPluginEvent("plugin:enable_failed", { pluginId: id, error: plugin.error });
+        return { ok: false, error: plugin.error };
+      }
+    });
   }
 
   async disablePlugin(id: string): Promise<void> {
-    const plugin = this.plugins.get(id);
-    if (!plugin || plugin.status !== "enabled") return;
+    return this.withLifecycleLock(async () => {
+      const plugin = this.plugins.get(id);
+      if (!plugin || plugin.status !== "enabled") return;
 
-    // Mark as pending_disable + dirty. The plugin keeps running in the Host
-    // until the admin restarts the Host.
-    // 注意：不清理 OAuth provider 缓存，因为插件仍在运行中。
-    // Host restart 时 discoverOAuthProviders() 会自然重建缓存，已禁用的插件不会被发现。
-    plugin.enabled = false;
-    plugin.status = "pending_disable";
-    this.addDirtyReason(id, "disabled");
+      // Mark as pending_disable + dirty. The plugin keeps running in the Host
+      // until the admin restarts the Host.
+      // 注意：不清理 OAuth provider 缓存，因为插件仍在运行中。
+      // Host restart 时 discoverOAuthProviders() 会自然重建缓存，已禁用的插件不会被发现。
+      plugin.enabled = false;
+      plugin.status = "pending_disable";
+      this.addDirtyReason(id, "disabled");
 
-    await this.saveRegistry();
-    emitPluginEvent("plugin:disabled", { pluginId: id });
+      await this.saveRegistry();
+      emitPluginEvent("plugin:disabled", { pluginId: id });
+    });
   }
 
   async updateConfig(
@@ -364,46 +377,53 @@ export class PluginManager {
   // === Host Management ===
 
   async restartHost(): Promise<void> {
-    emitPluginEvent("host:restarting");
-    await this.bridge.shutdown();
-    this.hookRegistry.clear();
-    this.setHostStatus("stopped");
-
-    // Re-scan plugins from disk to pick up manifest/config changes, new/removed plugins
-    await this.scan();
-
-    // Create new Host
-    this.bridge.start();
-    this.setHostStatus("running");
-
-    // Reload all enabled plugins
-    const toLoad = [...this.plugins.values()]
-      .filter((p) => p.enabled && p.status !== "error")
-      .sort((a, b) => a.order - b.order);
-
-    for (const plugin of toLoad) {
-      try {
-        await this.loadPluginIntoHost(plugin);
-        emitPluginEvent("plugin:reloaded", { pluginId: plugin.id });
-      } catch (err: unknown) {
-        plugin.status = "error";
-        plugin.error = err instanceof Error ? err.message : String(err);
-        emitPluginEvent("plugin:reload_failed", {
-          pluginId: plugin.id,
-          error: plugin.error,
-        });
+    return this.withLifecycleLock(async () => {
+      if (this.crashRecoveryTimer) {
+        clearTimeout(this.crashRecoveryTimer);
+        this.crashRecoveryTimer = null;
       }
-    }
 
-    // Re-discover OAuth providers after host restart
-    await this.discoverOAuthProviders();
+      emitPluginEvent("host:restarting");
+      await this.bridge.shutdown();
+      this.hookRegistry.clear();
+      this.setHostStatus("stopped");
 
-    // Clear dirty state
-    this.dirtyReasons = [];
-    this.notifyStatusChange();
-    emitPluginEvent("host:restarted", {
-      loaded: toLoad.filter((p) => p.status === "enabled").length,
-      failed: toLoad.filter((p) => p.status === "error").length,
+      // Re-scan plugins from disk to pick up manifest/config changes, new/removed plugins
+      await this.scan();
+
+      // Create new Host
+      this.bridge.start();
+      this.setHostStatus("running");
+
+      // Reload all enabled plugins
+      const toLoad = [...this.plugins.values()]
+        .filter((p) => p.enabled && p.status !== "error")
+        .sort((a, b) => a.order - b.order);
+
+      for (const plugin of toLoad) {
+        try {
+          await this.loadPluginIntoHost(plugin);
+          emitPluginEvent("plugin:reloaded", { pluginId: plugin.id });
+        } catch (err: unknown) {
+          plugin.status = "error";
+          plugin.error = err instanceof Error ? err.message : String(err);
+          emitPluginEvent("plugin:reload_failed", {
+            pluginId: plugin.id,
+            error: plugin.error,
+          });
+        }
+      }
+
+      // Re-discover OAuth providers after host restart
+      await this.discoverOAuthProviders();
+
+      // Clear dirty state
+      this.dirtyReasons = [];
+      this.notifyStatusChange();
+      emitPluginEvent("host:restarted", {
+        loaded: toLoad.filter((p) => p.status === "enabled").length,
+        failed: toLoad.filter((p) => p.status === "error").length,
+      });
     });
   }
 
@@ -594,6 +614,10 @@ export class PluginManager {
   // === Cleanup ===
 
   async destroy(): Promise<void> {
+    if (this.crashRecoveryTimer) {
+      clearTimeout(this.crashRecoveryTimer);
+      this.crashRecoveryTimer = null;
+    }
     emitPluginEvent("host:shutting_down");
     this.watcher?.stop();
     await this.bridge.shutdown();
@@ -695,39 +719,41 @@ export class PluginManager {
     }
 
     // Auto-restart after delay
-    setTimeout(async () => {
-      try {
-        emitPluginEvent("host:crash_recovery_start", { attempt: this.crashCount });
-        this.bridge.start();
-        this.setHostStatus("running");
+    this.crashRecoveryTimer = setTimeout(() => {
+      void this.withLifecycleLock(async () => {
+        try {
+          emitPluginEvent("host:crash_recovery_start", { attempt: this.crashCount });
+          this.bridge.start();
+          this.setHostStatus("running");
 
-        const toLoad = [...this.plugins.values()]
-          .filter((p) => p.enabled)
-          .sort((a, b) => a.order - b.order);
+          const toLoad = [...this.plugins.values()]
+            .filter((p) => p.enabled)
+            .sort((a, b) => a.order - b.order);
 
-        for (const plugin of toLoad) {
-          try {
-            await this.loadPluginIntoHost(plugin);
-          } catch {
-            plugin.status = "error";
-            plugin.error = "Failed to reload after crash";
+          for (const plugin of toLoad) {
+            try {
+              await this.loadPluginIntoHost(plugin);
+            } catch {
+              plugin.status = "error";
+              plugin.error = "Failed to reload after crash";
+            }
           }
+
+          // Re-discover OAuth providers after crash recovery
+          await this.discoverOAuthProviders();
+
+          this.dirtyReasons = [];
+          this.notifyStatusChange();
+          emitPluginEvent("host:crash_recovery_done", {
+            loaded: toLoad.filter((p) => p.status === "enabled").length,
+            failed: toLoad.filter((p) => p.status === "error").length,
+          });
+        } catch (restartErr) {
+          emitPluginEvent("host:crash_recovery_failed", {
+            error: restartErr instanceof Error ? restartErr.message : String(restartErr),
+          });
         }
-
-        // Re-discover OAuth providers after crash recovery
-        await this.discoverOAuthProviders();
-
-        this.dirtyReasons = [];
-        this.notifyStatusChange();
-        emitPluginEvent("host:crash_recovery_done", {
-          loaded: toLoad.filter((p) => p.status === "enabled").length,
-          failed: toLoad.filter((p) => p.status === "error").length,
-        });
-      } catch (restartErr) {
-        emitPluginEvent("host:crash_recovery_failed", {
-          error: restartErr instanceof Error ? restartErr.message : String(restartErr),
-        });
-      }
+      });
     }, 1000);
   }
 
