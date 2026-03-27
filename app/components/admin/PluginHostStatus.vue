@@ -5,6 +5,7 @@ const status = ref<string | null>(null);
 const dirtyReasons = ref<any[]>([]);
 const restarting = ref(false);
 let eventSource: EventSource | null = null;
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
 function connectSSE() {
   disconnectSSE();
@@ -15,13 +16,16 @@ function connectSSE() {
     dirtyReasons.value = data.dirtyReasons;
   });
   eventSource.onerror = () => {
-    // Reconnect after 3 seconds on error
     disconnectSSE();
-    setTimeout(connectSSE, 3000);
+    reconnectTimer = setTimeout(connectSSE, 3000);
   };
 }
 
 function disconnectSSE() {
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
   eventSource?.close();
   eventSource = null;
 }

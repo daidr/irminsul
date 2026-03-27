@@ -10,6 +10,7 @@ const typeFilter = ref("");
 const loadingHistory = ref(false);
 const hasMore = ref(true);
 let eventSource: EventSource | null = null;
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 const logContainerRef = useTemplateRef<HTMLElement>("logContainerRef");
 
 function connectSSE() {
@@ -23,9 +24,17 @@ function connectSSE() {
     logs.value.push(entry);
     nextTick(() => scrollToBottomIfNeeded());
   });
+  eventSource.onerror = () => {
+    disconnectSSE();
+    reconnectTimer = setTimeout(connectSSE, 3000);
+  };
 }
 
 function disconnectSSE() {
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
   eventSource?.close();
   eventSource = null;
 }
