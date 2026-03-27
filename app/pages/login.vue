@@ -15,6 +15,14 @@ const isLoading = ref(false);
 const toast = useToast();
 const altchaRef = ref<InstanceType<typeof AltchaField> | null>(null);
 
+// OAuth 回调 toast 提示
+const route = useRoute();
+const oauthMessages: Record<string, { type: "error" | "success"; text: string }> = {
+  "not-bound": { type: "error", text: "该第三方账号未绑定任何用户" },
+  denied: { type: "error", text: "你取消了第三方授权" },
+  error: { type: "error", text: "第三方登录失败，请重试" },
+};
+
 async function handleSubmit() {
   if (!email.value.trim()) {
     toast.error("请输入邮箱");
@@ -133,6 +141,16 @@ onMounted(() => {
   if (browserSupportsWebAuthn()) {
     initConditionalUI();
   }
+
+  const oauthParam = route.query.oauth as string;
+  if (oauthParam && oauthMessages[oauthParam]) {
+    const msg = oauthMessages[oauthParam];
+    if (msg.type === "error") toast.error(msg.text);
+    else toast.success(msg.text);
+    // 清理 URL 中的 oauth 参数，避免刷新重复 toast
+    const { oauth, ...rest } = route.query;
+    navigateTo({ query: rest }, { replace: true });
+  }
 });
 
 onBeforeUnmount(() => {
@@ -203,6 +221,9 @@ onBeforeUnmount(() => {
           使用通行密钥登录
         </template>
       </button>
+
+      <!-- OAuth Providers -->
+      <OAuthButtons />
 
       <!-- Forgot Password -->
       <NuxtLink to="/forgot-password" class="text-primary text-sm text-center">
