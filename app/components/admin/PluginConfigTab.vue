@@ -185,7 +185,7 @@ async function save() {
               </fieldset>
 
               <!-- OAuth Callback URL (只读提示) -->
-              <div v-else-if="field.type === 'oauth-callback-url'" class="alert alert-info alert-soft text-sm">
+              <div v-else-if="field.type === 'oauth-callback-url'" class="alert alert-info alert-outline text-sm">
                 <Icon name="hugeicons:information-circle" class="text-base shrink-0" />
                 <div class="flex flex-col gap-1">
                   <span class="font-medium">{{ field.label }}</span>
@@ -206,7 +206,8 @@ async function save() {
                 </legend>
                 <input v-model="formData[field.key]" :type="field.type === 'password' ? 'password' : 'text'"
                   class="input input-bordered w-full" :placeholder="field.description ?? ''"
-                  :disabled="isDisabled(field)" :autocomplete="field.type === 'password' ? 'new-password' : 'one-time-code'" :data-1p-ignore="true" :data-lpignore="true" />
+                  :disabled="isDisabled(field)" autocomplete="one-time-code" :data-1p-ignore="true"
+                  :data-lpignore="true" />
                 <p v-if="errors[field.key]" class="text-xs text-error mt-1">{{ errors[field.key] }}</p>
               </fieldset>
             </div>
