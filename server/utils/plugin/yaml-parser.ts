@@ -19,7 +19,6 @@ const SEMVER_REGEX = /^\d+\.\d+\.\d+/;
 export function parsePluginYaml(yamlContent: string): ParseResult {
   let parsed: unknown;
   try {
-    // @ts-expect-error Bun.YAML is Bun-specific
     parsed = Bun.YAML.parse(yamlContent);
   } catch {
     return { ok: false, errors: ["Invalid YAML syntax"] };

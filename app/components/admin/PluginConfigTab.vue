@@ -191,8 +191,13 @@ async function save() {
                   <span class="font-medium">{{ field.label }}</span>
                   <span v-if="field.description" class="opacity-70 text-xs">{{ field.description }}</span>
                   <code v-if="oauthCallbackUrl"
-                    class="select-all break-all bg-base-200 px-2 py-1 text-xs">{{ oauthCallbackUrl }}</code>
+                    class="select-all break-all px-2 py-1 text-xs badge badge-soft badge-secondary">{{ oauthCallbackUrl }}</code>
                   <span v-else class="text-xs opacity-60">启用插件后将在此显示 Callback URL</span>
+                  <a v-if="field.url" :href="field.url" target="_blank" rel="noopener noreferrer"
+                    class="link link-primary text-xs inline-flex items-center gap-1 w-fit">
+                    <Icon name="hugeicons:link-square-01" class="text-sm" />
+                    前往配置
+                  </a>
                 </div>
               </div>
 

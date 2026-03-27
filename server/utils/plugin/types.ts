@@ -26,6 +26,8 @@ export interface PluginConfigField {
   options_when?: ConditionalOptions[];
   validation?: ValidationRule;
   restart?: boolean;
+  /** 外部配置链接（仅 oauth-callback-url 类型使用） */
+  url?: string;
 }
 
 export interface SelectOption {
