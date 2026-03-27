@@ -7,6 +7,10 @@ export default defineEventHandler((event) => {
   const query = getQuery(event);
   const date = (query.date as string) ?? new Date().toISOString().slice(0, 10);
 
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    throw createError({ statusCode: 400, message: "Invalid date format, expected YYYY-MM-DD" });
+  }
+
   const manager = getPluginManager();
   const plugin = manager.getPlugin(id);
   if (!plugin) throw createError({ statusCode: 404, message: "Plugin not found" });

@@ -1,4 +1,5 @@
-import { existsSync, mkdirSync, readdirSync, unlinkSync, appendFileSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, unlinkSync, readFileSync } from "node:fs";
+import { appendFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { PluginLogEntry } from "./types";
 import { RingBuffer } from "./ring-buffer";
@@ -49,7 +50,7 @@ export class PluginLogManager {
     if (!existsSync(logsDir)) mkdirSync(logsDir, { recursive: true });
     const date = entry.timestamp.slice(0, 10); // YYYY-MM-DD
     const filePath = join(logsDir, `${date}.jsonl`);
-    appendFileSync(filePath, JSON.stringify(entry) + "\n");
+    void appendFile(filePath, JSON.stringify(entry) + "\n");
 
     // SSE notify
     const subs = this.subscribers.get(pluginId);
