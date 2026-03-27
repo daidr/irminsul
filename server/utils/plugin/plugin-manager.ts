@@ -45,8 +45,6 @@ export class PluginManager {
   private watcher: PluginWatcher | null = null;
   private pluginsDir: string;
   private statusSubscribers = new Set<ReadableStreamDefaultController>();
-  /** 最近刚启用的插件 ID，用于抑制 watcher 误报 */
-  private recentlyEnabled = new Set<string>();
 
   constructor(pluginsDir: string) {
     this.pluginsDir = resolve(pluginsDir);
@@ -240,10 +238,6 @@ export class PluginManager {
     }
 
     try {
-      // 抑制 watcher 在启用期间的误报（import index.js 可能触发文件访问事件）
-      this.recentlyEnabled.add(id);
-      setTimeout(() => this.recentlyEnabled.delete(id), 2000);
-
       await this.loadPluginIntoHost(plugin);
       plugin.enabled = true;
       plugin.error = undefined;
@@ -733,9 +727,6 @@ export class PluginManager {
   }
 
   private handlePluginChanged(pluginId: string): void {
-    // 跳过刚启用的插件（import 文件访问可能触发 watcher 误报）
-    if (this.recentlyEnabled.has(pluginId)) return;
-
     const existing = this.plugins.get(pluginId);
     if (!existing) {
       // New plugin discovered
