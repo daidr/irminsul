@@ -85,7 +85,6 @@ function cancelConfirm() {
             :src="provider.icon"
             :alt="provider.name"
             class="w-5 h-5"
-            style="filter: brightness(0) invert(1)"
           >
         </div>
 
