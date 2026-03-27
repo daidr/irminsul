@@ -16,7 +16,7 @@
 
 | 文件 | 职责 |
 |------|------|
-| `server/utils/oauth.ts` | OAuth 工具函数（state 管理、默认 token 交换、默认 profile 获取、provider 查询） |
+| `server/utils/oauth.ts` | OAuth 工具函数（state 管理、默认 token 交换、默认 profile 获取）；类型导出 |
 | `server/api/oauth/providers.get.ts` | 列出可用 OAuth Provider |
 | `server/api/oauth/[providerId]/authorize.get.ts` | 发起 OAuth 授权重定向 |
 | `server/api/oauth/[providerId]/callback.get.ts` | 处理 OAuth 回调 |
@@ -34,7 +34,7 @@
 | `server/utils/plugin/types.ts` | 在 `KNOWN_FUNCTIONAL_HOOKS` 中添加 4 个 OAuth hook |
 | `server/types/user.schema.ts` | 添加 `OAuthBinding` 接口和 `UserDocument.oauthBindings` 字段 |
 | `server/utils/user.repository.ts` | 添加 OAuth 绑定相关的索引和 CRUD 方法 |
-| `server/utils/plugin/plugin-manager.ts` | 添加 `discoverOAuthProviders()` 方法，在 `start()` 末尾调用 |
+| `server/utils/plugin/plugin-manager.ts` | 添加 OAuth provider 缓存、`discoverOAuthProviders()`、`callPluginHook()`；在 `start()`/`restartHost()`/`handleCrash()` 中调用 discovery；在 `disablePlugin()`/`handlePluginRemoved()` 中清理缓存 |
 | `server/middleware/01.session.ts` | 在 `event.context.user` 中加入 `oauthBindings` |
 | `app/pages/login.vue` | 引入 `OAuthButtons` 组件 + 处理 OAuth query param toast |
 | `app/components/HomePage.vue` | 引入 `OAuthBindings` 组件 + 添加 OAuth 相关 modal type |
@@ -105,8 +105,8 @@ export interface OAuthBinding {
 在 `passkeys: PasskeyRecord[];`（第 128 行）后插入：
 
 ```typescript
-  /** OAuth 第三方账号绑定列表 */
-  oauthBindings: OAuthBinding[];
+  /** OAuth 第三方账号绑定列表（旧文档可能不存在该字段） */
+  oauthBindings?: OAuthBinding[];
 ```
 
 - [ ] **Step 3: 提交**
@@ -321,8 +321,6 @@ describe("OAuth Utils", () => {
 
 ```typescript
 import { randomUUID } from "node:crypto";
-import { createLogger } from "evlog";
-import { getPluginManager } from "./plugin/plugin-manager";
 
 // === Types ===
 
@@ -366,7 +364,7 @@ export interface OAuthFetchProfileArgs {
   tokenType: string;
 }
 
-interface OAuthStateData {
+export interface OAuthStateData {
   action: "bind" | "login";
   userId?: string;
   providerId: string;
@@ -390,27 +388,6 @@ export async function consumeOAuthState(state: string): Promise<OAuthStateData |
   const raw = await redis.getdel(key);
   if (!raw) return null;
   return JSON.parse(raw) as OAuthStateData;
-}
-
-// === Provider Discovery ===
-
-/** 缓存的 provider 列表，由 discoverOAuthProviders 填充 */
-let oauthProviders: Map<string, { descriptor: OAuthProviderDescriptor; pluginId: string }> = new Map();
-
-export function setOAuthProviders(
-  providers: Map<string, { descriptor: OAuthProviderDescriptor; pluginId: string }>,
-): void {
-  oauthProviders = providers;
-}
-
-export function getOAuthProviders(): OAuthProviderDescriptor[] {
-  return [...oauthProviders.values()].map((p) => p.descriptor);
-}
-
-export function getOAuthProvider(
-  id: string,
-): { descriptor: OAuthProviderDescriptor; pluginId: string } | null {
-  return oauthProviders.get(id) ?? null;
 }
 
 // === Default OAuth 2.0 Flow ===
@@ -479,7 +456,10 @@ export async function defaultFetchProfile(
 
 export function buildCallbackUrl(providerId: string): string {
   const config = useRuntimeConfig();
-  const baseUrl = (config.yggdrasilBaseUrl as string).replace(/\/+$/, "");
+  const baseUrl = (config.yggdrasilBaseUrl as string)?.replace(/\/+$/, "");
+  if (!baseUrl) {
+    throw new Error("IRMIN_YGGDRASIL_BASE_URL is not configured, OAuth callbacks require it");
+  }
   return `${baseUrl}/api/oauth/${providerId}/callback`;
 }
 ```
@@ -503,16 +483,43 @@ git commit -m "feat: add OAuth utility functions for state, token exchange, and 
 **Files:**
 - Modify: `server/utils/plugin/plugin-manager.ts`
 
-- [ ] **Step 1: 在 `plugin-manager.ts` 中导入 OAuth 类型**
+- [ ] **Step 1: 在 `plugin-manager.ts` 中导入 OAuth 类型并添加私有字段**
 
 在 `server/utils/plugin/plugin-manager.ts` 顶部的导入区域添加：
 
 ```typescript
 import type { OAuthProviderDescriptor } from "../oauth";
-import { setOAuthProviders } from "../oauth";
 ```
 
-- [ ] **Step 2: 在 `bridgeEvlogHooks()` 方法之后添加 `discoverOAuthProviders()` 方法**
+在 `PluginManager` 类中添加私有字段（与其他字段如 `hookRegistry` 并列）：
+
+```typescript
+  private oauthProviders = new Map<string, { descriptor: OAuthProviderDescriptor; pluginId: string }>();
+```
+
+- [ ] **Step 2: 添加 OAuth provider 公开访问方法和 `callPluginHook()`**
+
+在 `getHookRegistry()` 方法附近添加：
+
+```typescript
+  // === OAuth Provider Access ===
+
+  getOAuthProviders(): OAuthProviderDescriptor[] {
+    return [...this.oauthProviders.values()].map((p) => p.descriptor);
+  }
+
+  getOAuthProvider(id: string): { descriptor: OAuthProviderDescriptor; pluginId: string } | null {
+    return this.oauthProviders.get(id) ?? null;
+  }
+
+  // === Plugin Hook Proxy (避免暴露 bridge) ===
+
+  async callPluginHook(pluginId: string, hookName: string, ...args: unknown[]): Promise<unknown> {
+    return this.bridge.callHook(pluginId, hookName, ...args);
+  }
+```
+
+- [ ] **Step 3: 在 `bridgeEvlogHooks()` 方法之后添加 `discoverOAuthProviders()` 方法**
 
 在 `server/utils/plugin/plugin-manager.ts` 的 `bridgeEvlogHooks()` 方法结束（约第 497 行 `}` 后）插入：
 
@@ -542,12 +549,13 @@ import { setOAuthProviders } from "../oauth";
         }
 
         if (providers.has(descriptor.id)) {
+          const existing = providers.get(descriptor.id)!;
           this.logManager.push({
             timestamp: new Date().toISOString(),
             level: "error",
             type: "event",
             pluginId: handler.pluginId,
-            message: `oauth:provider id "${descriptor.id}" already registered, skipping duplicate`,
+            message: `oauth:provider id "${descriptor.id}" already registered by plugin "${existing.pluginId}", skipping`,
           });
           continue;
         }
@@ -569,32 +577,74 @@ import { setOAuthProviders } from "../oauth";
       }
     }
 
-    setOAuthProviders(providers);
+    this.oauthProviders = providers;
     emitPluginEvent("oauth:discovery_complete", { count: providers.size });
   }
 ```
 
-- [ ] **Step 3: 在 `start()` 方法末尾调用 discovery（确保 host restart 时也重新执行）**
+- [ ] **Step 4: 在 `start()` 方法末尾调用 discovery**
 
-在 `server/utils/plugin/plugin-manager.ts` 的 `start()` 方法末尾（`this.logManager.cleanupExpiredLogs(retentionDays);` 之后，约第 208 行后）添加：
+在 `start()` 方法末尾（`this.logManager.cleanupExpiredLogs(retentionDays);` 之后，约第 208 行后）添加：
 
 ```typescript
     // Discover OAuth providers from loaded plugins
     await this.discoverOAuthProviders();
 ```
 
-这样 discovery 在首次启动和 Host restart 时都会执行。`bridgeEvlogHooks` 仍留在 `initPlugins` 中因为它注册的是永久性 nitroApp hook。
+- [ ] **Step 5: 在 `restartHost()` 中调用 discovery**
 
-- [ ] **Step 4: 验证 lint 通过**
+在 `restartHost()` 方法中，插件重载完成后（`this.dirtyReasons = [];` 之前）添加：
+
+```typescript
+    // Re-discover OAuth providers after host restart
+    await this.discoverOAuthProviders();
+```
+
+- [ ] **Step 6: 在 `handleCrash()` 的恢复代码中调用 discovery**
+
+在 `handleCrash()` 方法的恢复流程中，插件重载完成后（`this.dirtyReasons = [];` 之前）添加：
+
+```typescript
+      // Re-discover OAuth providers after crash recovery
+      await this.discoverOAuthProviders();
+```
+
+- [ ] **Step 7: 在 `disablePlugin()` 中清理 OAuth provider 缓存**
+
+在 `disablePlugin()` 方法末尾（`saveRegistry` 之前）添加：
+
+```typescript
+    // 清理该插件注册的 OAuth provider
+    for (const [providerId, entry] of this.oauthProviders) {
+      if (entry.pluginId === id) {
+        this.oauthProviders.delete(providerId);
+      }
+    }
+```
+
+- [ ] **Step 8: 在 `handlePluginRemoved()` 中清理 OAuth provider 缓存**
+
+在 `handlePluginRemoved()` 方法中，`this.hookRegistry.removePlugin(pluginId)` 之后添加：
+
+```typescript
+    // 清理该插件注册的 OAuth provider
+    for (const [providerId, entry] of this.oauthProviders) {
+      if (entry.pluginId === pluginId) {
+        this.oauthProviders.delete(providerId);
+      }
+    }
+```
+
+- [ ] **Step 9: 验证 lint 通过**
 
 Run: `bun run lint`
 Expected: 无新错误
 
-- [ ] **Step 5: 提交**
+- [ ] **Step 10: 提交**
 
 ```bash
 git add server/utils/plugin/plugin-manager.ts
-git commit -m "feat(plugin): add OAuth provider discovery in PluginManager.start()"
+git commit -m "feat(plugin): OAuth provider cache in PluginManager with full lifecycle management"
 ```
 
 ---
@@ -608,7 +658,8 @@ git commit -m "feat(plugin): add OAuth provider discovery in PluginManager.start
 
 ```typescript
 export default defineEventHandler(() => {
-  const providers = getOAuthProviders();
+  const manager = getPluginManager();
+  const providers = manager.getOAuthProviders();
   return {
     providers: providers.map((p) => ({
       id: p.id,
@@ -643,7 +694,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: "Missing providerId" });
   }
 
-  const provider = getOAuthProvider(providerId);
+  const manager = getPluginManager();
+  const provider = manager.getOAuthProvider(providerId);
   if (!provider) {
     throw createError({ statusCode: 404, statusMessage: "OAuth provider not found" });
   }
@@ -652,6 +704,14 @@ export default defineEventHandler(async (event) => {
   const action = query.action as string;
   if (action !== "bind" && action !== "login") {
     throw createError({ statusCode: 400, statusMessage: "Invalid action, must be 'bind' or 'login'" });
+  }
+
+  // 提前校验 clientId 和 clientSecret 是否配置，避免用户完成授权后才失败
+  const pluginConfig = getSetting(`plugin.custom.${provider.pluginId}.config`) as Record<string, unknown> | null;
+  const clientId = pluginConfig?.clientId as string;
+  const clientSecret = pluginConfig?.clientSecret as string;
+  if (!clientId || !clientSecret) {
+    throw createError({ statusCode: 500, statusMessage: "OAuth provider credentials not configured" });
   }
 
   let userId: string | undefined;
@@ -674,13 +734,6 @@ export default defineEventHandler(async (event) => {
     userId,
     providerId,
   });
-
-  // 读取插件配置中的 clientId
-  const pluginConfig = getSetting(`plugin.custom.${provider.pluginId}.config`) as Record<string, unknown> | null;
-  const clientId = pluginConfig?.clientId as string;
-  if (!clientId) {
-    throw createError({ statusCode: 500, statusMessage: "OAuth provider missing clientId config" });
-  }
 
   const redirectUri = buildCallbackUrl(providerId);
   const { descriptor } = provider;
@@ -724,6 +777,16 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const code = query.code as string;
   const stateParam = query.state as string;
+  const errorParam = query.error as string;
+
+  // 处理第三方返回的错误（如用户拒绝授权）
+  if (errorParam) {
+    if (stateParam) await consumeOAuthState(stateParam); // 清理 Redis state
+    if (errorParam === "access_denied") {
+      return sendRedirect(event, "/login?oauth=denied");
+    }
+    return sendRedirect(event, "/login?oauth=error");
+  }
 
   if (!providerId || !code || !stateParam) {
     return sendRedirect(event, "/login?oauth=error");
@@ -739,7 +802,8 @@ export default defineEventHandler(async (event) => {
     return sendRedirect(event, "/login?oauth=error");
   }
 
-  const provider = getOAuthProvider(providerId);
+  const manager = getPluginManager();
+  const provider = manager.getOAuthProvider(providerId);
   if (!provider) {
     return sendRedirect(event, "/login?oauth=error");
   }
@@ -759,17 +823,14 @@ export default defineEventHandler(async (event) => {
     const redirectUri = buildCallbackUrl(providerId);
 
     // 3. Token 交换（尝试插件覆盖，回退到默认）
-    const pluginManager = getPluginManager();
-    const hookRegistry = pluginManager.getHookRegistry();
-    const bridge = pluginManager.getBridge();
-
+    const hookRegistry = manager.getHookRegistry();
     let tokenResult: { accessToken: string; tokenType?: string };
 
-    const exchangeHandlers = hookRegistry.get("oauth:exchange-token")
-      .filter((h) => h.pluginId === pluginId);
+    const hasExchangeHook = hookRegistry.get("oauth:exchange-token")
+      .some((h) => h.pluginId === pluginId);
 
-    if (exchangeHandlers.length > 0) {
-      tokenResult = (await bridge.callHook(pluginId, "oauth:exchange-token", {
+    if (hasExchangeHook) {
+      tokenResult = (await manager.callPluginHook(pluginId, "oauth:exchange-token", {
         code,
         redirectUri,
         clientId,
@@ -787,11 +848,11 @@ export default defineEventHandler(async (event) => {
     // 4. 获取用户信息（尝试插件覆盖，回退到默认）
     let rawProfile: unknown;
 
-    const fetchProfileHandlers = hookRegistry.get("oauth:fetch-profile")
-      .filter((h) => h.pluginId === pluginId);
+    const hasFetchHook = hookRegistry.get("oauth:fetch-profile")
+      .some((h) => h.pluginId === pluginId);
 
-    if (fetchProfileHandlers.length > 0) {
-      rawProfile = await bridge.callHook(pluginId, "oauth:fetch-profile", {
+    if (hasFetchHook) {
+      rawProfile = await manager.callPluginHook(pluginId, "oauth:fetch-profile", {
         accessToken: tokenResult.accessToken,
         tokenType: tokenResult.tokenType ?? "Bearer",
       });
@@ -808,7 +869,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // 5. 映射 Profile
-    const mappedProfile = (await bridge.callHook(
+    const mappedProfile = (await manager.callPluginHook(
       pluginId,
       "oauth:map-profile",
       rawProfile,
@@ -827,15 +888,23 @@ export default defineEventHandler(async (event) => {
         return sendRedirect(event, "/home?oauth=already-bound");
       }
 
-      const added = await addOAuthBinding(stateData.userId!, {
-        provider: providerId,
-        providerId: mappedProfile.providerId,
-        displayName: mappedProfile.displayName,
-        boundAt: new Date(),
-      });
+      // 捕获 MongoDB duplicate key error（并发绑定竞态的最后防线）
+      try {
+        const added = await addOAuthBinding(stateData.userId!, {
+          provider: providerId,
+          providerId: mappedProfile.providerId,
+          displayName: mappedProfile.displayName,
+          boundAt: new Date(),
+        });
 
-      if (!added) {
-        return sendRedirect(event, "/home?oauth=duplicate");
+        if (!added) {
+          return sendRedirect(event, "/home?oauth=duplicate");
+        }
+      } catch (err: any) {
+        if (err?.code === 11000) {
+          return sendRedirect(event, "/home?oauth=already-bound");
+        }
+        throw err;
       }
 
       log.set({ oauth: { action: "bind", providerId, thirdPartyId: mappedProfile.providerId } });
@@ -870,16 +939,6 @@ export default defineEventHandler(async (event) => {
     return sendRedirect(event, "/login?oauth=error");
   }
 });
-```
-
-- [ ] **Step 2: 验证 `PluginManager` 暴露了 `getBridge()` 方法**
-
-检查 `server/utils/plugin/plugin-manager.ts` 是否有 `getBridge()` 公开方法。如果没有，添加：
-
-```typescript
-  getBridge(): PluginBridge {
-    return this.bridge;
-  }
 ```
 
 - [ ] **Step 3: 提交**
@@ -999,6 +1058,7 @@ function handleLogin(providerId: string) {
 const route = useRoute();
 const oauthMessages: Record<string, { type: "error" | "success"; text: string }> = {
   "not-bound": { type: "error", text: "该第三方账号未绑定任何用户" },
+  denied: { type: "error", text: "你取消了第三方授权" },
   error: { type: "error", text: "第三方登录失败，请重试" },
 };
 
@@ -1008,6 +1068,9 @@ onMounted(() => {
     const msg = oauthMessages[oauthParam];
     if (msg.type === "error") toast.error(msg.text);
     else toast.success(msg.text);
+    // 清理 URL 中的 oauth 参数，避免刷新重复 toast
+    const { oauth, ...rest } = route.query;
+    navigateTo({ query: rest }, { replace: true });
   }
 });
 ```
@@ -1187,7 +1250,8 @@ const oauthMessages: Record<string, { type: "error" | "success"; text: string }>
   "bind-success": { type: "success", text: "第三方账号绑定成功" },
   "already-bound": { type: "error", text: "该第三方账号已绑定其他用户" },
   duplicate: { type: "error", text: "你已绑定该服务的账号" },
-  error: { type: "error", text: "第三方登录失败，请重试" },
+  denied: { type: "error", text: "你取消了第三方授权" },
+  error: { type: "error", text: "操作失败，请重试" },
 };
 
 onMounted(() => {
@@ -1196,6 +1260,9 @@ onMounted(() => {
     const msg = oauthMessages[oauthParam];
     if (msg.type === "error") toast.error(msg.text);
     else toast.success(msg.text);
+    // 清理 URL 中的 oauth 参数
+    const { oauth, ...rest } = route.query;
+    navigateTo({ query: rest }, { replace: true });
   }
 });
 ```
