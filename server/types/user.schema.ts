@@ -89,6 +89,20 @@ export interface PasskeyRecord {
 }
 
 /**
+ * OAuth 第三方账号绑定记录
+ */
+export interface OAuthBinding {
+  /** Provider ID（如 "github"），由插件定义 */
+  provider: string;
+  /** 用户在第三方平台的唯一 ID（字符串化） */
+  providerId: string;
+  /** 第三方平台显示名 */
+  displayName: string;
+  /** 绑定时间 */
+  boundAt: Date;
+}
+
+/**
  * MongoDB 用户文档
  */
 export interface UserDocument {
@@ -126,6 +140,9 @@ export interface UserDocument {
 
   /** 通行密钥列表 */
   passkeys: PasskeyRecord[];
+
+  /** OAuth 第三方账号绑定列表（旧文档可能不存在该字段） */
+  oauthBindings?: OAuthBinding[];
 
   /** 是否为管理员 */
   isAdmin: boolean;
