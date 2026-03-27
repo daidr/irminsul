@@ -85,12 +85,11 @@ export async function consumePasswordResetToken(
   const tokenHash = hashToken(token);
   const key = resetKey(tokenHash);
   const redis = getRedisClient();
-  const raw = (await redis.send("GET", [key])) as string | null;
+  const raw = (await redis.send("GETDEL", [key])) as string | null;
   if (!raw) return null;
 
   const data = JSON.parse(raw) as ResetTokenData;
 
-  await redis.send("DEL", [key]);
   await redis.send("DEL", [lockKey(data.userId)]);
 
   useLogger(event).set({ passwordReset: { tokenConsumed: true, userId: data.userId } });

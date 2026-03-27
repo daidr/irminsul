@@ -9,10 +9,8 @@ const RESET_EMAIL_COOLDOWN_SECONDS = 10 * 60;
 async function checkEmailResetRateLimit(email: string): Promise<boolean> {
   const redis = getRedisClient();
   const key = buildRedisKey("password-reset-email", email.toLowerCase());
-  const existing = await redis.send("GET", [key]);
-  if (existing) return false;
-  await redis.send("SET", [key, "1", "EX", RESET_EMAIL_COOLDOWN_SECONDS.toString()]);
-  return true;
+  const result = await redis.send("SET", [key, "1", "EX", RESET_EMAIL_COOLDOWN_SECONDS.toString(), "NX"]);
+  return result !== null;
 }
 
 export default defineEventHandler(async (event) => {
