@@ -60,8 +60,16 @@ async function handleOrderUpdate(newList: any[]) {
   await $fetch("/api/admin/plugins/order", { method: "PUT", body: { order } });
 }
 
+// 用于驱动 PluginDetail 重新拉取数据
+const detailRefreshKey = ref(0);
+
 async function handlePluginAction() {
   await fetchPlugins();
+}
+
+async function handleHostRestarted() {
+  await fetchPlugins();
+  detailRefreshKey.value++;
 }
 </script>
 
@@ -72,7 +80,7 @@ async function handlePluginAction() {
       class="w-full md:w-[300px] shrink-0 border-x border-base-300 bg-base-200 flex flex-col"
       :class="mobileShowDetail ? 'hidden md:flex' : 'flex'"
     >
-      <AdminPluginHostStatus class="p-3 border-b border-base-300" @restarted="fetchPlugins" />
+      <AdminPluginHostStatus class="p-3 border-b border-base-300" @restarted="handleHostRestarted" />
       <div class="flex-1 overflow-y-auto">
         <AdminPluginList
           v-if="!loading"
@@ -100,6 +108,7 @@ async function handlePluginAction() {
     >
       <AdminPluginDetail
         v-if="selectedPlugin"
+        :key="selectedPlugin.id + '-' + detailRefreshKey"
         :plugin-id="selectedPlugin.id"
         :show-back="mobileShowDetail"
         @action="handlePluginAction"
