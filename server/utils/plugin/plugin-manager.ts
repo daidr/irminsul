@@ -261,16 +261,11 @@ export class PluginManager {
 
     // Mark as pending_disable + dirty. The plugin keeps running in the Host
     // until the admin restarts the Host.
+    // 注意：不清理 OAuth provider 缓存，因为插件仍在运行中。
+    // Host restart 时 discoverOAuthProviders() 会自然重建缓存，已禁用的插件不会被发现。
     plugin.enabled = false;
     plugin.status = "pending_disable";
     this.addDirtyReason(id, "disabled");
-
-    // 清理该插件注册的 OAuth provider
-    for (const [providerId, entry] of this.oauthProviders) {
-      if (entry.pluginId === id) {
-        this.oauthProviders.delete(providerId);
-      }
-    }
 
     await this.saveRegistry();
     emitPluginEvent("plugin:disabled", { pluginId: id });
