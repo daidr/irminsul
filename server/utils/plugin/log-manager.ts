@@ -129,13 +129,14 @@ export class PluginLogManager {
         if (opts.level && entry.level !== opts.level) continue;
         if (opts.type && entry.type !== opts.type) continue;
 
-        if (logs.length >= limit) {
-          // Reverse to chronological order (oldest first) before returning
-          logs.reverse();
-          return { logs, nextCursor: entry.timestamp, hasMore: true };
-        }
-
         logs.push(entry);
+
+        if (logs.length >= limit) {
+          // logs is newest→oldest order; last element is the oldest in this page
+          // Use its timestamp as cursor for the next page
+          logs.reverse();
+          return { logs, nextCursor: logs[0].timestamp, hasMore: true };
+        }
       }
     }
 
