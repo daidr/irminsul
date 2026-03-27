@@ -18,8 +18,11 @@ export function evaluateCondition(
     return !evaluateCondition(condition.$not as Condition, config);
   }
 
+  // Shorthand: { field: "fieldName", <op>: value } → { fieldName: { <op>: value } }
+  const normalized = normalizeFieldShorthand(condition as Record<string, unknown>);
+
   // Implicit AND: every field must match
-  const fields = condition as Record<string, FieldCondition>;
+  const fields = normalized as Record<string, FieldCondition>;
   for (const key of Object.keys(fields)) {
     if (!evaluateField(fields[key], config[key])) return false;
   }
@@ -50,11 +53,26 @@ function evaluateField(
   return false;
 }
 
+const OPERATOR_NAMES = [
+  "eq", "neq", "in", "nin", "gt", "gte", "lt", "lte", "truthy", "regex",
+];
+
 function isOperatorObject(v: unknown): boolean {
   if (v === null || typeof v !== "object" || Array.isArray(v)) return false;
   const keys = Object.keys(v as object);
   if (keys.length !== 1) return false;
-  return [
-    "eq", "neq", "in", "nin", "gt", "gte", "lt", "lte", "truthy", "regex",
-  ].includes(keys[0]);
+  return OPERATOR_NAMES.includes(keys[0]!);
+}
+
+/**
+ * Detect { field: "fieldName", <op>: value } shorthand and normalize
+ * to { fieldName: { <op>: value } } for the implicit AND evaluator.
+ */
+function normalizeFieldShorthand(
+  cond: Record<string, unknown>,
+): Record<string, unknown> {
+  if (typeof cond.field !== "string") return cond;
+  const keys = Object.keys(cond).filter((k) => k !== "field");
+  if (keys.length !== 1 || !OPERATOR_NAMES.includes(keys[0]!)) return cond;
+  return { [cond.field]: { [keys[0]!]: cond[keys[0]!] } };
 }

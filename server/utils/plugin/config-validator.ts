@@ -22,8 +22,14 @@ export function validatePluginConfig(
       }
     }
 
+    // Treat blank strings as empty for required checks
+    const isEmpty =
+      value === undefined ||
+      value === null ||
+      (typeof value === "string" && value.trim() === "");
+
     // Check required
-    if (field.required && (value === undefined || value === null)) {
+    if (field.required && isEmpty) {
       errors[field.key] = `${field.label} is required`;
       continue;
     }
@@ -31,7 +37,7 @@ export function validatePluginConfig(
     // Check required_when
     if (
       field.required_when &&
-      (value === undefined || value === null) &&
+      isEmpty &&
       evaluateCondition(field.required_when, input)
     ) {
       errors[field.key] = `${field.label} is required`;

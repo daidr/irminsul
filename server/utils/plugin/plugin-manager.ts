@@ -280,15 +280,23 @@ export class PluginManager {
     if (!plugin.meta.config)
       return { ok: false, errors: { _: "Plugin has no config schema" } };
 
-    const result = validatePluginConfig(plugin.meta.config, input);
-    if (!result.ok) return result;
-
     // Get old config
     const oldConfig =
       ((getSetting(`plugin.custom.${id}.config`) as Record<
         string,
         unknown
       >) ?? {});
+
+    // Preserve unchanged password fields (frontend sends "****" as placeholder,
+    // which is stripped before submission — missing password keys mean "keep old value")
+    for (const field of plugin.meta.config) {
+      if (field.type === "password" && !(field.key in input) && field.key in oldConfig) {
+        input[field.key] = oldConfig[field.key];
+      }
+    }
+
+    const result = validatePluginConfig(plugin.meta.config, input);
+    if (!result.ok) return result;
     const newConfig = result.config;
 
     // Persist
@@ -361,13 +369,8 @@ export class PluginManager {
     this.hookRegistry.clear();
     this.setHostStatus("stopped");
 
-    // Finalize pending_disable → disabled
-    for (const plugin of this.plugins.values()) {
-      if (plugin.status === "pending_disable") {
-        emitPluginEvent("plugin:finalize_disable", { pluginId: plugin.id });
-        plugin.status = "disabled";
-      }
-    }
+    // Re-scan plugins from disk to pick up manifest/config changes, new/removed plugins
+    await this.scan();
 
     // Create new Host
     this.bridge.start();

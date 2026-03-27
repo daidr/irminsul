@@ -88,10 +88,35 @@ const dirty = computed(() => {
   return false;
 });
 
+// 前端 required 校验
+function validateRequired(): boolean {
+  const errs: Record<string, string> = {};
+  for (const field of props.configSchema) {
+    if (!isVisible(field) || !isRequired(field)) continue;
+    const val = formData.value[field.key];
+    const empty =
+      val === undefined ||
+      val === null ||
+      (typeof val === "string" && val.trim() === "");
+    if (empty) {
+      errs[field.key] = `${field.label} 不能为空`;
+    }
+  }
+  if (Object.keys(errs).length > 0) {
+    errors.value = errs;
+    return false;
+  }
+  return true;
+}
+
 // 保存
 async function save() {
   saving.value = true;
   errors.value = {};
+  if (!validateRequired()) {
+    saving.value = false;
+    return;
+  }
   try {
     // 跳过值仍为 "****" 的密码字段（未修改）
     const body: Record<string, unknown> = {};
