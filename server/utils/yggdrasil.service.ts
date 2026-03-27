@@ -100,7 +100,7 @@ export async function yggdrasilRefresh(params: {
 
   // 过期检查 — 过期则物理删除
   const config = useRuntimeConfig();
-  const expiryMs = config.yggdrasilTokenExpiryMs || 432000000;
+  const expiryMs = Number(config.yggdrasilTokenExpiryMs) || 432000000;
   if (Date.now() - token.createdAt > expiryMs) {
     await removeToken(params.accessToken);
     throw new YggdrasilError(403, "ForbiddenOperationException", "Invalid token.");
