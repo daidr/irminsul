@@ -242,6 +242,8 @@ export class PluginManager {
       plugin.enabled = true;
       plugin.error = undefined;
       await this.saveRegistry();
+      // 新插件启用后重新发现 OAuth provider
+      await this.discoverOAuthProviders();
       emitPluginEvent("plugin:enabled", { pluginId: id });
       return { ok: true };
     } catch (err: unknown) {
