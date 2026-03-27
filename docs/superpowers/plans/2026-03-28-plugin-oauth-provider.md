@@ -378,15 +378,16 @@ export async function createOAuthState(data: OAuthStateData): Promise<string> {
   const state = randomUUID().replace(/-/g, "");
   const redis = getRedisClient();
   const key = buildRedisKey("oauth", "state", state);
-  await redis.set(key, JSON.stringify(data), { EX: OAUTH_STATE_TTL });
+  await redis.send("SET", [key, JSON.stringify(data), "EX", OAUTH_STATE_TTL.toString()]);
   return state;
 }
 
 export async function consumeOAuthState(state: string): Promise<OAuthStateData | null> {
   const redis = getRedisClient();
   const key = buildRedisKey("oauth", "state", state);
-  const raw = await redis.getdel(key);
+  const raw = (await redis.send("GET", [key])) as string | null;
   if (!raw) return null;
+  await redis.send("DEL", [key]);
   return JSON.parse(raw) as OAuthStateData;
 }
 
@@ -769,7 +770,6 @@ git commit -m "feat: add GET /api/oauth/[providerId]/authorize endpoint"
 
 ```typescript
 import { useLogger } from "evlog";
-import type { SessionData } from "~~/server/utils/session";
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event);
