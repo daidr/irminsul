@@ -6,6 +6,7 @@ import type {
   UserCape,
   YggdrasilToken,
   PasskeyRecord,
+  OAuthBinding,
 } from "~~/server/types/user.schema";
 import { hasActiveBan } from "~~/server/types/user.schema";
 
@@ -28,6 +29,10 @@ export async function ensureUserIndexes(): Promise<void> {
   await col.createIndex(
     { "passkeys.credentialId": 1 },
     { unique: true, partialFilterExpression: { "passkeys.credentialId": { $exists: true } } },
+  );
+  await col.createIndex(
+    { "oauthBindings.provider": 1, "oauthBindings.providerId": 1 },
+    { unique: true, sparse: true },
   );
   const log = createLogger({ category: "db" });
   log.set({ action: "ensureUserIndexes", status: "complete" });
@@ -53,14 +58,14 @@ export async function findUserForSession(
   uuid: string,
 ): Promise<Pick<
   UserDocument,
-  "skin" | "cape" | "bans" | "time" | "isAdmin" | "emailVerified"
+  "skin" | "cape" | "bans" | "time" | "isAdmin" | "emailVerified" | "oauthBindings"
 > | null> {
   return getUserCollection().findOne(
     { uuid },
-    { projection: { skin: 1, cape: 1, bans: 1, time: 1, isAdmin: 1, emailVerified: 1 } },
+    { projection: { skin: 1, cape: 1, bans: 1, time: 1, isAdmin: 1, emailVerified: 1, oauthBindings: 1 } },
   ) as Promise<Pick<
     UserDocument,
-    "skin" | "cape" | "bans" | "time" | "isAdmin" | "emailVerified"
+    "skin" | "cape" | "bans" | "time" | "isAdmin" | "emailVerified" | "oauthBindings"
   > | null>;
 }
 
@@ -415,4 +420,42 @@ export async function getPasskeys(uuid: string): Promise<Omit<PasskeyRecord, "pu
   const user = await getUserCollection().findOne({ uuid }, { projection: { passkeys: 1 } });
   if (!user || !user.passkeys) return [];
   return user.passkeys.map(({ publicKey: _publicKey, ...rest }) => rest);
+}
+
+// --- OAuth 绑定 ---
+
+/**
+ * 添加 OAuth 绑定（每个 provider 只允许绑定一个账号）
+ * 使用 $push + 过滤条件确保不重复绑定同一 provider
+ */
+export async function addOAuthBinding(uuid: string, binding: OAuthBinding): Promise<boolean> {
+  const result = await getUserCollection().updateOne(
+    { uuid, "oauthBindings.provider": { $ne: binding.provider } },
+    { $push: { oauthBindings: binding } },
+  );
+  return result.modifiedCount > 0;
+}
+
+/**
+ * 解绑 OAuth 账号
+ */
+export async function removeOAuthBinding(uuid: string, provider: string): Promise<boolean> {
+  const result = await getUserCollection().updateOne(
+    { uuid },
+    { $pull: { oauthBindings: { provider } } },
+  );
+  return result.modifiedCount > 0;
+}
+
+/**
+ * 按 provider + providerId 查找用户（用于 OAuth 登录）
+ */
+export async function findUserByOAuthBinding(
+  provider: string,
+  providerId: string,
+): Promise<UserDocument | null> {
+  return getUserCollection().findOne({
+    "oauthBindings.provider": provider,
+    "oauthBindings.providerId": providerId,
+  });
 }
