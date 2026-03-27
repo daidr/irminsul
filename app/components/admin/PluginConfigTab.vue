@@ -180,7 +180,7 @@ async function save() {
                     title="修改此项需要重启 Plugin Host" />
                 </legend>
                 <input v-model.number="formData[field.key]" type="number" class="input input-bordered w-full"
-                  :placeholder="field.description ?? ''" :disabled="isDisabled(field)" autocomplete="off" />
+                  :placeholder="field.description ?? ''" :disabled="isDisabled(field)" autocomplete="one-time-code" />
                 <p v-if="errors[field.key]" class="text-xs text-error mt-1">{{ errors[field.key] }}</p>
               </fieldset>
 
@@ -206,7 +206,7 @@ async function save() {
                 </legend>
                 <input v-model="formData[field.key]" :type="field.type === 'password' ? 'password' : 'text'"
                   class="input input-bordered w-full" :placeholder="field.description ?? ''"
-                  :disabled="isDisabled(field)" autocomplete="off" />
+                  :disabled="isDisabled(field)" :autocomplete="field.type === 'password' ? 'new-password' : 'one-time-code'" :data-1p-ignore="true" :data-lpignore="true" />
                 <p v-if="errors[field.key]" class="text-xs text-error mt-1">{{ errors[field.key] }}</p>
               </fieldset>
             </div>
