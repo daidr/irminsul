@@ -13,7 +13,7 @@ export interface PluginConfigField {
   key: string;
   label: string;
   description?: string;
-  type: "text" | "password" | "number" | "boolean" | "select" | "textarea";
+  type: "text" | "password" | "number" | "boolean" | "select" | "textarea" | "oauth-callback-url";
   group?: string;
   default?: unknown;
   default_when?: ConditionalValue[];

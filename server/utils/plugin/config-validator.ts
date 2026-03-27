@@ -91,6 +91,9 @@ function checkType(field: PluginConfigField, value: unknown): string | null {
     case "select":
       // select accepts any type
       break;
+    case "oauth-callback-url":
+      // Read-only server-computed field, skip type check
+      break;
   }
   return null;
 }

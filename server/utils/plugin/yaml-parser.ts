@@ -12,6 +12,7 @@ const VALID_CONFIG_TYPES = [
   "boolean",
   "select",
   "textarea",
+  "oauth-callback-url",
 ];
 const SEMVER_REGEX = /^\d+\.\d+\.\d+/;
 

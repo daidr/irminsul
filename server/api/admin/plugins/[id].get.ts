@@ -14,6 +14,17 @@ export default defineEventHandler((event) => {
     }
   }
 
+  // Compute OAuth callback URL if plugin has registered a provider
+  let oauthCallbackUrl: string | null = null;
+  const oauthProvider = manager.getOAuthProviderByPlugin(id);
+  if (oauthProvider) {
+    const config = useRuntimeConfig();
+    const baseUrl = (config.yggdrasilBaseUrl as string)?.replace(/\/+$/, "");
+    if (baseUrl) {
+      oauthCallbackUrl = `${baseUrl}/api/oauth/${oauthProvider.descriptor.id}/callback`;
+    }
+  }
+
   return {
     id: plugin.id,
     name: plugin.meta.name,
@@ -26,5 +37,6 @@ export default defineEventHandler((event) => {
     error: plugin.error ?? null,
     configSchema: plugin.meta.config ?? [],
     config: maskedConfig,
+    oauthCallbackUrl,
   };
 });

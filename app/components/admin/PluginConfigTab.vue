@@ -3,6 +3,7 @@ const props = defineProps<{
   pluginId: string;
   configSchema: any[];
   config: Record<string, unknown>;
+  oauthCallbackUrl?: string | null;
 }>();
 
 const emit = defineEmits<{ saved: [] }>();
@@ -29,6 +30,7 @@ function initForm() {
   const data: Record<string, unknown> = {};
   // 第一遍：使用配置值或静态默认值填充
   for (const field of props.configSchema) {
+    if (field.type === "oauth-callback-url") continue; // read-only, no form data
     data[field.key] = props.config[field.key] ?? resolveDefault(field, data);
   }
   formData.value = { ...data };
@@ -130,7 +132,7 @@ async function save() {
         </h4>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <template v-for="field in fields" :key="field.key">
-            <div v-if="isVisible(field)" :class="field.type === 'textarea' ? 'md:col-span-2' : ''">
+            <div v-if="isVisible(field)" :class="field.type === 'textarea' || field.type === 'oauth-callback-url' ? 'md:col-span-2' : ''">
               <!-- 布尔值：复选框 -->
               <label v-if="field.type === 'boolean'" class="flex cursor-pointer items-center gap-2 text-sm">
                 <input
@@ -190,6 +192,17 @@ async function save() {
                 />
                 <p v-if="errors[field.key]" class="text-xs text-error mt-1">{{ errors[field.key] }}</p>
               </fieldset>
+
+              <!-- OAuth Callback URL (只读提示) -->
+              <div v-else-if="field.type === 'oauth-callback-url'" class="alert alert-info alert-soft text-sm">
+                <Icon name="hugeicons:information-circle" class="text-base shrink-0" />
+                <div class="flex flex-col gap-1">
+                  <span class="font-medium">{{ field.label }}</span>
+                  <span v-if="field.description" class="opacity-70 text-xs">{{ field.description }}</span>
+                  <code v-if="oauthCallbackUrl" class="select-all break-all bg-base-200 px-2 py-1 text-xs">{{ oauthCallbackUrl }}</code>
+                  <span v-else class="text-xs opacity-60">启用插件后将在此显示 Callback URL（需配置 IRMIN_YGGDRASIL_BASE_URL）</span>
+                </div>
+              </div>
 
               <!-- 文本 / 密码 -->
               <fieldset v-else class="fieldset">

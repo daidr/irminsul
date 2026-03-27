@@ -467,6 +467,13 @@ export class PluginManager {
     return this.oauthProviders.get(id) ?? null;
   }
 
+  getOAuthProviderByPlugin(pluginId: string): { descriptor: OAuthProviderDescriptor; pluginId: string } | null {
+    for (const entry of this.oauthProviders.values()) {
+      if (entry.pluginId === pluginId) return entry;
+    }
+    return null;
+  }
+
   // === Plugin Hook Proxy (避免暴露 bridge) ===
 
   async callPluginHook(pluginId: string, hookName: string, ...args: unknown[]): Promise<unknown> {
