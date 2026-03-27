@@ -48,7 +48,13 @@ function evaluateField(
   if ("lt" in op) return (value as number) < op.lt;
   if ("lte" in op) return (value as number) <= op.lte;
   if ("truthy" in op) return op.truthy ? !!value : !value;
-  if ("regex" in op) return new RegExp(op.regex).test(String(value ?? ""));
+  if ("regex" in op) {
+    try {
+      return new RegExp(op.regex).test(String(value ?? ""));
+    } catch {
+      return false;
+    }
+  }
 
   return false;
 }

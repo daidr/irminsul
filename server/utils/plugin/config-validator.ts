@@ -112,7 +112,12 @@ function checkValidation(
 
   // Pattern check (for string values)
   if (validation.pattern && typeof value === "string") {
-    const regex = new RegExp(validation.pattern);
+    let regex: RegExp;
+    try {
+      regex = new RegExp(validation.pattern);
+    } catch {
+      return `${field.label} has an invalid validation pattern`;
+    }
     if (!regex.test(value)) {
       return (
         validation.message ??
