@@ -326,7 +326,7 @@ export async function removeAllTokens(uuid: string): Promise<void> {
  */
 export async function updateTokenLastUsed(accessToken: string, ip: string): Promise<void> {
   await getUserCollection().updateOne(
-    { "tokens.accessToken": accessToken, "tokens.status": 1 },
+    { tokens: { $elemMatch: { accessToken, status: 1 } } },
     {
       $set: {
         "tokens.$.lastUsedIp": ip,
@@ -455,7 +455,6 @@ export async function findUserByOAuthBinding(
   providerId: string,
 ): Promise<UserDocument | null> {
   return getUserCollection().findOne({
-    "oauthBindings.provider": provider,
-    "oauthBindings.providerId": providerId,
+    oauthBindings: { $elemMatch: { provider, providerId } },
   });
 }
