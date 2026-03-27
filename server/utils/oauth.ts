@@ -63,9 +63,8 @@ export async function createOAuthState(data: OAuthStateData): Promise<string> {
 export async function consumeOAuthState(state: string): Promise<OAuthStateData | null> {
   const redis = getRedisClient();
   const key = buildRedisKey("oauth", "state", state);
-  const raw = (await redis.send("GET", [key])) as string | null;
+  const raw = (await redis.send("GETDEL", [key])) as string | null;
   if (!raw) return null;
-  await redis.send("DEL", [key]);
   return JSON.parse(raw) as OAuthStateData;
 }
 
