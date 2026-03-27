@@ -30,6 +30,8 @@ async function loadPasskeys() {
   try {
     const result = await $fetch<{ success: boolean; passkeys: PasskeyItem[] }>("/api/passkey/list");
     if (result.success) passkeys.value = result.passkeys;
+  } catch {
+    toast.error("加载通行密钥失败");
   } finally {
     loading.value = false;
   }

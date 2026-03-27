@@ -22,6 +22,7 @@ const gameSessions = ref<GameSessionItem[]>([]);
 const webSessions = ref<WebSessionItem[]>([]);
 const loading = ref(false);
 const actionLoading = ref<string | null>(null);
+const toast = useToast();
 
 function formatTime(ts: number): string {
   const d = new Date(ts);
@@ -66,6 +67,8 @@ async function loadGameSessions() {
       "/api/user/sessions/game",
     );
     if (result.success) gameSessions.value = result.sessions;
+  } catch {
+    toast.error("加载游戏会话失败");
   } finally {
     loading.value = false;
   }
@@ -78,6 +81,8 @@ async function loadWebSessions() {
       "/api/user/sessions/web",
     );
     if (result.success) webSessions.value = result.sessions;
+  } catch {
+    toast.error("加载网页会话失败");
   } finally {
     loading.value = false;
   }
@@ -97,6 +102,8 @@ async function handleInvalidateGame(accessToken: string) {
       body: { accessToken },
     });
     if (result.success) await loadGameSessions();
+  } catch {
+    toast.error("注销会话失败");
   } finally {
     actionLoading.value = null;
   }
@@ -109,6 +116,8 @@ async function handleInvalidateAllGame() {
       method: "DELETE",
     });
     if (result.success) await loadGameSessions();
+  } catch {
+    toast.error("注销所有游戏会话失败");
   } finally {
     actionLoading.value = null;
   }
@@ -122,6 +131,8 @@ async function handleDeleteWeb(sessionId: string) {
       body: { sessionId },
     });
     if (result.success) await loadWebSessions();
+  } catch {
+    toast.error("登出会话失败");
   } finally {
     actionLoading.value = null;
   }
@@ -134,6 +145,8 @@ async function handleDeleteOtherWeb() {
       method: "DELETE",
     });
     if (result.success) await loadWebSessions();
+  } catch {
+    toast.error("登出其他会话失败");
   } finally {
     actionLoading.value = null;
   }

@@ -8,6 +8,7 @@ const props = defineProps<{
 const profileStore = useProfileStore();
 const { skinHash } = storeToRefs(profileStore);
 
+const toast = useToast();
 const show = ref(false);
 const loggingOut = ref(false);
 let closeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -36,6 +37,8 @@ async function handleLogout() {
     await $fetch("/api/auth/logout", { method: "POST" });
     await refreshNuxtData("current-user");
     await navigateTo("/login");
+  } catch {
+    toast.error("退出登录失败，请稍后重试");
   } finally {
     loggingOut.value = false;
   }
