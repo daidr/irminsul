@@ -40,15 +40,18 @@ beforeAll(async () => {
 });
 
 describe("password", () => {
+  // argon2id 分支不使用 event，传入占位即可
+  const fakeEvent = {} as any;
+
   it("hashes and verifies with argon2id", async () => {
     const hash = await hashPassword("test-password");
     expect(hash).toBeTruthy();
-    expect(await verifyPassword("test-password", hash, "argon2id")).toBe(true);
-    expect(await verifyPassword("wrong-password", hash, "argon2id")).toBe(false);
+    expect(await verifyPassword(fakeEvent, "test-password", hash, "argon2id")).toBe(true);
+    expect(await verifyPassword(fakeEvent, "wrong-password", hash, "argon2id")).toBe(false);
   });
 
   it("rejects empty passwords", async () => {
     const hash = await hashPassword("real-password");
-    expect(await verifyPassword("", hash, "argon2id")).toBe(false);
+    expect(await verifyPassword(fakeEvent, "", hash, "argon2id")).toBe(false);
   });
 });
