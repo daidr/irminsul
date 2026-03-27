@@ -167,6 +167,10 @@ export const LIFECYCLE_HOOKS = [
 export const KNOWN_FUNCTIONAL_HOOKS = [
   "evlog:enricher",
   "evlog:drain",
+  "oauth:provider",
+  "oauth:map-profile",
+  "oauth:exchange-token",
+  "oauth:fetch-profile",
 ] as const;
 
 export const ALL_KNOWN_HOOKS = [
