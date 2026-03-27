@@ -132,17 +132,15 @@ async function save() {
         </h4>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <template v-for="field in fields" :key="field.key">
-            <div v-if="isVisible(field)" :class="field.type === 'textarea' || field.type === 'oauth-callback-url' ? 'md:col-span-2' : ''">
+            <div v-if="isVisible(field)"
+              :class="field.type === 'textarea' || field.type === 'oauth-callback-url' ? 'md:col-span-2' : ''">
               <!-- 布尔值：复选框 -->
               <label v-if="field.type === 'boolean'" class="flex cursor-pointer items-center gap-2 text-sm">
-                <input
-                  v-model="formData[field.key]"
-                  type="checkbox"
-                  class="checkbox checkbox-sm"
-                  :disabled="isDisabled(field)"
-                />
+                <input v-model="formData[field.key]" type="checkbox" class="checkbox checkbox-sm"
+                  :disabled="isDisabled(field)" />
                 {{ field.label }}
-                <Icon v-if="field.restart" name="hugeicons:refresh" class="text-warning text-xs" title="修改此项需要重启 Plugin Host" />
+                <Icon v-if="field.restart" name="hugeicons:refresh" class="text-warning text-xs"
+                  title="修改此项需要重启 Plugin Host" />
               </label>
 
               <!-- 下拉选择 -->
@@ -150,9 +148,11 @@ async function save() {
                 <legend class="fieldset-legend text-xs">
                   {{ field.label }}
                   <span v-if="isRequired(field)" class="text-error">*</span>
-                  <Icon v-if="field.restart" name="hugeicons:refresh" class="text-warning text-xs" title="修改此项需要重启 Plugin Host" />
+                  <Icon v-if="field.restart" name="hugeicons:refresh" class="text-warning text-xs"
+                    title="修改此项需要重启 Plugin Host" />
                 </legend>
-                <select v-model="formData[field.key]" class="select select-bordered w-full" :disabled="isDisabled(field)">
+                <select v-model="formData[field.key]" class="select select-bordered w-full"
+                  :disabled="isDisabled(field)">
                   <option v-for="opt in getOptions(field)" :key="String(opt.value)" :value="opt.value">
                     {{ opt.label }}
                   </option>
@@ -166,13 +166,8 @@ async function save() {
                   {{ field.label }}
                   <span v-if="isRequired(field)" class="text-error">*</span>
                 </legend>
-                <textarea
-                  v-model="formData[field.key]"
-                  class="textarea textarea-bordered w-full"
-                  :placeholder="field.description ?? ''"
-                  :disabled="isDisabled(field)"
-                  rows="3"
-                />
+                <textarea v-model="formData[field.key]" class="textarea textarea-bordered w-full"
+                  :placeholder="field.description ?? ''" :disabled="isDisabled(field)" rows="3" />
                 <p v-if="errors[field.key]" class="text-xs text-error mt-1">{{ errors[field.key] }}</p>
               </fieldset>
 
@@ -181,15 +176,11 @@ async function save() {
                 <legend class="fieldset-legend text-xs">
                   {{ field.label }}
                   <span v-if="isRequired(field)" class="text-error">*</span>
-                  <Icon v-if="field.restart" name="hugeicons:refresh" class="text-warning text-xs" title="修改此项需要重启 Plugin Host" />
+                  <Icon v-if="field.restart" name="hugeicons:refresh" class="text-warning text-xs"
+                    title="修改此项需要重启 Plugin Host" />
                 </legend>
-                <input
-                  v-model.number="formData[field.key]"
-                  type="number"
-                  class="input input-bordered w-full"
-                  :placeholder="field.description ?? ''"
-                  :disabled="isDisabled(field)"
-                />
+                <input v-model.number="formData[field.key]" type="number" class="input input-bordered w-full"
+                  :placeholder="field.description ?? ''" :disabled="isDisabled(field)" autocomplete="off" />
                 <p v-if="errors[field.key]" class="text-xs text-error mt-1">{{ errors[field.key] }}</p>
               </fieldset>
 
@@ -199,8 +190,9 @@ async function save() {
                 <div class="flex flex-col gap-1">
                   <span class="font-medium">{{ field.label }}</span>
                   <span v-if="field.description" class="opacity-70 text-xs">{{ field.description }}</span>
-                  <code v-if="oauthCallbackUrl" class="select-all break-all bg-base-200 px-2 py-1 text-xs">{{ oauthCallbackUrl }}</code>
-                  <span v-else class="text-xs opacity-60">启用插件后将在此显示 Callback URL（需配置 IRMIN_YGGDRASIL_BASE_URL）</span>
+                  <code v-if="oauthCallbackUrl"
+                    class="select-all break-all bg-base-200 px-2 py-1 text-xs">{{ oauthCallbackUrl }}</code>
+                  <span v-else class="text-xs opacity-60">启用插件后将在此显示 Callback URL</span>
                 </div>
               </div>
 
@@ -209,15 +201,12 @@ async function save() {
                 <legend class="fieldset-legend text-xs">
                   {{ field.label }}
                   <span v-if="isRequired(field)" class="text-error">*</span>
-                  <Icon v-if="field.restart" name="hugeicons:refresh" class="text-warning text-xs" title="修改此项需要重启 Plugin Host" />
+                  <Icon v-if="field.restart" name="hugeicons:refresh" class="text-warning text-xs"
+                    title="修改此项需要重启 Plugin Host" />
                 </legend>
-                <input
-                  v-model="formData[field.key]"
-                  :type="field.type === 'password' ? 'password' : 'text'"
-                  class="input input-bordered w-full"
-                  :placeholder="field.description ?? ''"
-                  :disabled="isDisabled(field)"
-                />
+                <input v-model="formData[field.key]" :type="field.type === 'password' ? 'password' : 'text'"
+                  class="input input-bordered w-full" :placeholder="field.description ?? ''"
+                  :disabled="isDisabled(field)" autocomplete="off" />
                 <p v-if="errors[field.key]" class="text-xs text-error mt-1">{{ errors[field.key] }}</p>
               </fieldset>
             </div>
