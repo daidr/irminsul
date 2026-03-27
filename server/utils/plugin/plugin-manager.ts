@@ -16,6 +16,7 @@ import { HookRegistry } from "./hook-registry";
 import { PluginLogManager } from "./log-manager";
 import { PluginBridge } from "./plugin-bridge";
 import { PluginWatcher } from "./plugin-watcher";
+import type { OAuthProviderDescriptor } from "../oauth";
 
 const PLUGIN_MANAGER_KEY = Symbol.for("irminsul.pluginManager");
 
@@ -39,6 +40,7 @@ export class PluginManager {
   private hostStatus: HostStatus = "stopped";
   private bridge: PluginBridge;
   private hookRegistry = new HookRegistry();
+  private oauthProviders = new Map<string, { descriptor: OAuthProviderDescriptor; pluginId: string }>();
   private logManager: PluginLogManager;
   private watcher: PluginWatcher | null = null;
   private pluginsDir: string;
@@ -206,6 +208,9 @@ export class PluginManager {
     const retentionDays =
       (getSetting("plugin.system.logRetentionDays") as number) ?? 7;
     this.logManager.cleanupExpiredLogs(retentionDays);
+
+    // Discover OAuth providers from loaded plugins
+    await this.discoverOAuthProviders();
   }
 
   // === Plugin Lifecycle ===
@@ -257,6 +262,13 @@ export class PluginManager {
     plugin.enabled = false;
     plugin.status = "pending_disable";
     this.addDirtyReason(id, "disabled");
+
+    // 清理该插件注册的 OAuth provider
+    for (const [providerId, entry] of this.oauthProviders) {
+      if (entry.pluginId === id) {
+        this.oauthProviders.delete(providerId);
+      }
+    }
 
     await this.saveRegistry();
     emitPluginEvent("plugin:disabled", { pluginId: id });
@@ -383,6 +395,9 @@ export class PluginManager {
       }
     }
 
+    // Re-discover OAuth providers after host restart
+    await this.discoverOAuthProviders();
+
     // Clear dirty state
     this.dirtyReasons = [];
     this.notifyStatusChange();
@@ -442,6 +457,22 @@ export class PluginManager {
     return this.hookRegistry;
   }
 
+  // === OAuth Provider Access ===
+
+  getOAuthProviders(): OAuthProviderDescriptor[] {
+    return [...this.oauthProviders.values()].map((p) => p.descriptor);
+  }
+
+  getOAuthProvider(id: string): { descriptor: OAuthProviderDescriptor; pluginId: string } | null {
+    return this.oauthProviders.get(id) ?? null;
+  }
+
+  // === Plugin Hook Proxy (避免暴露 bridge) ===
+
+  async callPluginHook(pluginId: string, hookName: string, ...args: unknown[]): Promise<unknown> {
+    return this.bridge.callHook(pluginId, hookName, ...args);
+  }
+
   // === Evlog Bridge ===
 
   bridgeEvlogHooks(nitroApp: any): void {
@@ -494,6 +525,63 @@ export class PluginManager {
         }
       }
     });
+  }
+
+  // === OAuth Provider Discovery ===
+
+  async discoverOAuthProviders(): Promise<void> {
+    const providers = new Map<string, { descriptor: OAuthProviderDescriptor; pluginId: string }>();
+    const handlers = this.hookRegistry.get("oauth:provider");
+
+    for (const handler of handlers) {
+      try {
+        const descriptor = (await this.bridge.callHook(
+          handler.pluginId,
+          "oauth:provider",
+        )) as OAuthProviderDescriptor;
+
+        if (!descriptor?.id || !descriptor?.name) {
+          this.logManager.push({
+            timestamp: new Date().toISOString(),
+            level: "error",
+            type: "event",
+            pluginId: handler.pluginId,
+            message: "oauth:provider hook returned invalid descriptor (missing id or name)",
+          });
+          continue;
+        }
+
+        if (providers.has(descriptor.id)) {
+          const existing = providers.get(descriptor.id)!;
+          this.logManager.push({
+            timestamp: new Date().toISOString(),
+            level: "error",
+            type: "event",
+            pluginId: handler.pluginId,
+            message: `oauth:provider id "${descriptor.id}" already registered by plugin "${existing.pluginId}", skipping`,
+          });
+          continue;
+        }
+
+        providers.set(descriptor.id, { descriptor, pluginId: handler.pluginId });
+        emitPluginEvent("oauth:provider_discovered", {
+          pluginId: handler.pluginId,
+          providerId: descriptor.id,
+          providerName: descriptor.name,
+        });
+      } catch (err: unknown) {
+        this.logManager.push({
+          timestamp: new Date().toISOString(),
+          level: "error",
+          type: "event",
+          pluginId: handler.pluginId,
+          message: `oauth:provider discovery error: ${err instanceof Error ? err.message : String(err)}`,
+        });
+      }
+    }
+
+    this.oauthProviders = providers;
+    emitPluginEvent("oauth:discovery_complete", { count: providers.size });
   }
 
   // === Cleanup ===
@@ -617,6 +705,9 @@ export class PluginManager {
           }
         }
 
+        // Re-discover OAuth providers after crash recovery
+        await this.discoverOAuthProviders();
+
         this.dirtyReasons = [];
         this.notifyStatusChange();
         emitPluginEvent("host:crash_recovery_done", {
@@ -654,6 +745,12 @@ export class PluginManager {
 
     if (existing.status === "enabled") {
       this.hookRegistry.removePlugin(pluginId);
+      // 清理该插件注册的 OAuth provider
+      for (const [providerId, entry] of this.oauthProviders) {
+        if (entry.pluginId === pluginId) {
+          this.oauthProviders.delete(providerId);
+        }
+      }
       this.addDirtyReason(pluginId, "deleted");
     }
 
