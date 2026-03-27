@@ -41,15 +41,19 @@ export async function createPasswordResetToken(
   userId: string,
   email: string,
 ): Promise<string | null> {
-  if (await hasActivePasswordResetToken(userId)) {
-    useLogger(event).set({ passwordReset: { skipped: "token_already_active", userId } });
-    return null;
-  }
+  const redis = getRedisClient();
 
   const tokenBytes = crypto.getRandomValues(new Uint8Array(32));
   const rawToken = Buffer.from(tokenBytes).toString("hex");
   const tokenHash = hashToken(rawToken);
   const key = resetKey(tokenHash);
+
+  // Atomically acquire lock — if lock already exists, another token is active
+  const lockResult = await redis.send("SET", [lockKey(userId), tokenHash, "EX", RESET_EXPIRY_SECONDS.toString(), "NX"]);
+  if (!lockResult) {
+    useLogger(event).set({ passwordReset: { skipped: "token_already_active", userId } });
+    return null;
+  }
 
   const data: ResetTokenData = {
     userId,
@@ -57,9 +61,7 @@ export async function createPasswordResetToken(
     createdAt: Date.now(),
   };
 
-  const redis = getRedisClient();
   await redis.send("SET", [key, JSON.stringify(data), "EX", RESET_EXPIRY_SECONDS.toString()]);
-  await redis.send("SET", [lockKey(userId), tokenHash, "EX", RESET_EXPIRY_SECONDS.toString()]);
 
   useLogger(event).set({ passwordReset: { tokenCreated: true, userId } });
   return rawToken;
