@@ -62,6 +62,29 @@ function onDialogCancel(e: Event) {
   }
 }
 
+// OAuth 回调 toast 提示
+const route = useRoute();
+const toast = useToast();
+const oauthMessages: Record<string, { type: "error" | "success"; text: string }> = {
+  "bind-success": { type: "success", text: "第三方账号绑定成功" },
+  "already-bound": { type: "error", text: "该第三方账号已绑定其他用户" },
+  duplicate: { type: "error", text: "你已绑定该服务的账号" },
+  denied: { type: "error", text: "你取消了第三方授权" },
+  error: { type: "error", text: "操作失败，请重试" },
+};
+
+onMounted(() => {
+  const oauthParam = route.query.oauth as string;
+  if (oauthParam && oauthMessages[oauthParam]) {
+    const msg = oauthMessages[oauthParam];
+    if (msg.type === "error") toast.error(msg.text);
+    else toast.success(msg.text);
+    // 清理 URL 中的 oauth 参数
+    const { oauth, ...rest } = route.query;
+    navigateTo({ query: rest }, { replace: true });
+  }
+});
+
 // ---- 邮箱验证 ----
 const verifyLoading = ref(false);
 const verifyMsg = ref("");
@@ -121,6 +144,7 @@ async function handleSendVerification() {
           @ban-history="openModal('ban-history')"
           @admin-panel="openModal('admin-panel')"
         />
+        <OAuthBindings />
       </div>
       <!-- 右列 -->
       <div class="lg:col-span-8 flex flex-col gap-6">
