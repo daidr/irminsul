@@ -26,6 +26,12 @@ export default defineEventHandler(async (event) => {
     isAdmin: userDoc?.isAdmin === true,
     emailVerified,
     needsEmailVerification: !!requireEmailVerification && !emailVerified,
+    oauthBindings: (userDoc?.oauthBindings ?? []).map((b) => ({
+      provider: b.provider,
+      providerId: b.providerId,
+      displayName: b.displayName,
+      boundAt: b.boundAt.getTime(),
+    })),
   };
 
   event.context.sessionId = await getCurrentSessionId(event);
