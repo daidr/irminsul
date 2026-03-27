@@ -9,6 +9,10 @@ import { initSecrets } from "../init-modules/init-secrets";
 import { initPlugins } from "../init-modules/plugins";
 
 export default defineNitroPlugin(async (nitroApp) => {
+  if (import.meta.prerender) {
+    return;
+  }
+
   // Phase 1: Sync setup
   initEvlogDrain(nitroApp);
   initRuntimeCheck();
