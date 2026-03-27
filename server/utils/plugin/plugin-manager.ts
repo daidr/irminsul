@@ -645,6 +645,8 @@ export class PluginManager {
     });
 
     plugin.status = "enabled";
+    // 加载后更新 watcher 的 mtime 快照，避免 import 触发的文件访问被误判为修改
+    this.watcher?.updateSnapshot(plugin.id);
   }
 
   private handlePluginLog(
