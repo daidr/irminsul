@@ -11,10 +11,7 @@ export default defineNuxtConfig({
     noExternals: false,
     externals: {
       external: [
-        "mongodb",
-        "@simplewebauthn/server",
-        "nodemailer",
-        "evlog",
+        "mongodb"
       ],
       inline: ["mongodb-connection-string-url"],
     },

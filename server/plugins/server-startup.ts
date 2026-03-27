@@ -10,9 +10,9 @@ import { initPlugins } from "../init-modules/plugins";
 
 export default defineNitroPlugin(async (nitroApp) => {
   // Phase 1: Sync setup
+  initEvlogDrain(nitroApp);
   initRuntimeCheck();
   initDirs();
-  initEvlogDrain(nitroApp);
   initDb(nitroApp);
 
   // Phase 2: Async init (all depend on DB, can run in parallel)
