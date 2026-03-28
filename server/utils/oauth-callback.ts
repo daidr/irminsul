@@ -17,11 +17,15 @@ export async function handleOAuthCallback(event: H3Event, params: CallbackParams
 
   // 处理第三方返回的错误（如用户拒绝授权）
   if (errorParam) {
-    if (stateParam) await consumeOAuthState(stateParam);
-    if (errorParam === "access_denied") {
-      return sendRedirect(event, "/login?oauth=denied");
+    let errorTarget = "/login";
+    if (stateParam) {
+      const stateData = await consumeOAuthState(stateParam);
+      if (stateData?.action === "bind") errorTarget = "/home";
     }
-    return sendRedirect(event, "/login?oauth=error");
+    if (errorParam === "access_denied") {
+      return sendRedirect(event, `${errorTarget}?oauth=denied`);
+    }
+    return sendRedirect(event, `${errorTarget}?oauth=error`);
   }
 
   if (!providerId || !code || !stateParam) {

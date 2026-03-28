@@ -14,7 +14,5 @@ describe("OAuth Utils", () => {
   it.todo("createOAuthState stores state in Redis with TTL");
   it.todo("consumeOAuthState retrieves and deletes state");
   it.todo("consumeOAuthState returns null for expired/missing state");
-  it.todo("defaultExchangeToken sends POST with correct params");
-  it.todo("defaultFetchProfile sends GET with Authorization header");
   it.todo("buildCallbackUrl constructs correct URL from runtime config");
 });
