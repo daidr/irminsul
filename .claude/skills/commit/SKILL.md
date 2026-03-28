@@ -45,8 +45,10 @@ Optional. Use the primary area affected (e.g., `auth`, `yggdrasil`, `ui`, `db`, 
 
 1. Run `rtk git status` and `rtk git diff` (staged + unstaged) to understand current changes
 2. Run `rtk git log -5` to see recent commit style for reference
-3. Analyze all changes and draft a commit message:
-   - Determine the correct type and scope
+3. Analyze all changes and determine if they should be split:
+   - If changes span different concerns (e.g., new feature + formatting, config + bugfix), propose splitting into separate commits and ask the user for confirmation
+   - Each commit should be atomic — one logical change per commit
+   - Determine the correct type and scope for each commit
    - Write a concise description that captures the intent
    - Do NOT commit files that likely contain secrets (`.env`, credentials, etc.)
 4. Stage relevant files by name (avoid `git add -A` or `git add .`)
