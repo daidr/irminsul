@@ -36,7 +36,7 @@ async function handleLogout() {
   try {
     await $fetch("/api/auth/logout", { method: "POST" });
     await refreshNuxtData("current-user");
-    await navigateTo("/login");
+    await navigateTo("/");
   } catch {
     toast.error("退出登录失败，请稍后重试");
   } finally {
@@ -60,13 +60,8 @@ const isBanned = computed(() => {
   <div class="relative flex items-center" @mouseenter="onEnter" @mouseleave="onLeave">
     <!-- Trigger -->
     <div class="flex gap-2.5 items-center cursor-pointer">
-      <motion.div
-        v-if="skinHash && !show"
-        layout
-        class="pointer-events-none w-5 h-5 relative z-10"
-        layoutId="user-avatar"
-        :exit="{ opacity: 1 }"
-      >
+      <motion.div v-if="skinHash && !show" layout class="pointer-events-none w-5 h-5 relative z-10"
+        layoutId="user-avatar" :exit="{ opacity: 1 }">
         <McAvatar :hash="skinHash" :scale="9" class="w-full h-full" />
       </motion.div>
       <motion.p class="text-sm whitespace-nowrap font-mono" layout layoutId="user-game-id">{{
@@ -79,30 +74,19 @@ const isBanned = computed(() => {
       <div v-show="show" class="popover-anchor" @mouseenter="onEnter" @mouseleave="onLeave">
         <div class="h-[27px] shrink-0" />
 
-        <motion.div
-          v-if="skinHash"
-          layout
-          class="pointer-events-none w-16 h-16 -mt-16 translate-y-1/2 relative z-10"
-          layoutId="user-avatar"
-          :initial="{ opacity: 1 }"
-        >
+        <motion.div v-if="skinHash" layout class="pointer-events-none w-16 h-16 -mt-16 translate-y-1/2 relative z-10"
+          layoutId="user-avatar" :initial="{ opacity: 1 }">
           <McAvatar :hash="skinHash" :scale="9" class="w-full h-full" />
         </motion.div>
         <!-- Card -->
-        <motion.div
-          class="w-full bg-base-100 shadow-lg border border-base-300 relative"
-          :initial="{ opacity: 0, y: -20 }"
-          :animate="{ opacity: 1, y: 0 }"
-          :exit="{ opacity: 0, y: -20 }"
-        >
+        <motion.div class="w-full bg-base-100 shadow-lg border border-base-300 relative"
+          :initial="{ opacity: 0, y: -20 }" :animate="{ opacity: 1, y: 0 }" :exit="{ opacity: 0, y: -20 }">
           <div class="card-body items-center text-center pt-8">
             <motion.p class="text-xl whitespace-nowrap font-mono" layout layoutId="user-game-id">{{
               user.gameId
             }}</motion.p>
             <span v-if="isBanned" class="badge badge-soft badge-error badge-sm">封禁中</span>
-            <span v-else-if="user.isAdmin" class="badge badge-soft badge-primary badge-sm"
-              >管理员</span
-            >
+            <span v-else-if="user.isAdmin" class="badge badge-soft badge-primary badge-sm">管理员</span>
             <span v-else class="badge badge-soft badge-sm">普通玩家</span>
 
             <div class="divider my-0" />
@@ -119,12 +103,8 @@ const isBanned = computed(() => {
             </div>
 
             <div class="tooltip absolute right-2 top-2" data-tip="退出登录">
-              <button
-                class="btn btn-error btn-soft btn-sm btn-square"
-                :class="{ 'btn-disabled': loggingOut }"
-                :disabled="loggingOut"
-                @click="handleLogout"
-              >
+              <button class="btn btn-error btn-soft btn-sm btn-square" :class="{ 'btn-disabled': loggingOut }"
+                :disabled="loggingOut" @click="handleLogout">
                 <Icon v-if="!loggingOut" name="hugeicons:logout-05" class="action-icon" />
                 <span v-if="loggingOut" class="loading loading-spinner loading-xs" />
               </button>
