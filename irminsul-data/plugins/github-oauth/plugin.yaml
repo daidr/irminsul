@@ -1,0 +1,26 @@
+name: GitHub OAuth
+version: 1.0.0
+description: 使用 GitHub 账号绑定和快捷登录
+author: irminsul
+hooks:
+  - oauth:provider
+  - oauth:authorize
+  - oauth:exchange-token
+  - oauth:fetch-profile
+  - oauth:map-profile
+config:
+  - key: callbackUrl
+    label: OAuth Callback URL
+    type: oauth-callback-url
+    description: 在 GitHub OAuth App 设置中，将此 URL 填入 "Authorization callback URL" 字段
+    url: https://github.com/settings/developers
+  - key: clientId
+    label: Client ID
+    type: text
+    required: true
+    description: GitHub OAuth App 的 Client ID
+  - key: clientSecret
+    label: Client Secret
+    type: password
+    required: true
+    description: GitHub OAuth App 的 Client Secret
