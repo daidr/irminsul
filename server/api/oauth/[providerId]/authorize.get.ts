@@ -16,21 +16,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: "Invalid action, must be 'bind' or 'login'" });
   }
 
-  // 提前校验 clientId 和 clientSecret 是否配置，避免用户完成授权后才失败
-  const pluginConfig = getSetting(`plugin.custom.${provider.pluginId}.config`) as Record<string, unknown> | null;
-  const clientId = pluginConfig?.clientId as string;
-  const clientSecret = pluginConfig?.clientSecret as string;
-  if (!clientId || !clientSecret) {
-    throw createError({ statusCode: 500, statusMessage: "OAuth provider credentials not configured" });
-  }
-
   let userId: string | undefined;
 
   if (action === "bind") {
     const user = requireAuth(event);
     userId = user.userId;
 
-    // 检查是否已绑定该 provider
     const existingBinding = user.oauthBindings?.find(
       (b: { provider: string }) => b.provider === providerId,
     );
@@ -46,16 +37,17 @@ export default defineEventHandler(async (event) => {
   });
 
   const redirectUri = buildCallbackUrl(providerId);
-  const { descriptor } = provider;
 
-  const params = new URLSearchParams({
-    client_id: clientId,
-    redirect_uri: redirectUri,
-    scope: descriptor.authorize.scopes.join(" "),
-    state,
-    response_type: "code",
-  });
+  const result = (await manager.callPluginHook(
+    provider.pluginId,
+    "oauth:authorize",
+    { redirectUri, state },
+  )) as { url?: string } | null;
 
-  const authorizeUrl = `${descriptor.authorize.url}?${params.toString()}`;
+  const authorizeUrl = result?.url;
+  if (!authorizeUrl || typeof authorizeUrl !== "string" || !authorizeUrl.startsWith("https://")) {
+    throw createError({ statusCode: 500, statusMessage: "OAuth plugin returned invalid authorize URL" });
+  }
+
   return sendRedirect(event, authorizeUrl);
 });
