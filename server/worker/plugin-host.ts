@@ -92,6 +92,16 @@ interface PluginContext {
     debug(message: string, data?: Record<string, unknown>): void;
   };
   fetch: typeof globalThis.fetch;
+  oauth: {
+    exchangeToken(
+      tokenUrl: string,
+      options: { code: string; redirectUri: string; clientId: string; clientSecret: string },
+    ): Promise<{ accessToken: string; tokenType: string }>;
+    fetchProfile(
+      userInfoUrl: string,
+      options: { accessToken: string; tokenType: string; headers?: Record<string, string> },
+    ): Promise<unknown>;
+  };
 }
 
 function createPluginContext(
@@ -161,6 +171,59 @@ function createPluginContext(
       },
     },
     fetch: globalThis.fetch.bind(globalThis),
+    oauth: {
+      async exchangeToken(tokenUrl, options) {
+        const body = new URLSearchParams({
+          grant_type: "authorization_code",
+          code: options.code,
+          redirect_uri: options.redirectUri,
+          client_id: options.clientId,
+          client_secret: options.clientSecret,
+        });
+
+        const res = await globalThis.fetch(tokenUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Accept: "application/json",
+          },
+          body: body.toString(),
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`Token exchange failed (${res.status}): ${text}`);
+        }
+
+        const data = (await res.json()) as Record<string, unknown>;
+        const accessToken = data.access_token as string;
+        if (!accessToken) {
+          throw new Error("Token exchange response missing access_token");
+        }
+
+        return {
+          accessToken,
+          tokenType: (data.token_type as string) ?? "Bearer",
+        };
+      },
+
+      async fetchProfile(userInfoUrl, options) {
+        const res = await globalThis.fetch(userInfoUrl, {
+          headers: {
+            Authorization: `${options.tokenType} ${options.accessToken}`,
+            Accept: "application/json",
+            ...options.headers,
+          },
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`User info fetch failed (${res.status}): ${text}`);
+        }
+
+        return res.json();
+      },
+    },
   };
 }
 
