@@ -170,6 +170,7 @@ export const KNOWN_FUNCTIONAL_HOOKS = [
   "evlog:enricher",
   "evlog:drain",
   "oauth:provider",
+  "oauth:authorize",
   "oauth:map-profile",
   "oauth:exchange-token",
   "oauth:fetch-profile",
