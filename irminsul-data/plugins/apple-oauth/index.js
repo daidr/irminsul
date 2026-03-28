@@ -98,7 +98,25 @@ export function setup(ctx) {
     return { url: `https://appleid.apple.com/auth/authorize?${params}` };
   });
 
-  ctx.hook("oauth:exchange-token", async ({ code, redirectUri }) => {
+  // 缓存首次授权时从 callbackParams.user 解析到的用户名
+  // Apple 只在首次授权时返回 name，且通过 POST body 的 user 参数传递（不在 id_token 中）
+  let cachedUserName = "";
+
+  ctx.hook("oauth:exchange-token", async ({ code, redirectUri, callbackParams }) => {
+    // 尝试从 callbackParams.user 解析用户名（仅首次授权时存在）
+    if (callbackParams?.user) {
+      try {
+        const userData = typeof callbackParams.user === "string"
+          ? JSON.parse(callbackParams.user)
+          : callbackParams.user;
+        const firstName = userData?.name?.firstName || "";
+        const lastName = userData?.name?.lastName || "";
+        cachedUserName = [firstName, lastName].filter(Boolean).join(" ");
+      } catch {
+        // user 参数解析失败，忽略
+      }
+    }
+
     const clientSecret = await generateClientSecret(
       config.teamId,
       config.clientId,
@@ -141,7 +159,8 @@ export function setup(ctx) {
 
   ctx.hook("oauth:map-profile", (raw) => ({
     providerId: String(raw.sub),
-    displayName: raw.sub,
+    // 优先使用首次授权时拿到的用户名，回退到 sub
+    displayName: cachedUserName || raw.sub,
   }));
 
   ctx.log.info("Apple OAuth plugin loaded");

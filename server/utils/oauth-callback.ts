@@ -5,6 +5,8 @@ interface CallbackParams {
   code: string;
   state: string;
   error?: string;
+  /** 回调的完整原始参数（GET query 或 POST body），透传给 oauth:exchange-token */
+  rawParams: Record<string, unknown>;
 }
 
 /**
@@ -58,6 +60,7 @@ export async function handleOAuthCallback(event: H3Event, params: CallbackParams
     const tokenResult = (await manager.callPluginHook(pluginId, "oauth:exchange-token", {
       code,
       redirectUri,
+      callbackParams: params.rawParams,
     })) as { accessToken?: string; tokenType?: string } | null;
 
     if (!tokenResult?.accessToken) {

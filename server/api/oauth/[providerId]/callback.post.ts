@@ -8,5 +8,6 @@ export default defineEventHandler(async (event) => {
     code: body?.code as string,
     state: body?.state as string,
     error: body?.error as string | undefined,
+    rawParams: (body ?? {}) as Record<string, unknown>,
   });
 });

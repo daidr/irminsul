@@ -4,5 +4,6 @@ export default defineEventHandler(async (event) => {
     code: query.code as string,
     state: query.state as string,
     error: query.error as string | undefined,
+    rawParams: query as Record<string, unknown>,
   });
 });
