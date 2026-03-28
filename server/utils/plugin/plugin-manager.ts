@@ -578,6 +578,22 @@ export class PluginManager {
           continue;
         }
 
+        // 校验插件是否注册了全部必需的 OAuth hooks
+        const requiredHooks = ["oauth:authorize", "oauth:exchange-token", "oauth:fetch-profile", "oauth:map-profile"];
+        const missingHooks = requiredHooks.filter(
+          (h) => !this.hookRegistry.get(h).some((r) => r.pluginId === handler.pluginId),
+        );
+        if (missingHooks.length > 0) {
+          this.logManager.push({
+            timestamp: new Date().toISOString(),
+            level: "error",
+            type: "event",
+            pluginId: handler.pluginId,
+            message: `oauth:provider registered but missing required hooks: ${missingHooks.join(", ")}`,
+          });
+          continue;
+        }
+
         if (providers.has(descriptor.id)) {
           const existing = providers.get(descriptor.id)!;
           this.logManager.push({
