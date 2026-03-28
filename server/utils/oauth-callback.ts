@@ -5,8 +5,6 @@ interface CallbackParams {
   code: string;
   state: string;
   error?: string;
-  /** 回调的完整原始参数（GET query 或 POST body），透传给 oauth:exchange-token */
-  rawParams: Record<string, unknown>;
 }
 
 /**
@@ -60,7 +58,6 @@ export async function handleOAuthCallback(event: H3Event, params: CallbackParams
     const tokenResult = (await manager.callPluginHook(pluginId, "oauth:exchange-token", {
       code,
       redirectUri,
-      callbackParams: params.rawParams,
     })) as { accessToken?: string; tokenType?: string } | null;
 
     if (!tokenResult?.accessToken) {
@@ -84,7 +81,7 @@ export async function handleOAuthCallback(event: H3Event, params: CallbackParams
       rawProfile,
     )) as { providerId: string; displayName: string } | null;
 
-    if (!mappedProfile?.providerId || !mappedProfile?.displayName) {
+    if (!mappedProfile?.providerId) {
       log.set({ oauth: { error: "invalid_mapped_profile", step: "map_profile", providerId, rawProfile } });
       return sendRedirect(event, errorRedirect);
     }
@@ -100,7 +97,7 @@ export async function handleOAuthCallback(event: H3Event, params: CallbackParams
         const added = await addOAuthBinding(stateData.userId!, {
           provider: providerId,
           providerId: mappedProfile.providerId,
-          displayName: mappedProfile.displayName,
+          displayName: mappedProfile.displayName || "",
           boundAt: new Date(),
         });
 
