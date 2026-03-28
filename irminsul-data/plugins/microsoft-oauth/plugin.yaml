@@ -1,0 +1,50 @@
+name: Microsoft OAuth
+version: 1.0.0
+description: 使用 Microsoft 账号绑定和快捷登录
+author: irminsul
+hooks:
+  - oauth:provider
+  - oauth:authorize
+  - oauth:exchange-token
+  - oauth:fetch-profile
+  - oauth:map-profile
+config:
+  - key: callbackUrl
+    label: OAuth Callback URL
+    type: oauth-callback-url
+    description: 在 Azure Portal 的应用注册中，将此 URL 添加到"重定向 URI"（Web 平台）
+    url: https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade
+  - key: clientId
+    label: Application (client) ID
+    type: text
+    required: true
+    description: Azure AD 应用注册的 Application (client) ID
+  - key: clientSecret
+    label: Client Secret
+    type: password
+    required: true
+    description: Azure AD 应用注册的客户端密码（Value，非 Secret ID）
+  - key: tenant
+    label: Tenant
+    type: select
+    default: common
+    description: 选择允许登录的账号类型
+    options:
+      - label: 所有 Microsoft 账号（个人 + 工作/学校）
+        value: common
+      - label: 仅工作/学校账号（多租户）
+        value: organizations
+      - label: 仅个人 Microsoft 账号
+        value: consumers
+      - label: 仅特定租户（需填写下方租户 ID）
+        value: custom
+  - key: customTenant
+    label: 租户 ID / 域名
+    type: text
+    description: "填写租户 ID（GUID）或域名（如 contoso.onmicrosoft.com）"
+    visible_when:
+      field: tenant
+      eq: custom
+    required_when:
+      field: tenant
+      eq: custom
