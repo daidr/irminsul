@@ -1,0 +1,26 @@
+name: Google OAuth
+version: 1.0.0
+description: 使用 Google 账号绑定和快捷登录
+author: irminsul
+hooks:
+  - oauth:provider
+  - oauth:authorize
+  - oauth:exchange-token
+  - oauth:fetch-profile
+  - oauth:map-profile
+config:
+  - key: callbackUrl
+    label: OAuth Callback URL
+    type: oauth-callback-url
+    description: 在 Google Cloud Console 的 OAuth 2.0 客户端设置中，将此 URL 添加到"已获授权的重定向 URI"
+    url: https://console.cloud.google.com/apis/credentials
+  - key: clientId
+    label: Client ID
+    type: text
+    required: true
+    description: Google OAuth 2.0 客户端 ID
+  - key: clientSecret
+    label: Client Secret
+    type: password
+    required: true
+    description: Google OAuth 2.0 客户端密钥
