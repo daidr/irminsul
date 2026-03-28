@@ -80,7 +80,7 @@ const reasonLabel = (reason: string) => {
         <span v-if="status === null" class="loading loading-spinner loading-xs" />
         <span v-else class="badge badge-sm" :class="statusColor">{{ statusLabel }}</span>
       </div>
-      <button v-if="status === 'dirty' || status === 'crashed'" class="btn btn-xs btn-warning" :disabled="restarting"
+      <button v-if="status" class="btn btn-xs" :class="status === 'dirty' || status === 'crashed' ? 'btn-warning' : 'btn-ghost'" :disabled="restarting"
         @click="restartHost">
         <span v-if="restarting" class="loading loading-spinner loading-xs" />
         <Icon v-else name="hugeicons:refresh" class="text-sm" />
