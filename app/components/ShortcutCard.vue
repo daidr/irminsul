@@ -8,6 +8,7 @@ const emit = defineEmits<{
   "session-manage": [];
   "passkey-manage": [];
   "ban-history": [];
+  "oauth-bindings": [];
   "admin-panel": [];
 }>();
 
@@ -16,6 +17,7 @@ const shortcuts = [
   { icon: "game", label: "会话管理", action: "session-manage" },
   { icon: "passkeys", label: "通行密钥", action: "passkey-manage" },
   { icon: "ban", label: "封禁记录", action: "ban-history" },
+  { icon: "oauth", label: "账号绑定", action: "oauth-bindings" },
 ] as const;
 
 function handleClick(item: (typeof shortcuts)[number]) {
@@ -54,6 +56,11 @@ function handleClick(item: (typeof shortcuts)[number]) {
         <Icon
           v-else-if="item.icon === 'ban'"
           name="hugeicons:calendar-remove-01"
+          class="h-[18px] w-[18px] shrink-0"
+        />
+        <Icon
+          v-else-if="item.icon === 'oauth'"
+          name="hugeicons:link-circle-02"
           class="h-[18px] w-[18px] shrink-0"
         />
         <span class="text-[13px] font-medium">{{ item.label }}</span>

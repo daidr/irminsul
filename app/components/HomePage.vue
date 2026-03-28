@@ -9,7 +9,7 @@ defineProps<{
 }>();
 
 // ---- 共享 modal ----
-type ModalType = "change-password" | "session-manage" | "ban-history" | "passkey" | "admin-panel";
+type ModalType = "change-password" | "session-manage" | "ban-history" | "passkey" | "oauth-bindings" | "admin-panel";
 // renderedModal 控制 v-if 渲染的内容，关闭时保留，避免动画期间闪白
 // activeModal 跟踪逻辑上的开关状态
 const activeModal = ref<ModalType | null>(null);
@@ -23,6 +23,7 @@ const modalBoxClass = computed(() => {
       return "sm:max-w-[480px]";
     case "session-manage":
     case "passkey":
+    case "oauth-bindings":
       return "sm:max-w-[560px]";
     case "ban-history":
       return "sm:max-w-[520px]";
@@ -142,9 +143,9 @@ async function handleSendVerification() {
           @session-manage="openModal('session-manage')"
           @passkey-manage="openModal('passkey')"
           @ban-history="openModal('ban-history')"
+          @oauth-bindings="openModal('oauth-bindings')"
           @admin-panel="openModal('admin-panel')"
         />
-        <OAuthBindings />
       </div>
       <!-- 右列 -->
       <div class="lg:col-span-8 flex flex-col gap-6">
@@ -169,6 +170,7 @@ async function handleSendVerification() {
           <LazySessionManageModal v-if="renderedModal === 'session-manage'" />
           <LazyBanHistoryModal v-if="renderedModal === 'ban-history'" />
           <LazyPasskeyModal v-if="renderedModal === 'passkey'" />
+          <LazyOAuthBindings v-if="renderedModal === 'oauth-bindings'" />
           <LazyAdminPanelModal
             v-if="renderedModal === 'admin-panel'"
             ref="adminPanelRef"

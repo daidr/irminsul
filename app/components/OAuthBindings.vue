@@ -60,14 +60,18 @@ function cancelConfirm() {
 </script>
 
 <template>
-  <div v-if="providers.length > 0" class="border border-base-300 bg-base-200 p-5">
+  <div>
     <div class="flex items-center gap-2.5 text-lg">
       <Icon name="hugeicons:link-circle-02" class="text-xl" />
-      <h2>第三方账号</h2>
+      <h2>账号绑定</h2>
     </div>
     <p class="text-sm opacity-60 mt-1">绑定后可直接使用第三方账号快捷登录</p>
 
-    <div class="mt-4 flex flex-col gap-2">
+    <div v-if="providers.length === 0" class="mt-4 text-sm opacity-50">
+      暂无可用的第三方登录服务
+    </div>
+
+    <div v-else class="mt-4 flex flex-col gap-2">
       <div
         v-for="provider in providers"
         :key="provider.id"
@@ -133,3 +137,4 @@ function cancelConfirm() {
     </div>
   </div>
 </template>
+
