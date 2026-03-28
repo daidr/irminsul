@@ -90,8 +90,10 @@ export function setup(ctx) {
     const params = new URLSearchParams({
       client_id: config.clientId,
       redirect_uri: redirectUri,
+      scope: "name",
       state,
       response_type: "code",
+      response_mode: "form_post",
     });
     return { url: `https://appleid.apple.com/auth/authorize?${params}` };
   });
