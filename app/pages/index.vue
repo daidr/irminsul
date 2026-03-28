@@ -1,14 +1,12 @@
 <script setup lang="ts">
 const { data: user } = useUser();
 
-// Prerendered page — after client-side user refresh, redirect logged-in users
-if (import.meta.client) {
-  watch(user, (u) => {
-    if (u?.userId) navigateTo("/home", { replace: true });
-  });
-}
+const { data: pageData } = user.value?.userId
+  ? await useAsyncData("index-data", () => $fetch("/api/page-data"))
+  : { data: ref(null) as Ref<{ announcement: string; yggdrasilApiUrl: string } | null> };
 </script>
 
 <template>
-  <LandingPage />
+  <LazyHomePage v-if="user?.userId" :page-data="pageData" />
+  <LazyLandingPage v-else />
 </template>

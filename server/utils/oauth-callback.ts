@@ -20,7 +20,7 @@ export async function handleOAuthCallback(event: H3Event, params: CallbackParams
     let errorTarget = "/login";
     if (stateParam) {
       const stateData = await consumeOAuthState(stateParam);
-      if (stateData?.action === "bind") errorTarget = "/home";
+      if (stateData?.action === "bind") errorTarget = "/";
     }
     if (errorParam === "access_denied") {
       return sendRedirect(event, `${errorTarget}?oauth=denied`);
@@ -42,7 +42,7 @@ export async function handleOAuthCallback(event: H3Event, params: CallbackParams
     return sendRedirect(event, "/login?oauth=error");
   }
 
-  const errorRedirect = stateData.action === "bind" ? "/home?oauth=error" : "/login?oauth=error";
+  const errorRedirect = stateData.action === "bind" ? "/?oauth=error" : "/login?oauth=error";
 
   const manager = getPluginManager();
   const provider = manager.getOAuthProvider(providerId);
@@ -90,7 +90,7 @@ export async function handleOAuthCallback(event: H3Event, params: CallbackParams
     if (stateData.action === "bind") {
       const existingUser = await findUserByOAuthBinding(providerId, mappedProfile.providerId);
       if (existingUser && existingUser.uuid !== stateData.userId) {
-        return sendRedirect(event, "/home?oauth=already-bound");
+        return sendRedirect(event, "/?oauth=already-bound");
       }
 
       try {
@@ -102,17 +102,17 @@ export async function handleOAuthCallback(event: H3Event, params: CallbackParams
         });
 
         if (!added) {
-          return sendRedirect(event, "/home?oauth=duplicate");
+          return sendRedirect(event, "/?oauth=duplicate");
         }
       } catch (err: any) {
         if (err?.code === 11000) {
-          return sendRedirect(event, "/home?oauth=already-bound");
+          return sendRedirect(event, "/?oauth=already-bound");
         }
         throw err;
       }
 
       log.set({ oauth: { action: "bind", providerId, thirdPartyId: mappedProfile.providerId } });
-      return sendRedirect(event, "/home?oauth=bind-success");
+      return sendRedirect(event, "/?oauth=bind-success");
     }
 
     // action === "login"
@@ -136,7 +136,7 @@ export async function handleOAuthCallback(event: H3Event, params: CallbackParams
 
     await createSession(event, sessionData);
     log.set({ oauth: { action: "login", providerId, userId: user.uuid } });
-    return sendRedirect(event, "/home");
+    return sendRedirect(event, "/");
   } catch (err: unknown) {
     log.error(err as Error, { step: "oauth_callback", providerId });
     return sendRedirect(event, errorRedirect);

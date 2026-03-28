@@ -2,9 +2,7 @@ export default defineNuxtConfig({
   compatibilityDate: "2026-03-23",
   future: { compatibilityVersion: 4 },
 
-  routeRules: {
-    "/": { prerender: true },
-  },
+  routeRules: {},
 
   nitro: {
     preset: "bun",

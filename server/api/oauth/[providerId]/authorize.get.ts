@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
       (b: { provider: string }) => b.provider === providerId,
     );
     if (existingBinding) {
-      return sendRedirect(event, "/home?oauth=duplicate");
+      return sendRedirect(event, "/?oauth=duplicate");
     }
   }
 
