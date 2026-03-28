@@ -166,6 +166,11 @@ async function handleSendVerification() {
         @cancel="onDialogCancel"
       >
         <div class="modal-box" :class="modalBoxClass">
+          <form method="dialog">
+            <button class="btn btn-sm btn-ghost absolute right-2 top-2" @click="requestClose">
+              &#10005;
+            </button>
+          </form>
           <LazyChangePasswordModal v-if="renderedModal === 'change-password'" />
           <LazySessionManageModal v-if="renderedModal === 'session-manage'" />
           <LazyBanHistoryModal v-if="renderedModal === 'ban-history'" />

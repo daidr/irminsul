@@ -34,11 +34,6 @@ const hasActiveBan = computed(() => bans.value.some(isActive));
       <h3 class="text-xl font-bold">封禁记录</h3>
       <span v-if="hasActiveBan" class="badge badge-error badge-sm">封禁中</span>
     </div>
-    <form method="dialog">
-      <button class="btn btn-ghost btn-sm">
-        <Icon name="hugeicons:cancel-01" class="text-xl opacity-40" />
-      </button>
-    </form>
   </div>
 
   <p class="mt-3 text-[13px] leading-relaxed opacity-50">

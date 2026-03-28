@@ -64,11 +64,6 @@ async function handleSubmit() {
   <!-- Header -->
   <div class="flex items-center justify-between">
     <h3 class="text-xl font-bold">修改密码</h3>
-    <form method="dialog">
-      <button class="btn btn-ghost btn-sm">
-        <Icon name="hugeicons:cancel-01" class="text-xl opacity-40" />
-      </button>
-    </form>
   </div>
 
   <p class="mt-2 text-[13px] leading-relaxed opacity-60">

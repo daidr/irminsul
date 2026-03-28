@@ -22,9 +22,6 @@ defineExpose({ canClose });
   <!-- 头部 -->
   <div class="flex items-center justify-between">
     <h3 class="text-xl font-bold">管理面板</h3>
-    <button class="btn btn-ghost btn-sm" @click="handleClose">
-      <Icon name="hugeicons:cancel-01" class="text-xl opacity-40" />
-    </button>
   </div>
 
   <!-- Tab 栏 -->
