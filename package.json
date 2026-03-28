@@ -15,7 +15,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@daidr/minecraft-skin-renderer": "^0.3.1",
+    "@daidr/minecraft-skin-renderer": "^0.3.2",
     "@iconify-json/hugeicons": "^1.2.24",
     "@nuxt/a11y": "1.0.0-alpha.1",
     "@nuxt/hints": "1.0.2",
@@ -27,18 +27,18 @@
     "@vueuse/core": "^14.2.1",
     "altcha": "^3.0.0-beta.3",
     "daisyui": "5",
-    "evlog": "^2.9.0",
+    "evlog": "^2.10.0",
     "js-sha3": "^0.9.3",
     "marked": "^17.0.5",
-    "mongodb": "^7.1.0",
+    "mongodb": "^7.1.1",
     "motion-v": "^2.2.0",
-    "nodemailer": "^8.0.3",
+    "nodemailer": "^8.0.4",
     "nuxt": "^4.4.2",
     "pinia": "^3.0.4",
     "pngjs-nozlib": "^1.0.0",
     "sortablejs": "^1.15.7",
     "uuid": "^13.0.0",
-    "vue": "^3.5.30",
+    "vue": "^3.5.31",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -51,12 +51,12 @@
     "@types/uuid": "^11.0.0",
     "bun-git-hooks": "^0.3.1",
     "lint-staged": "^16.4.0",
-    "oxfmt": "^0.41.0",
-    "oxlint": "^1.56.0",
-    "oxlint-tsgolint": "^0.17.1",
+    "oxfmt": "^0.42.0",
+    "oxlint": "^1.57.0",
+    "oxlint-tsgolint": "^0.17.4",
     "sass-embedded": "^1.98.0",
-    "typescript": "^5.9.3",
-    "vitest": "^4.1.0"
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
   },
   "overrides": {
     "vite": "8.0.1"
