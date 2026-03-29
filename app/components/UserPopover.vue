@@ -59,7 +59,7 @@ const isBanned = computed(() => {
     <div class="flex gap-2.5 items-center cursor-pointer">
       <motion.div v-if="!show" layout class="pointer-events-none w-5 h-5 relative z-10"
         layoutId="user-avatar" :exit="{ opacity: 1 }">
-        <img :src="`/avatar/${props.user.gameId}?scale=2`" class="w-full h-full" style="image-rendering: pixelated">
+        <img :src="`/avatar/${props.user.gameId}?scale=2`" class="w-full h-full avatar-shadow" style="image-rendering: pixelated">
       </motion.div>
       <motion.p class="text-sm whitespace-nowrap font-mono" layout layoutId="user-game-id">{{
         user.gameId
@@ -115,6 +115,10 @@ const isBanned = computed(() => {
 
 <style scoped>
 @reference "~/assets/css/tailwind.css";
+
+.avatar-shadow {
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.2));
+}
 
 .avatar-expanded {
   top: 0;
