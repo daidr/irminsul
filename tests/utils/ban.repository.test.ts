@@ -3,9 +3,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Mock getUserCollection
 const mockUpdateOne = vi.fn();
 const mockFindOne = vi.fn();
+const mockFindOneAndUpdate = vi.fn();
 const mockCollection = {
   updateOne: mockUpdateOne,
   findOne: mockFindOne,
+  findOneAndUpdate: mockFindOneAndUpdate,
 };
 
 vi.mock("../../server/utils/user.repository", () => ({
@@ -26,56 +28,106 @@ beforeEach(async () => {
 });
 
 describe("addBan", () => {
-  it("pushes a new ban record with generated id and operatorId", async () => {
-    mockUpdateOne.mockResolvedValue({ modifiedCount: 1 });
+  it("pushes a new ban and returns ban record with user context", async () => {
+    mockFindOneAndUpdate.mockResolvedValue({
+      uuid: "user-uuid",
+      email: "user@test.com",
+      gameId: "Player1",
+    });
     const result = await banRepo.addBan("user-uuid", { reason: "test" }, "admin-uuid");
 
-    expect(mockUpdateOne).toHaveBeenCalledOnce();
-    const [filter, update] = mockUpdateOne.mock.calls[0];
+    expect(mockFindOneAndUpdate).toHaveBeenCalledOnce();
+    const [filter, update, options] = mockFindOneAndUpdate.mock.calls[0];
     expect(filter).toEqual({ uuid: "user-uuid" });
     expect(update.$push.bans.id).toBe("test-uuid-1234");
     expect(update.$push.bans.operatorId).toBe("admin-uuid");
     expect(update.$push.bans.reason).toBe("test");
     expect(update.$push.bans.start).toBeInstanceOf(Date);
     expect(update.$push.bans.end).toBeUndefined();
-    expect(result).toEqual({ success: true, banId: "test-uuid-1234" });
+    expect(options.returnDocument).toBe("after");
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.banId).toBe("test-uuid-1234");
+      expect(result.ban).toEqual({
+        id: "test-uuid-1234",
+        start: expect.any(Date),
+        operatorId: "admin-uuid",
+        reason: "test",
+      });
+      expect(result.user).toEqual({ uuid: "user-uuid", email: "user@test.com", gameId: "Player1" });
+    }
   });
 
   it("sets end date when provided", async () => {
-    mockUpdateOne.mockResolvedValue({ modifiedCount: 1 });
+    mockFindOneAndUpdate.mockResolvedValue({
+      uuid: "user-uuid",
+      email: "u@t.com",
+      gameId: "P",
+    });
     const end = new Date("2026-12-31T00:00:00Z");
     await banRepo.addBan("user-uuid", { end, reason: "temp" }, "admin-uuid");
 
-    const [, update] = mockUpdateOne.mock.calls[0];
+    const [, update] = mockFindOneAndUpdate.mock.calls[0];
     expect(update.$push.bans.end).toEqual(end);
   });
 
   it("returns failure when user not found", async () => {
-    mockUpdateOne.mockResolvedValue({ modifiedCount: 0 });
+    mockFindOneAndUpdate.mockResolvedValue(null);
     const result = await banRepo.addBan("nonexistent", {}, "admin-uuid");
     expect(result).toEqual({ success: false, error: "用户不存在" });
   });
 });
 
 describe("revokeBan", () => {
-  it("sets revokedAt and revokedBy on matching active ban using $elemMatch", async () => {
-    mockUpdateOne.mockResolvedValue({ modifiedCount: 1 });
+  it("sets revokedAt/revokedBy and returns ban record with user context", async () => {
+    const banStart = new Date("2026-03-01T00:00:00Z");
+    mockFindOneAndUpdate.mockResolvedValue({
+      uuid: "user-uuid",
+      email: "user@test.com",
+      gameId: "Player1",
+      bans: [{ id: "ban-id", start: banStart, operatorId: "op", reason: "test" }],
+    });
     const result = await banRepo.revokeBan("user-uuid", "ban-id", "admin-uuid");
 
-    expect(mockUpdateOne).toHaveBeenCalledOnce();
-    const [filter, update] = mockUpdateOne.mock.calls[0];
-    // Must use $elemMatch to ensure conditions match the SAME array element
+    expect(mockFindOneAndUpdate).toHaveBeenCalledOnce();
+    const [filter, update, options] = mockFindOneAndUpdate.mock.calls[0];
     expect(filter.uuid).toBe("user-uuid");
     expect(filter.bans.$elemMatch.id).toBe("ban-id");
     expect(filter.bans.$elemMatch.revokedAt).toEqual({ $exists: false });
-    expect(filter.bans.$elemMatch.start).toBeDefined(); // $lte check
     expect(update.$set["bans.$.revokedAt"]).toBeInstanceOf(Date);
     expect(update.$set["bans.$.revokedBy"]).toBe("admin-uuid");
-    expect(result).toEqual({ success: true });
+    expect(options.returnDocument).toBe("before");
+
+    expect(result).toEqual({
+      success: true,
+      ban: { id: "ban-id", start: banStart, operatorId: "op", reason: "test" },
+      user: { uuid: "user-uuid", email: "user@test.com", gameId: "Player1" },
+    });
+  });
+
+  it("correctly finds target ban among multiple records", async () => {
+    mockFindOneAndUpdate.mockResolvedValue({
+      uuid: "user-uuid",
+      email: "u@t.com",
+      gameId: "P",
+      bans: [
+        { id: "other-ban", start: new Date("2026-01-01"), operatorId: "op1" },
+        { id: "ban-id", start: new Date("2026-03-01"), operatorId: "op2", reason: "target" },
+        { id: "another-ban", start: new Date("2026-02-01"), operatorId: "op3" },
+      ],
+    });
+    const result = await banRepo.revokeBan("user-uuid", "ban-id", "admin-uuid");
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.ban.id).toBe("ban-id");
+      expect(result.ban.reason).toBe("target");
+    }
   });
 
   it("returns failure when ban already revoked, expired, or not found", async () => {
-    mockUpdateOne.mockResolvedValue({ matchedCount: 0, modifiedCount: 0 });
+    mockFindOneAndUpdate.mockResolvedValue(null);
     const result = await banRepo.revokeBan("user-uuid", "ban-id", "admin-uuid");
     expect(result).toEqual({ success: false, error: "该封禁已被撤销、已过期或不存在" });
   });

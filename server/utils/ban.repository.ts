@@ -1,11 +1,20 @@
 import type { BanRecord } from "../types/user.schema";
 import { getUserCollection } from "./user.repository";
 
+export interface BanOpUserContext {
+  uuid: string;
+  email: string;
+  gameId: string;
+}
+
 export async function addBan(
   userUuid: string,
   opts: { end?: Date; reason?: string },
   operatorUuid: string,
-): Promise<{ success: true; banId: string } | { success: false; error: string }> {
+): Promise<
+  | { success: true; banId: string; ban: BanRecord; user: BanOpUserContext }
+  | { success: false; error: string }
+> {
   const ban: BanRecord = {
     id: crypto.randomUUID(),
     start: new Date(),
@@ -14,24 +23,33 @@ export async function addBan(
     ...(opts.reason && { reason: opts.reason }),
   };
 
-  const result = await getUserCollection().updateOne(
+  const doc = await getUserCollection().findOneAndUpdate(
     { uuid: userUuid },
     { $push: { bans: ban } },
+    { returnDocument: "after", projection: { uuid: 1, email: 1, gameId: 1 } },
   );
 
-  if (result.modifiedCount === 0) {
+  if (!doc) {
     return { success: false, error: "用户不存在" };
   }
-  return { success: true, banId: ban.id };
+  return {
+    success: true,
+    banId: ban.id,
+    ban,
+    user: { uuid: doc.uuid, email: doc.email, gameId: doc.gameId },
+  };
 }
 
 export async function revokeBan(
   userUuid: string,
   banId: string,
   operatorUuid: string,
-): Promise<{ success: true } | { success: false; error: string }> {
+): Promise<
+  | { success: true; ban: BanRecord; user: BanOpUserContext }
+  | { success: false; error: string }
+> {
   const now = new Date();
-  const result = await getUserCollection().updateOne(
+  const doc = await getUserCollection().findOneAndUpdate(
     {
       uuid: userUuid,
       bans: {
@@ -49,12 +67,19 @@ export async function revokeBan(
         "bans.$.revokedBy": operatorUuid,
       },
     },
+    { returnDocument: "before", projection: { uuid: 1, email: 1, gameId: 1, bans: 1 } },
   );
 
-  if (result.matchedCount === 0) {
+  if (!doc) {
     return { success: false, error: "该封禁已被撤销、已过期或不存在" };
   }
-  return { success: true };
+
+  const ban = doc.bans.find((b) => b.id === banId)!;
+  return {
+    success: true,
+    ban,
+    user: { uuid: doc.uuid, email: doc.email, gameId: doc.gameId },
+  };
 }
 
 export async function editBan(
