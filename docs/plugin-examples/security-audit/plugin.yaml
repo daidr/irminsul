@@ -1,0 +1,8 @@
+name: 安全审计
+version: 1.0.0
+description: 记录安全敏感操作的审计日志
+author: Irminsul
+hooks:
+  - user:password-changed
+  - user:password-reset
+  - user:oauth-bindchanged

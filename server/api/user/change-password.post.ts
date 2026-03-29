@@ -77,6 +77,14 @@ export default defineEventHandler(async (event) => {
     secure: process.env.NODE_ENV !== "development",
   });
 
+  emitUserHook("user:password-changed", {
+    uuid: userDoc.uuid,
+    email: userDoc.email,
+    gameId: userDoc.gameId,
+    ip: extractClientIp(event),
+    timestamp: Date.now(),
+  });
+
   log.set({ auth: { action: "password_changed", userId: userDoc.uuid } });
   return { success: true };
 });

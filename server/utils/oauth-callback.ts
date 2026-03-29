@@ -112,6 +112,21 @@ export async function handleOAuthCallback(event: H3Event, params: CallbackParams
       }
 
       log.set({ oauth: { action: "bind", providerId, thirdPartyId: mappedProfile.providerId } });
+
+      // Emit bind event — use session context (bind requires login, so event.context.user is always available)
+      const bindUser = event.context.user;
+      if (bindUser) {
+        emitUserHook("user:oauth-bindchanged", {
+          uuid: bindUser.userId,
+          email: bindUser.email,
+          gameId: bindUser.gameId,
+          action: "bind",
+          provider: providerId,
+          displayName: mappedProfile.displayName || undefined,
+          timestamp: Date.now(),
+        });
+      }
+
       return sendRedirect(event, "/?oauth=bind-success");
     }
 
@@ -135,6 +150,16 @@ export async function handleOAuthCallback(event: H3Event, params: CallbackParams
     };
 
     await createSession(event, sessionData);
+
+    emitUserHook("user:login", {
+      uuid: user.uuid,
+      email: user.email,
+      gameId: user.gameId,
+      ip: clientIp,
+      method: "oauth",
+      timestamp: Date.now(),
+    });
+
     log.set({ oauth: { action: "login", providerId, userId: user.uuid } });
     return sendRedirect(event, "/");
   } catch (err: unknown) {
