@@ -73,5 +73,14 @@ export default defineEventHandler(async (event) => {
 
   await createSession(event, sessionData);
 
+  emitUserHook("user:login", {
+    uuid: user.uuid,
+    email: user.email,
+    gameId: user.gameId,
+    ip: clientIp,
+    method: "password",
+    timestamp: Date.now(),
+  });
+
   return { success: true };
 });
