@@ -6,8 +6,6 @@ const props = defineProps<{
 interface UserProfile {
   uuid: string;
   gameId: string;
-  skinHash?: string;
-  skinSlim?: boolean;
   isAdmin: boolean;
 }
 
@@ -67,8 +65,7 @@ function onLeave() {
   <span v-else class="relative inline-flex" @mouseenter="onEnter" @mouseleave="onLeave">
     <!-- Capsule trigger -->
     <span class="bubble-trigger">
-      <McAvatar v-if="profile.skinHash" :hash="profile.skinHash" :slim="profile.skinSlim" :scale="3"
-        class="w-3 h-3 shrink-0" />
+      <img :src="`/avatar/${profile.uuid}?scale=1`" class="w-3 h-3 shrink-0" style="image-rendering: pixelated">
       <span class="truncate">{{ profile.gameId }}</span>
     </span>
 
@@ -77,8 +74,7 @@ function onLeave() {
       <div v-if="show" class="bubble-popover" @mouseenter="onEnter" @mouseleave="onLeave">
         <div class="flex items-center gap-3">
           <!-- Large avatar -->
-          <McAvatar v-if="profile.skinHash" :hash="profile.skinHash" :slim="profile.skinSlim" :scale="8"
-            class="w-10 h-10 shrink-0" />
+          <img :src="`/avatar/${profile.uuid}?scale=3`" class="w-10 h-10 shrink-0" style="image-rendering: pixelated">
 
           <!-- Info -->
           <div class="min-w-0 flex flex-col gap-0.5">

@@ -11,15 +11,11 @@ export default defineEventHandler(async (event) => {
     return { success: false, error: "用户不存在" };
   }
 
-  const defaultSkinHash = useRuntimeConfig(event).yggdrasilDefaultSkinHash;
-
   return {
     success: true,
     user: {
       uuid: user.uuid,
       gameId: user.gameId,
-      skinHash: user.skin?.hash || defaultSkinHash || undefined,
-      skinSlim: user.skin?.type === 1,
       isAdmin: user.isAdmin,
     },
   };
