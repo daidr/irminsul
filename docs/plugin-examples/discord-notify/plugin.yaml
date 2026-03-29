@@ -1,0 +1,18 @@
+name: Discord 通知
+version: 1.0.0
+description: 将用户事件推送到 Discord Webhook
+author: Irminsul
+hooks:
+  - user:registered
+  - user:login
+  - user:banned
+  - user:unbanned
+config:
+  - key: webhookUrl
+    label: Webhook URL
+    type: text
+    required: true
+  - key: enableLogin
+    label: 推送登录事件
+    type: boolean
+    default: false
