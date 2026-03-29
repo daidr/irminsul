@@ -69,6 +69,14 @@ export default defineEventHandler(async (event) => {
   // Delete all existing sessions
   await destroyAllSessions(user.uuid);
 
+  emitUserHook("user:password-reset", {
+    uuid: user.uuid,
+    email: user.email,
+    gameId: user.gameId,
+    ip: extractClientIp(event),
+    timestamp: Date.now(),
+  });
+
   log.set({ auth: { action: "password_reset_completed", userId: user.uuid } });
   return { success: true };
 });
