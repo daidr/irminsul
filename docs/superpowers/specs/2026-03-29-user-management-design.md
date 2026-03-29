@@ -15,28 +15,48 @@ export interface BanRecord {
   id: string;            // nanoid 短 ID，用于定位操作
   start: Date;           // 封禁开始时间
   end?: Date;            // 截止时间（undefined = 永久）
-  reason?: string;       // 封禁理由
-  operatorId: string;    // 执行封禁的管理员 userId
+  reason?: string;       // 封禁理由（最大 500 字符）
+  operatorId: string;    // 执行封禁的管理员 uuid
   revokedAt?: Date;      // 撤销时间（存在则表示已撤销）
-  revokedBy?: string;    // 撤销操作的管理员 userId
+  revokedBy?: string;    // 撤销操作的管理员 uuid
 }
 ```
 
+**标识符约定**：`operatorId`、`revokedBy` 以及所有 API 路径中的 `userId` 统一使用用户的 `uuid`（带连字符格式），与 session 中的 `userId` 一致。用户列表返回的 `id` 也使用 `uuid`。
+
 ### 封禁状态判断
 
-- **生效中**：`!revokedAt && (!end || end > now)`
+- **生效中**：`!revokedAt && start <= now && (!end || end > now)`
 - **已撤销**：`revokedAt` 存在
 - **已过期**：`!revokedAt && end && end <= now`
 
-现有 `hasActiveBan()` 函数需同步更新，加入 `revokedAt` 判断。
+**`hasActiveBan()` 必须同步更新**：新逻辑为 `!ban.revokedAt && ban.start <= now && (!ban.end || ban.end > now)`。调用点包括：
+- `server/utils/yggdrasil.service.ts`（`validateAccessToken`）
+- `server/api/auth/forgot-password.post.ts`
+- `server/api/auth/reset-password.post.ts`
 
-### 向下兼容
+### Session 中间件同步
 
-现有 `BanRecord` 数据缺少新增字段（`id`、`operatorId` 等）。代码需容忍这些字段缺失，旧记录显示时将操作者显示为"未知"，`id` 缺失的旧记录不支持 edit/revoke/remove 操作（或在首次读取时自动补上 id）。
+`server/middleware/01.session.ts` 构造 `event.context.user.bans` 时需新增传递 `id`、`revokedAt`、`operatorId` 字段，使前端 `BanHistoryModal.vue`（用户侧）能区分"已撤销"和"生效中"状态。
+
+### 旧数据迁移
+
+使用服务器启动时的一次性迁移逻辑（server plugin），为所有缺少 `id` 的旧 `BanRecord` 补上 nanoid，`operatorId` 默认设为 `"system"`。避免在读取路径中产生写操作副作用。
 
 ## API 设计
 
 所有接口使用 `requireAdmin(event)` 鉴权，返回 `{ success: boolean, error?: string, ...data }` 格式。
+
+### 输入校验规范
+
+所有 API 输入使用以下校验规则：
+- `reason`：最大 500 字符
+- `search`：最大 100 字符，**必须转义正则特殊字符**（`escapeRegExp`）防止 ReDoS
+- `end`：必须是合法的 ISO 日期字符串，且必须是未来时间
+- `page`：正整数，默认 1
+- `pageSize`：正整数，范围 1-100，默认 20
+- `userId` 路径参数：必须是合法 UUID 格式，用户不存在时返回 `{ success: false, error: "用户不存在" }`
+- `banId` 路径参数：封禁记录不存在时返回 `{ success: false, error: "封禁记录不存在" }`
 
 ### GET /api/admin/users
 
@@ -45,7 +65,7 @@ export interface BanRecord {
 查询参数：
 - `page: number`（默认 1）
 - `pageSize: number`（默认 20，上限 100）
-- `search?: string`（模糊匹配 gameId 或 email）
+- `search?: string`（模糊匹配 gameId 或 email，转义后使用正则）
 - `filter?: "banned" | "admin"`（状态筛选）
 
 返回：
@@ -53,7 +73,7 @@ export interface BanRecord {
 {
   success: true,
   users: Array<{
-    id: string;          // ObjectId 字符串
+    id: string;          // 用户 uuid
     gameId: string;
     email: string;
     isAdmin: boolean;
@@ -66,11 +86,27 @@ export interface BanRecord {
 }
 ```
 
-MongoDB 查询使用 `skip/limit` 分页，`search` 使用正则匹配，`filter=banned` 通过 `hasActiveBan` 逻辑构造查询条件，`filter=admin` 通过 `isAdmin: true` 筛选。
+MongoDB 查询使用 `skip/limit` 分页。`search` 对用户输入进行 `escapeRegExp` 转义后使用 `$regex` 匹配。`filter=banned` 使用 `$elemMatch` 构造复合条件：
+
+```javascript
+{
+  bans: {
+    $elemMatch: {
+      revokedAt: { $exists: false },
+      start: { $lte: now },
+      $or: [{ end: { $exists: false } }, { end: { $gt: now } }]
+    }
+  }
+}
+```
+
+`filter=admin` 通过 `isAdmin: true` 筛选。
+
+**已知限制**：`filter=banned` 和 `search` 正则匹配均需扫描文档，万级用户以下性能可接受。`skip/limit` 分页在数据变化时可能出现重复/遗漏，管理后台场景可接受。
 
 ### GET /api/admin/users/[userId]/bans
 
-获取某用户的全部封禁记录，按 `start` 倒序返回。
+获取某用户的全部封禁记录，按 `start` 倒序返回。上限 200 条。
 
 ### POST /api/admin/users/[userId]/bans
 
@@ -79,10 +115,13 @@ MongoDB 查询使用 `skip/limit` 分页，`search` 使用正则匹配，`filter
 Body：
 ```typescript
 { end?: string; reason?: string }
-// end 为 ISO 日期字符串，不传则永久
+// end 为 ISO 日期字符串（必须为未来时间），不传则永久
+// reason 最大 500 字符
 ```
 
-服务端自动填充 `id`（nanoid）、`start`（当前时间）、`operatorId`（当前管理员 userId）。使用 MongoDB `$push` 将新记录追加到用户的 `bans` 数组。
+服务端自动填充 `id`（nanoid）、`start`（当前时间）、`operatorId`（当前管理员 uuid）。使用 MongoDB `$push` 将新记录追加到用户的 `bans` 数组。
+
+**约束**：禁止管理员封禁自己，返回 `{ success: false, error: "不能封禁自己" }`。
 
 ### PATCH /api/admin/users/[userId]/bans/[banId]
 
@@ -92,17 +131,24 @@ Body：
 ```typescript
 { end?: string | null; reason?: string }
 // end 为 null 表示改为永久，为 ISO 字符串表示设置截止时间
+// reason 最大 500 字符
 ```
 
 使用 MongoDB positional operator `$set` 更新匹配 `bans.id` 的数组元素。
 
+**约束**：编辑操作不会清除 `revokedAt`。编辑已撤销的记录仅修改历史信息（`end`、`reason`），不影响其撤销状态。
+
 ### POST /api/admin/users/[userId]/bans/[banId]/revoke
 
-撤销封禁。服务端设置该记录的 `revokedAt` 为当前时间，`revokedBy` 为当前管理员 userId。仅对生效中的封禁有效。
+撤销封禁。服务端设置该记录的 `revokedAt` 为当前时间，`revokedBy` 为当前管理员 uuid。
+
+**幂等性保证**：使用条件更新 `{ "bans.id": banId, "bans.revokedAt": { $exists: false } }`，匹配不到则返回 `{ success: false, error: "该封禁已被撤销或不存在" }`。仅对生效中的封禁有效，已过期的封禁不可撤销。
 
 ### DELETE /api/admin/users/[userId]/bans/[banId]
 
 移除封禁记录。使用 MongoDB `$pull` 从 `bans` 数组中删除匹配 `bans.id` 的元素。
+
+**审计**：删除操作通过 evlog 记录审计日志，包含：操作者 uuid、目标用户 uuid、被删除的封禁记录快照。
 
 ## 前端设计
 
@@ -136,7 +182,7 @@ Emit 事件：
 1. **新建封禁区域**（顶部）
    - 快捷时长按钮组：1天、7天、30天、永久、自定义
    - 点击"自定义"展开日期时间选择器
-   - 理由输入框（可选）
+   - 理由输入框（可选，最大 500 字符）
    - 确认封禁按钮
 2. **封禁历史列表**（下方，按 start 倒序）
    - 每条记录显示：状态标签、时间信息、理由、操作者
@@ -144,6 +190,10 @@ Emit 事件：
    - 已撤销/已过期：半透明，提供编辑/移除
    - 编辑：点击后该条目内联展开编辑表单
    - 移除：按钮变为"确认移除？"二次确认模式
+
+### 用户侧 BanHistoryModal.vue 更新
+
+同步更新现有的 `BanHistoryModal.vue` 和 `ClientBanRecord` 类型，支持 `revokedAt` 字段，增加"已撤销"状态展示。
 
 ### 数据流
 
@@ -163,3 +213,5 @@ Emit 事件：
 - 管理员权限分级
 - 封禁记录的跨用户搜索/导出
 - 批量操作
+- `isBanned` 冗余字段优化（当前性能可接受，未来视用户量增长情况决定）
+- cursor-based 分页（当前 skip/limit 满足需求）
