@@ -28,7 +28,7 @@ describe("emitUserHook dispatch logic", () => {
           level: "error",
           type: "event",
           pluginId: handlers[i].pluginId,
-          message: `Hook ${hookName} failed: ${result.reason}`,
+          message: `Hook ${hookName} failed: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`,
         });
       }
     }
