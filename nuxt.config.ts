@@ -9,7 +9,8 @@ export default defineNuxtConfig({
     noExternals: false,
     externals: {
       external: [
-        "mongodb"
+        "mongodb",
+        "@napi-rs/canvas",
       ],
       inline: ["mongodb-connection-string-url"],
     },
