@@ -1,12 +1,19 @@
+import { z } from "zod";
+
+const bodySchema = z.object({
+  credentialId: z.string().optional(),
+  newLabel: z.string().optional(),
+});
+
 export default defineEventHandler(async (event) => {
   const user = requireAuth(event);
 
-  const body = await readBody<{
-    credentialId?: string;
-    newLabel?: string;
-  }>(event);
+  const parsed = bodySchema.safeParse(await readBody(event));
+  if (!parsed.success) {
+    return { success: false, error: "参数格式错误" };
+  }
 
-  const { credentialId, newLabel } = body || {};
+  const { credentialId, newLabel } = parsed.data;
 
   if (!credentialId || !newLabel) {
     return { success: false, error: "参数不完整" };

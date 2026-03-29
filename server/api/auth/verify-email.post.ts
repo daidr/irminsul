@@ -1,11 +1,19 @@
+import { z } from "zod";
 import { useLogger } from "evlog";
+
+const bodySchema = z.object({
+  token: z.string().optional(),
+});
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event);
-  const body = await readBody<{ token?: string }>(event);
-  const { token } = body || {};
+  const parsed = bodySchema.safeParse(await readBody(event));
+  if (!parsed.success) {
+    return { success: false, error: "参数格式错误" };
+  }
+  const { token } = parsed.data;
 
-  if (!token || typeof token !== "string") {
+  if (!token) {
     return { success: false, error: "无效的验证链接" };
   }
 

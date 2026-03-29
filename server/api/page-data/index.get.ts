@@ -1,5 +1,6 @@
 import { marked } from "marked";
 import type { MarkedExtension } from "marked";
+import DOMPurify from "isomorphic-dompurify";
 
 const markedLinkNewTab: MarkedExtension = {
   renderer: {
@@ -17,7 +18,9 @@ export default defineEventHandler(async () => {
 
   const announcementRaw = getSetting("general.announcement");
   const announcementText = typeof announcementRaw === "string" ? announcementRaw : "";
-  const announcementHtml = announcementText ? await marked.parse(announcementText) : "";
+  const announcementHtml = announcementText
+    ? DOMPurify.sanitize(await marked.parse(announcementText))
+    : "";
 
   return {
     announcement: announcementHtml,

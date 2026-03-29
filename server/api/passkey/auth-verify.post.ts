@@ -1,19 +1,26 @@
+import { z } from "zod";
 import type { AuthenticationResponseJSON } from "@simplewebauthn/server";
 import { useLogger } from "evlog";
 import type { SessionData } from "~~/server/utils/session";
 
+const bodySchema = z.object({
+  credential: z.record(z.unknown()).optional(),
+  challengeId: z.string().optional(),
+});
+
 export default defineEventHandler(async (event) => {
   const log = useLogger(event);
-  const body = await readBody<{
-    credential?: AuthenticationResponseJSON;
-    challengeId?: string;
-  }>(event);
+  const parsed = bodySchema.safeParse(await readBody(event));
+  if (!parsed.success) {
+    return { success: false, error: "参数格式错误" };
+  }
 
-  if (!body?.credential || !body?.challengeId) {
+  if (!parsed.data.credential || !parsed.data.challengeId) {
     return { success: false, error: "缺少验证数据" };
   }
 
-  const { credential, challengeId } = body;
+  const credential = parsed.data.credential as AuthenticationResponseJSON;
+  const { challengeId } = parsed.data;
 
   // Find user by credentialId
   const credentialId = credential.id;

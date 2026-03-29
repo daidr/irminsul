@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { randomUUIDv7 } from "bun";
 import { MongoServerError } from "mongodb";
 import type { UserDocument } from "~~/server/types/user.schema";
@@ -11,16 +12,21 @@ function generateUuid(): string {
   return randomUUIDv7().replace(/^(.{14})./, "$10");
 }
 
-export default defineEventHandler(async (event) => {
-  const body = await readBody<{
-    email?: string;
-    gameId?: string;
-    password?: string;
-    confirmPassword?: string;
-    altchaPayload?: string;
-  }>(event);
+const bodySchema = z.object({
+  email: z.string().optional(),
+  gameId: z.string().optional(),
+  password: z.string().optional(),
+  confirmPassword: z.string().optional(),
+  altchaPayload: z.string().optional(),
+});
 
-  const { email, gameId, password, confirmPassword, altchaPayload } = body || {};
+export default defineEventHandler(async (event) => {
+  const parsed = bodySchema.safeParse(await readBody(event));
+  if (!parsed.success) {
+    return { success: false, error: "参数格式错误" };
+  }
+
+  const { email, gameId, password, confirmPassword, altchaPayload } = parsed.data;
 
   // Validate input
   if (!email || !gameId || !password || !confirmPassword) {

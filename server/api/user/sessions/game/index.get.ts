@@ -4,7 +4,7 @@ export default defineEventHandler(async (event) => {
   const tokens = await getAllTokens(user.userId);
   const sessions = tokens
     .map((t) => ({
-      accessToken: t.accessToken,
+      tokenId: computeTokenId(t.accessToken),
       label: t.label || "Unknown",
       status: t.status,
       createdIp: t.createdIp || "",

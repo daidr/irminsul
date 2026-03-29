@@ -11,6 +11,7 @@ export default defineNuxtConfig({
       external: [
         "mongodb",
         "@napi-rs/canvas",
+        "jsdom",
       ],
       inline: ["mongodb-connection-string-url"],
     },
@@ -57,6 +58,7 @@ export default defineNuxtConfig({
     evlogMaxFiles: 30,
     yggdrasilBaseUrl: "",
     yggdrasilSkinDomains: "",
+    trustProxy: false,
     yggdrasilTokenExpiryMs: 432000000,
     yggdrasilDefaultSkinHash: "",
     legacyGlobalSalt: "",

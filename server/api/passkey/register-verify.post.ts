@@ -1,18 +1,26 @@
+import { z } from "zod";
 import type { RegistrationResponseJSON } from "@simplewebauthn/server";
 import { useLogger } from "evlog";
 import type { PasskeyRecord } from "~~/server/types/user.schema";
+
+const bodySchema = z.object({
+  credential: z.record(z.unknown()).optional(),
+});
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event);
   const user = requireAuth(event);
 
-  const body = await readBody<{
-    credential?: RegistrationResponseJSON;
-  }>(event);
+  const parsed = bodySchema.safeParse(await readBody(event));
+  if (!parsed.success) {
+    return { success: false, error: "参数格式错误" };
+  }
 
-  if (!body?.credential) {
+  if (!parsed.data.credential) {
     return { success: false, error: "缺少凭证数据" };
   }
+
+  const credential = parsed.data.credential as RegistrationResponseJSON;
 
   const userDoc = await findUserByUuid(user.userId);
   if (!userDoc) {
@@ -21,7 +29,7 @@ export default defineEventHandler(async (event) => {
 
   let verified;
   try {
-    verified = await verifyRegistration(userDoc.uuid, body.credential);
+    verified = await verifyRegistration(userDoc.uuid, credential);
   } catch (e) {
     log.error(e as Error, { step: "passkey_register_verify", userId: userDoc.uuid });
     return { success: false, error: "验证失败，请重试" };
@@ -37,7 +45,7 @@ export default defineEventHandler(async (event) => {
   const ua = getHeader(event, "user-agent") || "";
 
   const existingLabels = (userDoc.passkeys || []).map((pk) => pk.label);
-  const rawLabel = inferPasskeyLabel(ua, backupEligible, body.credential.authenticatorAttachment);
+  const rawLabel = inferPasskeyLabel(ua, backupEligible, credential.authenticatorAttachment);
   const label = deduplicateLabel(rawLabel, existingLabels);
 
   const now = new Date();

@@ -1,14 +1,21 @@
+import { z } from "zod";
+
+const bodySchema = z.object({
+  category: z.string().optional(),
+  values: z.record(z.unknown()).optional(),
+});
+
 export default defineEventHandler(async (event) => {
   requireAdmin(event);
 
-  const body = await readBody<{
-    category: string;
-    values: Record<string, unknown>;
-  }>(event);
+  const parsed = bodySchema.safeParse(await readBody(event));
+  if (!parsed.success) {
+    return { success: false, error: "参数格式错误" };
+  }
 
-  const { category, values } = body || {};
+  const { category, values } = parsed.data;
 
-  if (!category || !values || typeof values !== "object") {
+  if (!category || !values) {
     return { success: false, error: "参数错误" };
   }
 
@@ -27,7 +34,7 @@ export default defineEventHandler(async (event) => {
       return { success: false, error: "端口号须为 1-65535" };
     }
 
-    await setSetting("smtp.host", (host as string).trim());
+    await setSetting("smtp.host", host.trim());
     await setSetting("smtp.port", port);
     await setSetting("smtp.secure", secure);
     await setSetting("smtp.user", user);

@@ -1,10 +1,19 @@
+import { z } from "zod";
+
+const bodySchema = z.object({
+  tokenId: z.string().optional(),
+});
+
 export default defineEventHandler(async (event) => {
   const user = requireAuth(event);
 
-  const body = await readBody<{ accessToken?: string }>(event);
-  const { accessToken } = body || {};
+  const parsed = bodySchema.safeParse(await readBody(event));
+  if (!parsed.success) {
+    return { success: false, error: "参数格式错误" };
+  }
+  const { tokenId } = parsed.data;
 
-  if (!accessToken) {
+  if (!tokenId) {
     return { success: false, error: "缺少令牌标识" };
   }
 
@@ -13,11 +22,13 @@ export default defineEventHandler(async (event) => {
     return { success: false, error: "用户不存在" };
   }
 
-  const tokenBelongsToUser = userDoc.tokens.some((t) => t.accessToken === accessToken);
-  if (!tokenBelongsToUser) {
+  const matchedToken = userDoc.tokens.find(
+    (t) => computeTokenId(t.accessToken) === tokenId,
+  );
+  if (!matchedToken) {
     return { success: false, error: "无权操作" };
   }
 
-  await removeToken(accessToken);
+  await removeToken(matchedToken.accessToken);
   return { success: true };
 });

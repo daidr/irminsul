@@ -1,9 +1,18 @@
+import { z } from "zod";
+
+const bodySchema = z.object({
+  sessionId: z.string().optional(),
+});
+
 export default defineEventHandler(async (event) => {
   const user = requireAuth(event);
   const currentSessionId = event.context.sessionId as string | null;
 
-  const body = await readBody<{ sessionId?: string }>(event);
-  const { sessionId } = body || {};
+  const parsed = bodySchema.safeParse(await readBody(event));
+  if (!parsed.success) {
+    return { success: false, error: "参数格式错误" };
+  }
+  const { sessionId } = parsed.data;
 
   if (!sessionId) {
     return { success: false, error: "缺少会话标识" };

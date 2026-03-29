@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { useLogger } from "evlog";
 import { hasActiveBan } from "~~/server/types/user.schema";
 
@@ -13,14 +14,19 @@ async function checkEmailResetRateLimit(email: string): Promise<boolean> {
   return result !== null;
 }
 
+const bodySchema = z.object({
+  email: z.string().optional(),
+  altchaPayload: z.string().optional(),
+});
+
 export default defineEventHandler(async (event) => {
   const log = useLogger(event);
-  const body = await readBody<{
-    email?: string;
-    altchaPayload?: string;
-  }>(event);
+  const parsed = bodySchema.safeParse(await readBody(event));
+  if (!parsed.success) {
+    return { success: false, error: "参数格式错误" };
+  }
 
-  const { email, altchaPayload } = body || {};
+  const { email, altchaPayload } = parsed.data;
 
   if (!altchaPayload) {
     return { success: false, error: "人机验证失败，请重试" };

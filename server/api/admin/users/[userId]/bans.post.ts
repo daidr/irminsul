@@ -1,3 +1,10 @@
+import { z } from "zod";
+
+const bodySchema = z.object({
+  end: z.string().optional(),
+  reason: z.string().optional(),
+});
+
 export default defineEventHandler(async (event) => {
   const admin = requireAdmin(event);
 
@@ -11,17 +18,21 @@ export default defineEventHandler(async (event) => {
     return { success: false, error: "不能封禁自己" };
   }
 
-  const body = (await readBody<{ end?: string; reason?: string }>(event)) ?? {};
+  const parsed = bodySchema.safeParse(await readBody(event));
+  if (!parsed.success) {
+    return { success: false, error: "参数格式错误" };
+  }
+  const { end, reason } = parsed.data;
 
   // Validate reason length
-  if (body.reason && body.reason.length > 500) {
+  if (reason && reason.length > 500) {
     return { success: false, error: "封禁理由不能超过 500 个字符" };
   }
 
   // Validate and parse end date
   let endDate: Date | undefined;
-  if (body.end) {
-    endDate = new Date(body.end);
+  if (end) {
+    endDate = new Date(end);
     if (Number.isNaN(endDate.getTime())) {
       return { success: false, error: "截止时间格式无效" };
     }
@@ -32,7 +43,7 @@ export default defineEventHandler(async (event) => {
 
   const result = await addBan(
     userId,
-    { end: endDate, reason: body.reason || undefined },
+    { end: endDate, reason: reason || undefined },
     admin.userId,
   );
 
@@ -45,7 +56,7 @@ export default defineEventHandler(async (event) => {
         email: target.email,
         gameId: target.gameId,
         timestamp: Date.now(),
-        reason: body.reason || undefined,
+        reason: reason || undefined,
         end: endDate?.getTime(),
         operator: admin.userId,
       });

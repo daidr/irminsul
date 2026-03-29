@@ -1,6 +1,6 @@
 <script setup lang="ts">
 interface GameSessionItem {
-  accessToken: string;
+  tokenId: string;
   label: string;
   status: 0 | 1;
   createdIp: string;
@@ -94,12 +94,12 @@ function switchTab(tab: "game" | "web") {
   else loadWebSessions();
 }
 
-async function handleInvalidateGame(accessToken: string) {
-  actionLoading.value = accessToken;
+async function handleInvalidateGame(tokenId: string) {
+  actionLoading.value = tokenId;
   try {
     const result = await $fetch<{ success: boolean }>("/api/user/sessions/game", {
       method: "DELETE",
-      body: { accessToken },
+      body: { tokenId },
     });
     if (result.success) await loadGameSessions();
   } catch {
@@ -202,7 +202,7 @@ onMounted(() => {
     <div v-else class="mt-5 flex flex-col gap-3 max-h-[40dvh] overflow-auto">
       <div
         v-for="s in gameSessions"
-        :key="s.accessToken"
+        :key="s.tokenId"
         class="flex items-center justify-between border border-base-300 bg-base-200/50 px-4 py-3"
         :class="{ 'opacity-50': s.status === 0 }"
       >
@@ -223,11 +223,11 @@ onMounted(() => {
         </div>
         <button
           class="btn btn-ghost btn-xs border border-error/30 text-error hover:bg-error/10"
-          :disabled="actionLoading === s.accessToken"
-          @click="handleInvalidateGame(s.accessToken)"
+          :disabled="actionLoading === s.tokenId"
+          @click="handleInvalidateGame(s.tokenId)"
         >
           <span
-            v-if="actionLoading === s.accessToken"
+            v-if="actionLoading === s.tokenId"
             class="loading loading-spinner loading-xs"
           />
           <template v-else>注销</template>

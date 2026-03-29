@@ -1,17 +1,23 @@
+import { z } from "zod";
 import { useLogger } from "evlog";
+
+const bodySchema = z.object({
+  oldPassword: z.string().optional(),
+  newPassword: z.string().optional(),
+  confirmPassword: z.string().optional(),
+  altchaPayload: z.string().optional(),
+});
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event);
   const user = requireAuth(event);
 
-  const body = await readBody<{
-    oldPassword?: string;
-    newPassword?: string;
-    confirmPassword?: string;
-    altchaPayload?: string;
-  }>(event);
+  const parsed = bodySchema.safeParse(await readBody(event));
+  if (!parsed.success) {
+    return { success: false, error: "参数格式错误" };
+  }
 
-  const { oldPassword, newPassword, confirmPassword, altchaPayload } = body || {};
+  const { oldPassword, newPassword, confirmPassword, altchaPayload } = parsed.data;
 
   // Verify altcha
   if (!altchaPayload) {

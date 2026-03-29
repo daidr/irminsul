@@ -1,13 +1,20 @@
+import { z } from "zod";
+
+const bodySchema = z.object({
+  type: z.string().optional(),
+  data: z.string().optional(),
+  model: z.number().optional(),
+});
+
 export default defineEventHandler(async (event) => {
   const user = requireAuth(event);
 
-  const body = await readBody<{
-    type?: "skin" | "cape";
-    data?: string;
-    model?: number;
-  }>(event);
+  const parsed = bodySchema.safeParse(await readBody(event));
+  if (!parsed.success) {
+    return { success: false, error: "参数格式错误" };
+  }
 
-  const { type: textureType, data: fileBase64, model } = body || {};
+  const { type: textureType, data: fileBase64, model } = parsed.data;
 
   if (textureType !== "skin" && textureType !== "cape") {
     return { success: false, error: "无效的材质类型" };

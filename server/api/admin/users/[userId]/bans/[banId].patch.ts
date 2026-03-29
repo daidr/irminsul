@@ -1,3 +1,10 @@
+import { z } from "zod";
+
+const bodySchema = z.object({
+  end: z.string().nullable().optional(),
+  reason: z.string().optional(),
+});
+
 export default defineEventHandler(async (event) => {
   requireAdmin(event);
 
@@ -7,17 +14,21 @@ export default defineEventHandler(async (event) => {
     return { success: false, error: "缺少参数" };
   }
 
-  const body = (await readBody<{ end?: string | null; reason?: string }>(event)) ?? {};
+  const parsed = bodySchema.safeParse(await readBody(event));
+  if (!parsed.success) {
+    return { success: false, error: "参数格式错误" };
+  }
+  const { end, reason } = parsed.data;
 
-  if (body.reason !== undefined && body.reason.length > 500) {
+  if (reason !== undefined && reason.length > 500) {
     return { success: false, error: "封禁理由不能超过 500 个字符" };
   }
 
   let endDate: Date | null | undefined;
-  if (body.end === null) {
+  if (end === null) {
     endDate = null; // make permanent
-  } else if (body.end !== undefined) {
-    endDate = new Date(body.end);
+  } else if (end !== undefined) {
+    endDate = new Date(end);
     if (Number.isNaN(endDate.getTime())) {
       return { success: false, error: "截止时间格式无效" };
     }
@@ -26,7 +37,7 @@ export default defineEventHandler(async (event) => {
 
   const result = await editBan(userId, banId, {
     end: endDate,
-    reason: body.reason,
+    reason,
   });
 
   return result;

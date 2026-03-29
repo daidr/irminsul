@@ -1,15 +1,21 @@
+import { z } from "zod";
 import { useLogger } from "evlog";
 import type { SessionData } from "~~/server/utils/session";
 
+const bodySchema = z.object({
+  email: z.string().optional(),
+  password: z.string().optional(),
+  altchaPayload: z.string().optional(),
+});
+
 export default defineEventHandler(async (event) => {
-  const body = await readBody<{
-    email?: string;
-    password?: string;
-    altchaPayload?: string;
-  }>(event);
+  const parsed = bodySchema.safeParse(await readBody(event));
+  if (!parsed.success) {
+    return { success: false, error: "参数格式错误" };
+  }
   const log = useLogger(event);
 
-  const { email, password, altchaPayload } = body || {};
+  const { email, password, altchaPayload } = parsed.data;
 
   // Validate input
   if (!email || !password) {

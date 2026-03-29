@@ -1,16 +1,22 @@
+import { z } from "zod";
 import { useLogger } from "evlog";
 import { hasActiveBan } from "~~/server/types/user.schema";
 
+const bodySchema = z.object({
+  token: z.string().optional(),
+  password: z.string().optional(),
+  confirmPassword: z.string().optional(),
+  altchaPayload: z.string().optional(),
+});
+
 export default defineEventHandler(async (event) => {
   const log = useLogger(event);
-  const body = await readBody<{
-    token?: string;
-    password?: string;
-    confirmPassword?: string;
-    altchaPayload?: string;
-  }>(event);
+  const parsed = bodySchema.safeParse(await readBody(event));
+  if (!parsed.success) {
+    return { success: false, error: "参数格式错误" };
+  }
 
-  const { token, password, confirmPassword, altchaPayload } = body || {};
+  const { token, password, confirmPassword, altchaPayload } = parsed.data;
 
   if (!altchaPayload) {
     return { success: false, error: "人机验证失败，请重试" };
