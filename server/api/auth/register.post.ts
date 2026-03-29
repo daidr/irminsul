@@ -120,5 +120,13 @@ export default defineEventHandler(async (event) => {
     return { success: false, error: "注册失败，请稍后重试" };
   }
 
+  emitUserHook("user:registered", {
+    uuid: userDoc.uuid,
+    email: userDoc.email,
+    gameId: userDoc.gameId,
+    ip: clientIp,
+    timestamp: Date.now(),
+  });
+
   return { success: true };
 });
