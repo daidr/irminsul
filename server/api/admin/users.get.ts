@@ -1,3 +1,5 @@
+import { hasActiveBan } from "~~/server/types/user.schema";
+
 export default defineEventHandler(async (event) => {
   requireAdmin(event);
 
