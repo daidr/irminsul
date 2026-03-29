@@ -86,7 +86,11 @@ export async function editBan(
   userUuid: string,
   banId: string,
   opts: { end?: Date | null; reason?: string },
-): Promise<{ success: true } | { success: false; error: string }> {
+): Promise<
+  | { success: true; old: BanRecord; new: BanRecord; user: BanOpUserContext }
+  | { success: true }
+  | { success: false; error: string }
+> {
   const $set: Record<string, unknown> = {};
   const $unset: Record<string, unknown> = {};
 
@@ -108,15 +112,35 @@ export async function editBan(
     return { success: true };
   }
 
-  const result = await getUserCollection().updateOne(
+  const doc = await getUserCollection().findOneAndUpdate(
     { uuid: userUuid, "bans.id": banId },
     update,
+    { returnDocument: "before", projection: { uuid: 1, email: 1, gameId: 1, bans: 1 } },
   );
 
-  if (result.matchedCount === 0) {
+  if (!doc) {
     return { success: false, error: "封禁记录不存在" };
   }
-  return { success: true };
+
+  const oldBan = doc.bans.find((b) => b.id === banId)!;
+
+  // Construct new ban from old + applied changes
+  const newBan: BanRecord = { ...oldBan };
+  if (opts.end === null) {
+    delete newBan.end;
+  } else if (opts.end !== undefined) {
+    newBan.end = opts.end;
+  }
+  if (opts.reason !== undefined) {
+    newBan.reason = opts.reason;
+  }
+
+  return {
+    success: true,
+    old: oldBan,
+    new: newBan,
+    user: { uuid: doc.uuid, email: doc.email, gameId: doc.gameId },
+  };
 }
 
 export async function removeBan(

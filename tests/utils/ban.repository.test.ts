@@ -134,29 +134,82 @@ describe("revokeBan", () => {
 });
 
 describe("editBan", () => {
-  it("updates end and reason on matching ban", async () => {
-    mockUpdateOne.mockResolvedValue({ modifiedCount: 1 });
-    const end = new Date("2027-01-01T00:00:00Z");
-    const result = await banRepo.editBan("user-uuid", "ban-id", { end, reason: "updated" });
+  it("returns old and new ban records with user context", async () => {
+    const banStart = new Date("2026-03-01T00:00:00Z");
+    const oldEnd = new Date("2026-06-01T00:00:00Z");
+    mockFindOneAndUpdate.mockResolvedValue({
+      uuid: "user-uuid",
+      email: "user@test.com",
+      gameId: "Player1",
+      bans: [{ id: "ban-id", start: banStart, end: oldEnd, reason: "old reason", operatorId: "op" }],
+    });
+    const newEnd = new Date("2027-01-01T00:00:00Z");
+    const result = await banRepo.editBan("user-uuid", "ban-id", { end: newEnd, reason: "updated" });
 
-    const [filter, update] = mockUpdateOne.mock.calls[0];
+    const [filter, update, options] = mockFindOneAndUpdate.mock.calls[0];
     expect(filter).toEqual({ uuid: "user-uuid", "bans.id": "ban-id" });
-    expect(update.$set["bans.$.end"]).toEqual(end);
+    expect(update.$set["bans.$.end"]).toEqual(newEnd);
     expect(update.$set["bans.$.reason"]).toBe("updated");
-    expect(result).toEqual({ success: true });
+    expect(options.returnDocument).toBe("before");
+
+    expect(result).toEqual({
+      success: true,
+      old: { id: "ban-id", start: banStart, end: oldEnd, reason: "old reason", operatorId: "op" },
+      new: { id: "ban-id", start: banStart, end: newEnd, reason: "updated", operatorId: "op" },
+      user: { uuid: "user-uuid", email: "user@test.com", gameId: "Player1" },
+    });
   });
 
-  it("unsets end when null (make permanent)", async () => {
-    mockUpdateOne.mockResolvedValue({ modifiedCount: 1 });
+  it("handles $unset end (make permanent) — removes end from new ban", async () => {
+    const banStart = new Date("2026-03-01T00:00:00Z");
+    const oldEnd = new Date("2026-06-01T00:00:00Z");
+    mockFindOneAndUpdate.mockResolvedValue({
+      uuid: "user-uuid",
+      email: "u@t.com",
+      gameId: "P",
+      bans: [{ id: "ban-id", start: banStart, end: oldEnd, operatorId: "op" }],
+    });
     const result = await banRepo.editBan("user-uuid", "ban-id", { end: null });
 
-    const [, update] = mockUpdateOne.mock.calls[0];
+    const [, update] = mockFindOneAndUpdate.mock.calls[0];
     expect(update.$unset["bans.$.end"]).toBe("");
+
+    expect(result.success).toBe(true);
+    if (result.success && "old" in result) {
+      expect(result.old.end).toEqual(oldEnd);
+      expect(result.new).not.toHaveProperty("end");
+    }
+  });
+
+  it("correctly finds target ban among multiple records", async () => {
+    mockFindOneAndUpdate.mockResolvedValue({
+      uuid: "user-uuid",
+      email: "u@t.com",
+      gameId: "P",
+      bans: [
+        { id: "other-ban", start: new Date("2026-01-01"), reason: "wrong", operatorId: "op1" },
+        { id: "ban-id", start: new Date("2026-03-01"), reason: "correct", operatorId: "op2" },
+      ],
+    });
+    const result = await banRepo.editBan("user-uuid", "ban-id", { reason: "updated" });
+
+    expect(result.success).toBe(true);
+    if (result.success && "old" in result) {
+      expect(result.old.id).toBe("ban-id");
+      expect(result.old.reason).toBe("correct");
+      expect(result.new.reason).toBe("updated");
+    }
+  });
+
+  it("returns { success: true } without old/new when no fields to update", async () => {
+    const result = await banRepo.editBan("user-uuid", "ban-id", {});
+    expect(mockFindOneAndUpdate).not.toHaveBeenCalled();
     expect(result).toEqual({ success: true });
+    expect(result).not.toHaveProperty("old");
   });
 
   it("returns failure when ban not found", async () => {
-    mockUpdateOne.mockResolvedValue({ matchedCount: 0, modifiedCount: 0 });
+    mockFindOneAndUpdate.mockResolvedValue(null);
     const result = await banRepo.editBan("user-uuid", "ban-id", { reason: "x" });
     expect(result).toEqual({ success: false, error: "封禁记录不存在" });
   });
