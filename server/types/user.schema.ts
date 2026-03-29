@@ -26,20 +26,33 @@ export interface UserCape {
  * 封禁记录
  */
 export interface BanRecord {
+  /** 封禁记录唯一 ID */
+  id: string;
   /** 封禁开始时间 */
   start: Date;
   /** 封禁结束时间（不填表示永久） */
   end?: Date;
   /** 封禁原因 */
   reason?: string;
+  /** 操作人 ID */
+  operatorId: string;
+  /** 撤销时间（设置后表示该封禁已被撤销） */
+  revokedAt?: Date;
+  /** 撤销操作人 ID */
+  revokedBy?: string;
 }
 
 /**
  * 判断封禁记录列表中是否存在生效的封禁
+ * Active = not revoked AND start <= now AND (no end OR end > now).
+ * Tolerates legacy records missing id/operatorId.
  */
 export function hasActiveBan(bans: BanRecord[]): boolean {
+  if (!bans?.length) return false;
   const now = new Date();
-  return bans?.some((ban) => ban.start <= now && (!ban.end || ban.end > now));
+  return bans.some(
+    (ban) => !ban.revokedAt && ban.start <= now && (!ban.end || ban.end > now),
+  );
 }
 
 /**
