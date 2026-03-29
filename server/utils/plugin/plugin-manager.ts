@@ -8,6 +8,7 @@ import type {
   HostStatus,
   PluginLogEntry,
   WorkerToMainMessage,
+  UserHookPayloadMap,
 } from "./types";
 import { parsePluginYaml } from "./yaml-parser";
 import { validatePluginConfig } from "./config-validator";
@@ -498,6 +499,32 @@ export class PluginManager {
 
   async callPluginHook(pluginId: string, hookName: string, ...args: unknown[]): Promise<unknown> {
     return this.bridge.callHook(pluginId, hookName, ...args);
+  }
+
+  // === User Event Hook Dispatch ===
+
+  async emitUserHook<K extends keyof UserHookPayloadMap>(hookName: K, payload: UserHookPayloadMap[K]): Promise<void> {
+    const handlers = this.hookRegistry.get(hookName);
+    if (!handlers.length) return;
+
+    const results = await Promise.allSettled(
+      handlers.map((handler) =>
+        this.callPluginHook(handler.pluginId, hookName, payload),
+      ),
+    );
+
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i];
+      if (result.status === "rejected") {
+        this.logManager.push({
+          timestamp: new Date().toISOString(),
+          level: "error",
+          type: "event",
+          pluginId: handlers[i].pluginId,
+          message: `Hook ${hookName} failed: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`,
+        });
+      }
+    }
   }
 
   // === Evlog Bridge ===
