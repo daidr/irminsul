@@ -10,19 +10,32 @@ export default defineEventHandler(async (event) => {
   const result = await removeBan(userId, banId);
 
   if (result.success) {
-    // Audit log via evlog
+    // Audit log as fallback (hook may have no subscribers)
     console.info("[ban-audit] Ban record removed", {
       operator: admin.userId,
       targetUser: userId,
       removedBan: {
-        id: result.removed.id,
+        id: banId,
         start: result.removed.start,
         end: result.removed.end,
         reason: result.removed.reason,
         operatorId: result.removed.operatorId,
       },
     });
+
+    emitUserHook("user:ban-deleted", {
+      uuid: result.user.uuid,
+      email: result.user.email,
+      gameId: result.user.gameId,
+      banId,
+      operator: admin.userId,
+      timestamp: Date.now(),
+      ban: toBanSnapshot(result.removed),
+      wasActive: result.wasActive,
+    });
   }
 
-  return { success: result.success, error: result.success ? undefined : result.error };
+  return result.success
+    ? { success: true }
+    : { success: false, error: result.error };
 });

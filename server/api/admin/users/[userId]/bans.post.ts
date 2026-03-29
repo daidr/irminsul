@@ -47,21 +47,19 @@ export default defineEventHandler(async (event) => {
     admin.userId,
   );
 
-  // Emit plugin hook on success
   if (result.success) {
-    const target = await findUserByUuid(userId);
-    if (target) {
-      emitUserHook("user:banned", {
-        uuid: target.uuid,
-        email: target.email,
-        gameId: target.gameId,
-        timestamp: Date.now(),
-        reason: reason || undefined,
-        end: endDate?.getTime(),
-        operator: admin.userId,
-      });
-    }
+    emitUserHook("user:ban-created", {
+      uuid: result.user.uuid,
+      email: result.user.email,
+      gameId: result.user.gameId,
+      banId: result.banId,
+      operator: admin.userId,
+      timestamp: Date.now(),
+      ban: toBanSnapshot(result.ban),
+    });
   }
 
-  return result;
+  return result.success
+    ? { success: true, banId: result.banId }
+    : { success: false, error: result.error };
 });

@@ -6,7 +6,7 @@ const bodySchema = z.object({
 });
 
 export default defineEventHandler(async (event) => {
-  requireAdmin(event);
+  const admin = requireAdmin(event);
 
   const userId = getRouterParam(event, "userId");
   const banId = getRouterParam(event, "banId");
@@ -40,5 +40,31 @@ export default defineEventHandler(async (event) => {
     reason,
   });
 
-  return result;
+  if (result.success && "old" in result) {
+    const oldSnap = toBanSnapshot(result.old);
+    const newSnap = toBanSnapshot(result.new);
+    // Only emit hook if there's an actual change (explicit field comparison)
+    if (
+      oldSnap.start !== newSnap.start ||
+      oldSnap.end !== newSnap.end ||
+      oldSnap.reason !== newSnap.reason ||
+      oldSnap.revokedAt !== newSnap.revokedAt ||
+      oldSnap.revokedBy !== newSnap.revokedBy
+    ) {
+      emitUserHook("user:ban-edited", {
+        uuid: result.user.uuid,
+        email: result.user.email,
+        gameId: result.user.gameId,
+        banId,
+        operator: admin.userId,
+        timestamp: Date.now(),
+        old: oldSnap,
+        new: newSnap,
+      });
+    }
+  }
+
+  return result.success
+    ? { success: true }
+    : { success: false, error: result.error };
 });

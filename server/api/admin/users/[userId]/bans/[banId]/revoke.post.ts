@@ -9,19 +9,19 @@ export default defineEventHandler(async (event) => {
 
   const result = await revokeBan(userId, banId, admin.userId);
 
-  // Emit plugin hook on success
   if (result.success) {
-    const target = await findUserByUuid(userId);
-    if (target) {
-      emitUserHook("user:unbanned", {
-        uuid: target.uuid,
-        email: target.email,
-        gameId: target.gameId,
-        timestamp: Date.now(),
-        operator: admin.userId,
-      });
-    }
+    emitUserHook("user:ban-revoked", {
+      uuid: result.user.uuid,
+      email: result.user.email,
+      gameId: result.user.gameId,
+      banId,
+      operator: admin.userId,
+      timestamp: Date.now(),
+      ban: toBanSnapshot(result.ban),
+    });
   }
 
-  return result;
+  return result.success
+    ? { success: true }
+    : { success: false, error: result.error };
 });
