@@ -233,19 +233,19 @@ describe("emitUserHook dispatch logic", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [ ] **Step 2: Run tests to verify they pass**
 
 Run: `rtk vitest run tests/utils/plugin.emit-user-hook.test.ts`
-Expected: All 4 tests PASS (they test the extracted logic, not the real PluginManager — this validates the algorithm is correct before wiring it in).
+Expected: All 4 tests PASS (they test the extracted dispatch algorithm directly, not the PluginManager class — this validates the logic is correct before wiring it in).
 
 - [ ] **Step 3: Add `emitUserHook` method to PluginManager**
 
-In `server/utils/plugin/plugin-manager.ts`, add the following method after `callPluginHook` (after line 501), before the `// === Evlog Bridge ===` comment:
+In `server/utils/plugin/plugin-manager.ts`, add the following method after `callPluginHook` (after line 501), before the `// === Evlog Bridge ===` comment. Also add `import type { UserHookPayloadMap } from "./types";` to the imports at the top of the file (merge into existing type import line):
 
 ```typescript
   // === User Event Hook Dispatch ===
 
-  async emitUserHook(hookName: string, payload: Record<string, unknown>): Promise<void> {
+  async emitUserHook<K extends keyof UserHookPayloadMap>(hookName: K, payload: UserHookPayloadMap[K]): Promise<void> {
     const handlers = this.hookRegistry.get(hookName);
     if (!handlers.length) return;
 
@@ -531,16 +531,16 @@ git commit -m "feat(plugin): emit user:login hook on passkey login"
 
 - [ ] **Step 1: Add `user:oauth-bindchanged` hook after successful bind**
 
-In `server/utils/oauth-callback.ts`, insert before `return sendRedirect(event, "/?oauth=bind-success");` (line 115):
+In `server/utils/oauth-callback.ts`, insert after the `log.set(...)` line and before `return sendRedirect(event, "/?oauth=bind-success");`. Locate by the existing code `log.set({ oauth: { action: "bind", providerId, thirdPartyId: mappedProfile.providerId } });`:
 
 ```typescript
       log.set({ oauth: { action: "bind", providerId, thirdPartyId: mappedProfile.providerId } });
 
-      // Emit bind event — need to fetch user info for the payload
-      const bindUser = await findUserByUuid(stateData.userId!);
+      // Emit bind event — use session context (bind requires login, so event.context.user is always available)
+      const bindUser = event.context.user;
       if (bindUser) {
         emitUserHook("user:oauth-bindchanged", {
-          uuid: bindUser.uuid,
+          uuid: bindUser.userId,
           email: bindUser.email,
           gameId: bindUser.gameId,
           action: "bind",
@@ -553,11 +553,11 @@ In `server/utils/oauth-callback.ts`, insert before `return sendRedirect(event, "
       return sendRedirect(event, "/?oauth=bind-success");
 ```
 
-Note: `findUserByUuid` is auto-imported from `server/utils/user.repository.ts`. We need to fetch the user because the bind flow only has `stateData.userId` (a UUID string), not the full user object.
+Note: Bind flow requires login, so `event.context.user` (populated by session middleware) is always available. This avoids an extra `findUserByUuid` database query. The session context uses `userId` (not `uuid`) for the user's UUID.
 
 - [ ] **Step 2: Add `user:login` hook after successful OAuth login**
 
-In the same file, insert between `await createSession(event, sessionData);` (line 137) and the log/redirect (lines 138-139):
+In the same file, in the `action === "login"` branch, insert between `await createSession(event, sessionData);` and `log.set({ oauth: { action: "login" ... } })`. Locate by the existing `// action === "login"` comment:
 
 ```typescript
     await createSession(event, sessionData);
@@ -577,16 +577,12 @@ In the same file, insert between `await createSession(event, sessionData);` (lin
 
 The `user` object returned from `findUserByOAuthBinding` (line 119) contains `uuid`, `email`, `gameId`.
 
-- [ ] **Step 3: Verify that `findUserByUuid` returns the fields we need**
-
-Check `server/utils/user.repository.ts` — `findUserByUuid` does a full document query (`collection.findOne({ uuid })`), so it returns all fields including `email` and `gameId`.
-
-- [ ] **Step 4: Verify lint passes**
+- [ ] **Step 3: Verify lint passes**
 
 Run: `bun run lint`
 Expected: No new errors.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add server/utils/oauth-callback.ts
@@ -602,7 +598,7 @@ git commit -m "feat(plugin): emit user:login and user:oauth-bindchanged hooks in
 
 - [ ] **Step 1: Add `emitUserHook` call after password update**
 
-In `server/api/user/change-password.post.ts`, insert before the log/return (lines 80-81):
+In `server/api/user/change-password.post.ts`, insert between the `deleteCookie(...)` call and the `log.set(...)` line. The hook fires after all cleanup (tokens/sessions invalidated, cookie cleared) but before the evlog and return:
 
 ```typescript
   deleteCookie(event, "irmin_session", {
@@ -624,7 +620,7 @@ In `server/api/user/change-password.post.ts`, insert before the log/return (line
   return { success: true };
 ```
 
-Note: `extractClientIp` is already imported/used in the server context. Check whether the file already has access to `extractClientIp` — if not, it is auto-imported from `server/utils/`.
+Note: `extractClientIp` is an auto-imported server util from `server/utils/request-ip.ts`. This file hasn't used it before, but Nuxt auto-import makes it available without manual import.
 
 - [ ] **Step 2: Verify lint passes**
 
@@ -647,7 +643,7 @@ git commit -m "feat(plugin): emit user:password-changed hook"
 
 - [ ] **Step 1: Add `emitUserHook` call after password reset**
 
-In `server/api/auth/reset-password.post.ts`, insert before the log/return (lines 72-73):
+In `server/api/auth/reset-password.post.ts`, insert between `await destroyAllSessions(user.uuid);` and `log.set(...)`. `extractClientIp` is an auto-imported server util (same as Task 8):
 
 ```typescript
   await destroyAllSessions(user.uuid);
@@ -861,3 +857,9 @@ Expected: No errors.
 
 Run: `rtk git status`
 Expected: Clean working tree.
+
+---
+
+### 备注：`user:banned` / `user:unbanned` 触发点
+
+这两个 hook 的类型定义和常量已在 Task 1 中注册，但**本 plan 不包含触发点接入**，因为 admin 用户管理端点（ban/unban 操作）尚未实现。触发点将在 admin 用户管理功能的实施计划中补充。

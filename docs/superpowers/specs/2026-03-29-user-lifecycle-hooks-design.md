@@ -213,11 +213,13 @@ async emitUserHook<K extends keyof UserHookPayloadMap>(
   for (let i = 0; i < results.length; i++) {
     const result = results[i];
     if (result.status === "rejected") {
-      this.logManager.append(
-        handlers[i].pluginId,
-        "error",
-        `Hook ${hookName} failed: ${result.reason}`,
-      );
+      this.logManager.push({
+        timestamp: new Date().toISOString(),
+        level: "error",
+        type: "event",
+        pluginId: handlers[i].pluginId,
+        message: `Hook ${hookName} failed: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`,
+      });
     }
   }
 }
