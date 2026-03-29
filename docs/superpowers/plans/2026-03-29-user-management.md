@@ -295,26 +295,26 @@ describe("addBan", () => {
 });
 
 describe("revokeBan", () => {
-  it("sets revokedAt and revokedBy on matching active ban", async () => {
+  it("sets revokedAt and revokedBy on matching active ban using $elemMatch", async () => {
     mockUpdateOne.mockResolvedValue({ modifiedCount: 1 });
     const result = await banRepo.revokeBan("user-uuid", "ban-id", "admin-uuid");
 
     expect(mockUpdateOne).toHaveBeenCalledOnce();
     const [filter, update] = mockUpdateOne.mock.calls[0];
-    expect(filter).toEqual({
-      uuid: "user-uuid",
-      "bans.id": "ban-id",
-      "bans.revokedAt": { $exists: false },
-    });
+    // Must use $elemMatch to ensure conditions match the SAME array element
+    expect(filter.uuid).toBe("user-uuid");
+    expect(filter.bans.$elemMatch.id).toBe("ban-id");
+    expect(filter.bans.$elemMatch.revokedAt).toEqual({ $exists: false });
+    expect(filter.bans.$elemMatch.start).toBeDefined(); // $lte check
     expect(update.$set["bans.$.revokedAt"]).toBeInstanceOf(Date);
     expect(update.$set["bans.$.revokedBy"]).toBe("admin-uuid");
     expect(result).toEqual({ success: true });
   });
 
-  it("returns failure when ban already revoked or not found", async () => {
+  it("returns failure when ban already revoked, expired, or not found", async () => {
     mockUpdateOne.mockResolvedValue({ modifiedCount: 0 });
     const result = await banRepo.revokeBan("user-uuid", "ban-id", "admin-uuid");
-    expect(result).toEqual({ success: false, error: "该封禁已被撤销或不存在" });
+    expect(result).toEqual({ success: false, error: "该封禁已被撤销、已过期或不存在" });
   });
 });
 
@@ -401,7 +401,7 @@ Expected: FAIL — module not found.
 Create `server/utils/ban.repository.ts`:
 
 ```typescript
-import type { BanRecord } from "../types/user.schema";
+import type { BanRecord } from "~~/server/types/user.schema";
 
 export async function addBan(
   userUuid: string,
@@ -432,22 +432,29 @@ export async function revokeBan(
   banId: string,
   operatorUuid: string,
 ): Promise<{ success: true } | { success: false; error: string }> {
+  const now = new Date();
   const result = await getUserCollection().updateOne(
     {
       uuid: userUuid,
-      "bans.id": banId,
-      "bans.revokedAt": { $exists: false },
+      bans: {
+        $elemMatch: {
+          id: banId,
+          revokedAt: { $exists: false },
+          start: { $lte: now },
+          $or: [{ end: { $exists: false } }, { end: { $gt: now } }],
+        },
+      },
     },
     {
       $set: {
-        "bans.$.revokedAt": new Date(),
+        "bans.$.revokedAt": now,
         "bans.$.revokedBy": operatorUuid,
       },
     },
   );
 
   if (result.modifiedCount === 0) {
-    return { success: false, error: "该封禁已被撤销或不存在" };
+    return { success: false, error: "该封禁已被撤销、已过期或不存在" };
   }
   return { success: true };
 }
@@ -504,10 +511,14 @@ export async function removeBan(
     return { success: false, error: "封禁记录不存在" };
   }
 
-  await getUserCollection().updateOne(
+  const result = await getUserCollection().updateOne(
     { uuid: userUuid },
     { $pull: { bans: { id: banId } } },
   );
+
+  if (result.modifiedCount === 0) {
+    return { success: false, error: "封禁记录不存在" };
+  }
 
   return { success: true, removed: ban };
 }
@@ -546,12 +557,17 @@ rtk git commit -m "feat(ban): add ban repository with CRUD operations"
 Create `server/init-modules/init-ban-migration.ts`:
 
 ```typescript
+import { createLogger } from "evlog";
+
 export async function initBanMigration() {
+  const log = createLogger({ category: "startup" });
+  log.set({ step: "ban-migration" });
+
   const collection = getUserCollection();
 
-  // Find all users with bans that lack the `id` field
+  // Find users with at least one ban record missing the `id` field
   const cursor = collection.find(
-    { "bans.0": { $exists: true }, "bans.id": { $exists: false } },
+    { bans: { $elemMatch: { id: { $exists: false } } } },
     { projection: { _id: 1, bans: 1 } },
   );
 
@@ -570,9 +586,8 @@ export async function initBanMigration() {
     migratedCount++;
   }
 
-  if (migratedCount > 0) {
-    console.log(`[ban-migration] Migrated ${migratedCount} user(s) with legacy ban records`);
-  }
+  log.set({ status: "ok", migratedCount });
+  log.emit();
 }
 ```
 
@@ -584,13 +599,11 @@ In `server/plugins/server-startup.ts`, add `initBanMigration` to the Phase 2 `Pr
 await Promise.all([initIndexes(), initSettings(), initKeys(), initBanMigration()]);
 ```
 
-Add the import at the top:
+Add the import at the top (alongside other init-module imports):
 
 ```typescript
 import { initBanMigration } from "../init-modules/init-ban-migration";
 ```
-
-Note: `server/init-modules/` files may be auto-imported by Nitro. If so, skip the explicit import — just add `initBanMigration()` to the `Promise.all` call.
 
 - [ ] **Step 3: Commit**
 
@@ -778,7 +791,7 @@ export default defineEventHandler(async (event) => {
     return { success: false, error: "不能封禁自己" };
   }
 
-  const body = await readBody<{ end?: string; reason?: string }>(event);
+  const body = (await readBody<{ end?: string; reason?: string }>(event)) ?? {};
 
   // Validate reason length
   if (body.reason && body.reason.length > 500) {
@@ -802,6 +815,22 @@ export default defineEventHandler(async (event) => {
     { end: endDate, reason: body.reason || undefined },
     admin.userId,
   );
+
+  // Emit plugin hook on success
+  if (result.success) {
+    const target = await findUserByUuid(userId);
+    if (target) {
+      emitUserHook("user:banned", {
+        uuid: target.uuid,
+        email: target.email,
+        gameId: target.gameId,
+        timestamp: Date.now(),
+        reason: body.reason || undefined,
+        end: endDate?.getTime(),
+        operator: admin.userId,
+      });
+    }
+  }
 
   return result;
 });
@@ -837,7 +866,7 @@ export default defineEventHandler(async (event) => {
     return { success: false, error: "缺少参数" };
   }
 
-  const body = await readBody<{ end?: string | null; reason?: string }>(event);
+  const body = (await readBody<{ end?: string | null; reason?: string }>(event)) ?? {};
 
   if (body.reason !== undefined && body.reason.length > 500) {
     return { success: false, error: "封禁理由不能超过 500 个字符" };
@@ -851,9 +880,7 @@ export default defineEventHandler(async (event) => {
     if (isNaN(endDate.getTime())) {
       return { success: false, error: "截止时间格式无效" };
     }
-    if (endDate <= new Date()) {
-      return { success: false, error: "截止时间必须是未来时间" };
-    }
+    // No future-time check here: editing historical records may need past dates
   }
 
   const result = await editBan(userId, banId, {
@@ -880,6 +907,21 @@ export default defineEventHandler(async (event) => {
   }
 
   const result = await revokeBan(userId, banId, admin.userId);
+
+  // Emit plugin hook on success
+  if (result.success) {
+    const target = await findUserByUuid(userId);
+    if (target) {
+      emitUserHook("user:unbanned", {
+        uuid: target.uuid,
+        email: target.email,
+        gameId: target.gameId,
+        timestamp: Date.now(),
+        operator: admin.userId,
+      });
+    }
+  }
+
   return result;
 });
 ```
