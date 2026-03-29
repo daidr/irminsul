@@ -176,9 +176,20 @@ export const KNOWN_FUNCTIONAL_HOOKS = [
   "oauth:fetch-profile",
 ] as const;
 
+export const KNOWN_EVENT_HOOKS = [
+  "user:registered",
+  "user:login",
+  "user:banned",
+  "user:unbanned",
+  "user:password-changed",
+  "user:password-reset",
+  "user:oauth-bindchanged",
+] as const;
+
 export const ALL_KNOWN_HOOKS = [
   ...LIFECYCLE_HOOKS,
   ...KNOWN_FUNCTIONAL_HOOKS,
+  ...KNOWN_EVENT_HOOKS,
 ] as const;
 
 export function isLifecycleHook(name: string): boolean {
@@ -188,3 +199,59 @@ export function isLifecycleHook(name: string): boolean {
 export function isKnownHook(name: string): boolean {
   return (ALL_KNOWN_HOOKS as readonly string[]).includes(name);
 }
+
+export function isEventHook(name: string): boolean {
+  return (KNOWN_EVENT_HOOKS as readonly string[]).includes(name);
+}
+
+// ===== User Lifecycle Hook Payloads =====
+
+export interface UserHookBasePayload {
+  uuid: string;
+  email: string;
+  gameId: string;
+  timestamp: number;
+}
+
+export interface UserRegisteredPayload extends UserHookBasePayload {
+  ip: string | null;
+}
+
+export interface UserLoginPayload extends UserHookBasePayload {
+  ip: string | null;
+  method: "password" | "passkey" | "oauth";
+}
+
+export interface UserBannedPayload extends UserHookBasePayload {
+  reason?: string;
+  end?: number;
+  operator: string;
+}
+
+export interface UserUnbannedPayload extends UserHookBasePayload {
+  operator: string;
+}
+
+export interface UserPasswordChangedPayload extends UserHookBasePayload {
+  ip: string | null;
+}
+
+export interface UserPasswordResetPayload extends UserHookBasePayload {
+  ip: string | null;
+}
+
+export interface UserOAuthBindChangedPayload extends UserHookBasePayload {
+  action: "bind" | "unbind";
+  provider: string;
+  displayName?: string;
+}
+
+export type UserHookPayloadMap = {
+  "user:registered": UserRegisteredPayload;
+  "user:login": UserLoginPayload;
+  "user:banned": UserBannedPayload;
+  "user:unbanned": UserUnbannedPayload;
+  "user:password-changed": UserPasswordChangedPayload;
+  "user:password-reset": UserPasswordResetPayload;
+  "user:oauth-bindchanged": UserOAuthBindChangedPayload;
+};
