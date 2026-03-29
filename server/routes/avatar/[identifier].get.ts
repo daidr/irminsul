@@ -55,10 +55,11 @@ export default defineEventHandler(async (event) => {
   }
 
   // Render avatar
-  // Avatar is 8x8 MC pixels, scale * 2 maps user scale 1-4 to output 16/32/48/64px
+  // Avatar is 8x8 MC pixels. With overlayInflated, output = 9 * mcScale.
+  // scale 1-4 maps to mcScale 2-8, output 18/36/54/72px.
+  // renderAvatar sets canvas.width/height internally.
   const mcScale = scale * 2;
-  const size = 8 * mcScale;
-  const canvas = createCanvas(size, size);
+  const canvas = createCanvas(1, 1);
 
   await renderAvatar(canvas as any, {
     skin: skinImage as any,
