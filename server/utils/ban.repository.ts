@@ -1,4 +1,5 @@
 import type { BanRecord } from "../types/user.schema";
+import { isBanActive } from "../types/user.schema";
 import { getUserCollection } from "./user.repository";
 
 export interface BanOpUserContext {
@@ -146,10 +147,13 @@ export async function editBan(
 export async function removeBan(
   userUuid: string,
   banId: string,
-): Promise<{ success: true; removed: BanRecord } | { success: false; error: string }> {
+): Promise<
+  | { success: true; removed: BanRecord; wasActive: boolean; user: BanOpUserContext }
+  | { success: false; error: string }
+> {
   const user = await getUserCollection().findOne(
     { uuid: userUuid },
-    { projection: { bans: 1 } },
+    { projection: { uuid: 1, email: 1, gameId: 1, bans: 1 } },
   );
 
   const ban = user?.bans?.find((b) => b.id === banId);
@@ -166,7 +170,12 @@ export async function removeBan(
     return { success: false, error: "封禁记录不存在" };
   }
 
-  return { success: true, removed: ban };
+  return {
+    success: true,
+    removed: ban,
+    wasActive: isBanActive(ban),
+    user: { uuid: user!.uuid, email: user!.email, gameId: user!.gameId },
+  };
 }
 
 export async function getUserBans(userUuid: string): Promise<BanRecord[]> {

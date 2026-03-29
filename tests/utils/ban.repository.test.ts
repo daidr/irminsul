@@ -216,22 +216,89 @@ describe("editBan", () => {
 });
 
 describe("removeBan", () => {
-  it("pulls ban record from array", async () => {
-    mockFindOne.mockResolvedValue({ bans: [{ id: "ban-id", start: new Date(), operatorId: "op" }] });
+  it("pulls ban record and returns removed ban with wasActive and user context", async () => {
+    const now = new Date();
+    const activeBan = { id: "ban-id", start: new Date(now.getTime() - 1000), operatorId: "op" };
+    mockFindOne.mockResolvedValue({
+      uuid: "user-uuid",
+      email: "user@test.com",
+      gameId: "Player1",
+      bans: [activeBan],
+    });
     mockUpdateOne.mockResolvedValue({ modifiedCount: 1 });
     const result = await banRepo.removeBan("user-uuid", "ban-id");
 
+    expect(mockFindOne).toHaveBeenCalledWith(
+      { uuid: "user-uuid" },
+      { projection: { uuid: 1, email: 1, gameId: 1, bans: 1 } },
+    );
     expect(mockUpdateOne).toHaveBeenCalledOnce();
     const [filter, update] = mockUpdateOne.mock.calls[0];
     expect(filter).toEqual({ uuid: "user-uuid" });
     expect(update.$pull.bans).toEqual({ id: "ban-id" });
+
     expect(result.success).toBe(true);
-    expect(result.removed).toBeDefined();
+    if (result.success) {
+      expect(result.removed).toEqual(activeBan);
+      expect(result.wasActive).toBe(true);
+      expect(result.user).toEqual({ uuid: "user-uuid", email: "user@test.com", gameId: "Player1" });
+    }
+  });
+
+  it("sets wasActive to false for revoked ban", async () => {
+    const revokedBan = {
+      id: "ban-id",
+      start: new Date("2026-01-01"),
+      operatorId: "op",
+      revokedAt: new Date("2026-02-01"),
+      revokedBy: "admin",
+    };
+    mockFindOne.mockResolvedValue({
+      uuid: "user-uuid",
+      email: "u@t.com",
+      gameId: "P",
+      bans: [revokedBan],
+    });
+    mockUpdateOne.mockResolvedValue({ modifiedCount: 1 });
+    const result = await banRepo.removeBan("user-uuid", "ban-id");
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.wasActive).toBe(false);
+    }
+  });
+
+  it("sets wasActive to false for expired ban", async () => {
+    const expiredBan = {
+      id: "ban-id",
+      start: new Date("2025-01-01"),
+      end: new Date("2025-06-01"),
+      operatorId: "op",
+    };
+    mockFindOne.mockResolvedValue({
+      uuid: "user-uuid",
+      email: "u@t.com",
+      gameId: "P",
+      bans: [expiredBan],
+    });
+    mockUpdateOne.mockResolvedValue({ modifiedCount: 1 });
+    const result = await banRepo.removeBan("user-uuid", "ban-id");
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.wasActive).toBe(false);
+    }
   });
 
   it("returns failure when ban not found", async () => {
-    mockFindOne.mockResolvedValue({ bans: [] });
+    mockFindOne.mockResolvedValue({ uuid: "user-uuid", email: "u@t.com", gameId: "P", bans: [] });
     const result = await banRepo.removeBan("user-uuid", "nonexistent");
+    expect(result).toEqual({ success: false, error: "封禁记录不存在" });
+  });
+
+  it("returns failure when user not found", async () => {
+    mockFindOne.mockResolvedValue(null);
+    const result = await banRepo.removeBan("user-uuid", "ban-id");
     expect(result).toEqual({ success: false, error: "封禁记录不存在" });
   });
 });

@@ -43,16 +43,21 @@ export interface BanRecord {
 }
 
 /**
- * 判断封禁记录列表中是否存在生效的封禁
+ * 判断单条封禁记录是否处于活跃状态
  * Active = not revoked AND start <= now AND (no end OR end > now).
+ */
+export function isBanActive(ban: BanRecord, now = new Date()): boolean {
+  return !ban.revokedAt && ban.start <= now && (!ban.end || ban.end > now);
+}
+
+/**
+ * 判断封禁记录列表中是否存在生效的封禁
  * Tolerates legacy records missing id/operatorId.
  */
 export function hasActiveBan(bans: BanRecord[]): boolean {
   if (!bans?.length) return false;
   const now = new Date();
-  return bans.some(
-    (ban) => !ban.revokedAt && ban.start <= now && (!ban.end || ban.end > now),
-  );
+  return bans.some((ban) => isBanActive(ban, now));
 }
 
 /**
