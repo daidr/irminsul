@@ -265,12 +265,17 @@ describe("addBan", () => {
     expect(update.$push.bans.end).toBeUndefined();
     expect(options.returnDocument).toBe("after");
 
-    expect(result).toEqual({
-      success: true,
-      banId: "test-uuid-1234",
-      ban: expect.objectContaining({ id: "test-uuid-1234", reason: "test" }),
-      user: { uuid: "user-uuid", email: "user@test.com", gameId: "Player1" },
-    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.banId).toBe("test-uuid-1234");
+      expect(result.ban).toEqual({
+        id: "test-uuid-1234",
+        start: expect.any(Date),
+        operatorId: "admin-uuid",
+        reason: "test",
+      });
+      expect(result.user).toEqual({ uuid: "user-uuid", email: "user@test.com", gameId: "Player1" });
+    }
   });
 
   it("sets end date when provided", async () => {
@@ -324,6 +329,26 @@ describe("revokeBan", () => {
       ban: { id: "ban-id", start: banStart, operatorId: "op", reason: "test" },
       user: { uuid: "user-uuid", email: "user@test.com", gameId: "Player1" },
     });
+  });
+
+  it("correctly finds target ban among multiple records", async () => {
+    mockFindOneAndUpdate.mockResolvedValue({
+      uuid: "user-uuid",
+      email: "u@t.com",
+      gameId: "P",
+      bans: [
+        { id: "other-ban", start: new Date("2026-01-01"), operatorId: "op1" },
+        { id: "ban-id", start: new Date("2026-03-01"), operatorId: "op2", reason: "target" },
+        { id: "another-ban", start: new Date("2026-02-01"), operatorId: "op3" },
+      ],
+    });
+    const result = await banRepo.revokeBan("user-uuid", "ban-id", "admin-uuid");
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.ban.id).toBe("ban-id");
+      expect(result.ban.reason).toBe("target");
+    }
   });
 
   it("returns failure when ban already revoked, expired, or not found", async () => {
@@ -505,10 +530,31 @@ describe("editBan", () => {
     }
   });
 
+  it("correctly finds target ban among multiple records", async () => {
+    mockFindOneAndUpdate.mockResolvedValue({
+      uuid: "user-uuid",
+      email: "u@t.com",
+      gameId: "P",
+      bans: [
+        { id: "other-ban", start: new Date("2026-01-01"), reason: "wrong", operatorId: "op1" },
+        { id: "ban-id", start: new Date("2026-03-01"), reason: "correct", operatorId: "op2" },
+      ],
+    });
+    const result = await banRepo.editBan("user-uuid", "ban-id", { reason: "updated" });
+
+    expect(result.success).toBe(true);
+    if (result.success && "old" in result) {
+      expect(result.old.id).toBe("ban-id");
+      expect(result.old.reason).toBe("correct");
+      expect(result.new.reason).toBe("updated");
+    }
+  });
+
   it("returns { success: true } without old/new when no fields to update", async () => {
     const result = await banRepo.editBan("user-uuid", "ban-id", {});
     expect(mockFindOneAndUpdate).not.toHaveBeenCalled();
     expect(result).toEqual({ success: true });
+    expect(result).not.toHaveProperty("old");
   });
 
   it("returns failure when ban not found", async () => {
@@ -605,13 +651,38 @@ git commit -m "feat(plugin): update editBan to return old/new snapshots via find
 
 ---
 
-### Task 5: 更新 removeBan
+### Task 5: 提取 isBanActive 并更新 removeBan
 
 **Files:**
+- Modify: `server/types/user.schema.ts` (提取 `isBanActive`)
 - Modify: `server/utils/ban.repository.ts` (removeBan 函数)
 - Modify: `tests/utils/ban.repository.test.ts` (removeBan 测试)
 
-- [ ] **Step 1: 更新 removeBan 测试**
+- [ ] **Step 1: 提取 `isBanActive` 函数**
+
+在 `server/types/user.schema.ts` 中，在 `hasActiveBan` 函数前新增 `isBanActive`，然后重构 `hasActiveBan` 复用它：
+
+```typescript
+/**
+ * 判断单条封禁记录是否处于活跃状态
+ * Active = not revoked AND start <= now AND (no end OR end > now).
+ */
+export function isBanActive(ban: BanRecord, now = new Date()): boolean {
+  return !ban.revokedAt && ban.start <= now && (!ban.end || ban.end > now);
+}
+
+/**
+ * 判断封禁记录列表中是否存在生效的封禁
+ * Tolerates legacy records missing id/operatorId.
+ */
+export function hasActiveBan(bans: BanRecord[]): boolean {
+  if (!bans?.length) return false;
+  const now = new Date();
+  return bans.some((ban) => isBanActive(ban, now));
+}
+```
+
+- [ ] **Step 2: 更新 removeBan 测试**
 
 替换整个 `describe("removeBan", ...)` 块为：
 
@@ -705,12 +776,20 @@ describe("removeBan", () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试确认失败**
+- [ ] **Step 3: 运行测试确认失败**
 
 Run: `rtk vitest run tests/utils/ban.repository.test.ts`
 Expected: FAIL — `removeBan` 测试因新断言失败。
 
-- [ ] **Step 3: 更新 removeBan 实现**
+- [ ] **Step 4: 更新 removeBan 实现**
+
+在 `server/utils/ban.repository.ts` 顶部 import 中新增 `isBanActive`：
+
+```typescript
+import type { BanRecord } from "../types/user.schema";
+import { isBanActive } from "../types/user.schema";
+import { getUserCollection } from "./user.repository";
+```
 
 替换 `removeBan` 函数：
 
@@ -741,34 +820,30 @@ export async function removeBan(
     return { success: false, error: "封禁记录不存在" };
   }
 
-  // Determine if the ban was active at removal time
-  const now = new Date();
-  const wasActive = !ban.revokedAt && ban.start <= now && (!ban.end || ban.end > now);
-
   return {
     success: true,
     removed: ban,
-    wasActive,
+    wasActive: isBanActive(ban),
     user: { uuid: user!.uuid, email: user!.email, gameId: user!.gameId },
   };
 }
 ```
 
-- [ ] **Step 4: 运行测试确认通过**
+- [ ] **Step 5: 运行测试确认通过**
 
 Run: `rtk vitest run tests/utils/ban.repository.test.ts`
 Expected: 所有测试 PASS。
 
-- [ ] **Step 5: 验证 lint**
+- [ ] **Step 6: 验证 lint**
 
 Run: `bun run lint`
 Expected: 无新增错误。
 
-- [ ] **Step 6: 提交**
+- [ ] **Step 7: 提交**
 
 ```bash
-git add server/utils/ban.repository.ts tests/utils/ban.repository.test.ts
-git commit -m "feat(plugin): update removeBan to return wasActive and user context"
+git add server/types/user.schema.ts server/utils/ban.repository.ts tests/utils/ban.repository.test.ts
+git commit -m "feat(plugin): extract isBanActive helper and update removeBan to return wasActive with user context"
 ```
 
 ---
@@ -905,8 +980,14 @@ export default defineEventHandler(async (event) => {
   if (result.success && "old" in result) {
     const oldSnap = toBanSnapshot(result.old);
     const newSnap = toBanSnapshot(result.new);
-    // Only emit hook if there's an actual change
-    if (JSON.stringify(oldSnap) !== JSON.stringify(newSnap)) {
+    // Only emit hook if there's an actual change (explicit field comparison)
+    if (
+      oldSnap.start !== newSnap.start ||
+      oldSnap.end !== newSnap.end ||
+      oldSnap.reason !== newSnap.reason ||
+      oldSnap.revokedAt !== newSnap.revokedAt ||
+      oldSnap.revokedBy !== newSnap.revokedBy
+    ) {
       emitUserHook("user:ban-edited", {
         uuid: result.user.uuid,
         email: result.user.email,
@@ -920,11 +1001,13 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  return { success: result.success, error: result.success ? undefined : result.error };
+  return result.success
+    ? { success: true }
+    : { success: false, error: result.error };
 });
 ```
 
-关键点：`"old" in result` 区分有实际 DB 操作的情况（返回 old/new）和无变更的提前返回（仅 `{ success: true }`）。`JSON.stringify` 对比确保值完全相同时不触发 hook。
+关键点：`"old" in result` 区分有实际 DB 操作的情况（返回 old/new）和无变更的提前返回（仅 `{ success: true }`）。显式字段对比确保值完全相同时不触发 hook。
 
 - [ ] **Step 3: 更新 revoke.post.ts（ban-revoked）**
 
@@ -954,7 +1037,9 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  return { success: result.success, error: result.success ? undefined : result.error };
+  return result.success
+    ? { success: true }
+    : { success: false, error: result.error };
 });
 ```
 
@@ -975,6 +1060,19 @@ export default defineEventHandler(async (event) => {
   const result = await removeBan(userId, banId);
 
   if (result.success) {
+    // Audit log as fallback (hook may have no subscribers)
+    console.info("[ban-audit] Ban record removed", {
+      operator: admin.userId,
+      targetUser: userId,
+      removedBan: {
+        id: banId,
+        start: result.removed.start,
+        end: result.removed.end,
+        reason: result.removed.reason,
+        operatorId: result.removed.operatorId,
+      },
+    });
+
     emitUserHook("user:ban-deleted", {
       uuid: result.user.uuid,
       email: result.user.email,
@@ -987,11 +1085,13 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  return { success: result.success, error: result.success ? undefined : result.error };
+  return result.success
+    ? { success: true }
+    : { success: false, error: result.error };
 });
 ```
 
-注意：原有的 `console.info("[ban-audit]...")` 审计日志被移除——审计功能现由插件 hook 承担。
+注意：保留原有的 `console.info` 审计日志作为兜底，因为 hook 不保证有插件监听。删除操作属于不可逆的高风险操作，始终需要基础审计记录。
 
 - [ ] **Step 5: 验证 lint**
 
