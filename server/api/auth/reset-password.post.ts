@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { useLogger } from "evlog";
-import { hasActiveBan } from "~~/server/types/user.schema";
 
 const bodySchema = z.object({
   token: z.string().optional(),
@@ -61,10 +60,6 @@ export default defineEventHandler(async (event) => {
   if (!user) {
     return { success: false, error: "用户不存在" };
   }
-  if (hasActiveBan(user.bans)) {
-    return { success: false, error: "该账户已被封禁" };
-  }
-
   // Hash and update password
   const newHash = await hashPassword(password);
   await updatePasswordHash(user.uuid, newHash, "argon2id");

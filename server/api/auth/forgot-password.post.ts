@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { useLogger } from "evlog";
-import { hasActiveBan } from "~~/server/types/user.schema";
 
 const SUCCESS_MESSAGE = "如果该邮箱已注册，我们已发送密码重置链接，请检查收件箱。";
 
@@ -65,11 +64,6 @@ export default defineEventHandler(async (event) => {
   // Find user (don't reveal whether user exists)
   const user = await findUserByEmail(email);
   if (!user) {
-    return { success: true, message: SUCCESS_MESSAGE };
-  }
-
-  // Check banned
-  if (hasActiveBan(user.bans)) {
     return { success: true, message: SUCCESS_MESSAGE };
   }
 
