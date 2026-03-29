@@ -249,38 +249,25 @@ async function handleRemove(banId: string) {
             <div class="mb-3">
               <label class="text-xs text-base-content/50 block mb-1">封禁时长</label>
               <div class="flex flex-wrap gap-1.5">
-                <button
-                  v-for="opt in [
-                    { value: '1d', label: '1 天' },
-                    { value: '7d', label: '7 天' },
-                    { value: '30d', label: '30 天' },
-                    { value: 'permanent', label: '永久' },
-                    { value: 'custom', label: '自定义' },
-                  ]"
-                  :key="opt.value"
-                  class="btn btn-xs"
+                <button v-for="opt in [
+                  { value: '1d', label: '1 天' },
+                  { value: '7d', label: '7 天' },
+                  { value: '30d', label: '30 天' },
+                  { value: 'permanent', label: '永久' },
+                  { value: 'custom', label: '自定义' },
+                ]" :key="opt.value" class="btn btn-xs"
                   :class="newBanDuration === opt.value ? 'btn-active' : 'btn-ghost'"
-                  @click="newBanDuration = opt.value as typeof newBanDuration"
-                >
+                  @click="newBanDuration = opt.value as typeof newBanDuration">
                   {{ opt.label }}
                 </button>
               </div>
-              <input
-                v-if="newBanDuration === 'custom'"
-                v-model="newBanCustomDate"
-                type="datetime-local"
-                class="input input-sm input-bordered w-full mt-2"
-              >
+              <input v-if="newBanDuration === 'custom'" v-model="newBanCustomDate" type="datetime-local"
+                class="input input-sm input-bordered w-full mt-2">
             </div>
             <div class="mb-3">
               <label class="text-xs text-base-content/50 block mb-1">封禁理由（可选）</label>
-              <input
-                v-model="newBanReason"
-                type="text"
-                class="input input-sm input-bordered w-full"
-                placeholder="输入封禁理由..."
-                maxlength="500"
-              >
+              <input v-model="newBanReason" type="text" class="input input-sm input-bordered w-full"
+                placeholder="输入封禁理由..." maxlength="500">
             </div>
             <div class="text-right">
               <button class="btn btn-sm btn-error" :disabled="creating" @click="createBan">
@@ -303,40 +290,27 @@ async function handleRemove(banId: string) {
             </div>
 
             <div v-else class="flex flex-col gap-2 max-h-[40dvh] overflow-auto">
-              <div
-                v-for="ban in bans"
-                :key="ban.id"
-                class="border p-3"
-                :class="banStatus(ban) === 'active' ? 'border-error/50 bg-error/5' : 'border-base-300 opacity-70'"
-              >
+              <div v-for="ban in bans" :key="ban.id" class="border p-3"
+                :class="banStatus(ban) === 'active' ? 'border-error/50 bg-error/5' : 'border-base-300'">
                 <!-- Display mode -->
                 <template v-if="editingBanId !== ban.id">
                   <div class="flex items-start justify-between gap-2">
                     <div class="min-w-0">
                       <!-- Status badges -->
                       <div class="flex items-center gap-1.5 flex-wrap">
-                        <span
-                          v-if="banStatus(ban) === 'active'"
-                          class="bg-error text-error-content px-2 py-0.5 text-[10px] font-semibold"
-                        >
+                        <span v-if="banStatus(ban) === 'active'"
+                          class="bg-error text-error-content px-2 py-0.5 text-[10px] font-semibold">
                           生效中
                         </span>
-                        <span
-                          v-else-if="banStatus(ban) === 'revoked'"
-                          class="bg-base-300 px-2 py-0.5 text-[10px] font-semibold"
-                        >
+                        <span v-else-if="banStatus(ban) === 'revoked'"
+                          class="bg-base-300 px-2 py-0.5 text-[10px] font-semibold">
                           已撤销
                         </span>
-                        <span
-                          v-else
-                          class="bg-base-300 px-2 py-0.5 text-[10px] font-semibold"
-                        >
+                        <span v-else class="bg-base-300 px-2 py-0.5 text-[10px] font-semibold">
                           已过期
                         </span>
-                        <span
-                          v-if="!ban.end && banStatus(ban) !== 'revoked'"
-                          class="bg-warning/20 text-warning px-2 py-0.5 text-[10px]"
-                        >
+                        <span v-if="!ban.end && banStatus(ban) !== 'revoked'"
+                          class="bg-warning/20 text-warning px-2 py-0.5 text-[10px]">
                           永久
                         </span>
                       </div>
@@ -373,26 +347,15 @@ async function handleRemove(banId: string) {
 
                     <!-- Action buttons -->
                     <div class="flex gap-1 shrink-0">
-                      <button
-                        v-if="banStatus(ban) === 'active'"
-                        class="btn btn-ghost btn-xs"
-                        :disabled="actionLoading === ban.id"
-                        @click="handleRevoke(ban.id)"
-                      >
+                      <button v-if="banStatus(ban) === 'active'" class="btn btn-ghost btn-xs"
+                        :disabled="actionLoading === ban.id" @click="handleRevoke(ban.id)">
                         撤销
                       </button>
-                      <button
-                        class="btn btn-ghost btn-xs"
-                        :disabled="actionLoading === ban.id"
-                        @click="startEdit(ban)"
-                      >
+                      <button class="btn btn-ghost btn-xs" :disabled="actionLoading === ban.id" @click="startEdit(ban)">
                         编辑
                       </button>
-                      <button
-                        class="btn btn-ghost btn-xs text-error"
-                        :disabled="actionLoading === ban.id"
-                        @click="handleRemove(ban.id)"
-                      >
+                      <button class="btn btn-ghost btn-xs text-error" :disabled="actionLoading === ban.id"
+                        @click="handleRemove(ban.id)">
                         {{ confirmRemoveId === ban.id ? '确认？' : '移除' }}
                       </button>
                     </div>
@@ -405,44 +368,27 @@ async function handleRemove(banId: string) {
                     <div>
                       <label class="text-xs text-base-content/50 block mb-1">截止时间</label>
                       <div class="flex flex-wrap gap-1.5">
-                        <button
-                          class="btn btn-xs"
-                          :class="editDuration === 'permanent' ? 'btn-active' : 'btn-ghost'"
-                          @click="editDuration = 'permanent'"
-                        >
+                        <button class="btn btn-xs" :class="editDuration === 'permanent' ? 'btn-active' : 'btn-ghost'"
+                          @click="editDuration = 'permanent'">
                           永久
                         </button>
-                        <button
-                          class="btn btn-xs"
-                          :class="editDuration === 'custom' ? 'btn-active' : 'btn-ghost'"
-                          @click="editDuration = 'custom'"
-                        >
+                        <button class="btn btn-xs" :class="editDuration === 'custom' ? 'btn-active' : 'btn-ghost'"
+                          @click="editDuration = 'custom'">
                           自定义
                         </button>
                       </div>
-                      <input
-                        v-if="editDuration === 'custom'"
-                        v-model="editEndCustom"
-                        type="datetime-local"
-                        class="input input-sm input-bordered w-full mt-2"
-                      >
+                      <input v-if="editDuration === 'custom'" v-model="editEndCustom" type="datetime-local"
+                        class="input input-sm input-bordered w-full mt-2">
                     </div>
                     <div>
                       <label class="text-xs text-base-content/50 block mb-1">理由</label>
-                      <input
-                        v-model="editReason"
-                        type="text"
-                        class="input input-sm input-bordered w-full"
-                        maxlength="500"
-                      >
+                      <input v-model="editReason" type="text" class="input input-sm input-bordered w-full"
+                        maxlength="500">
                     </div>
                     <div class="flex justify-end gap-1">
                       <button class="btn btn-ghost btn-xs" @click="cancelEdit">取消</button>
-                      <button
-                        class="btn btn-primary btn-xs"
-                        :disabled="actionLoading === ban.id"
-                        @click="saveEdit(ban.id)"
-                      >
+                      <button class="btn btn-primary btn-xs" :disabled="actionLoading === ban.id"
+                        @click="saveEdit(ban.id)">
                         保存
                       </button>
                     </div>

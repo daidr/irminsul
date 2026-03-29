@@ -55,71 +55,38 @@ function onLeave() {
     show.value = false;
   }, 150);
 }
-
-function shortUuid(uuid: string): string {
-  return uuid.split("-")[0] ?? uuid;
-}
 </script>
 
 <template>
-  <span
-    v-if="loading"
-    class="inline-flex items-center gap-1 text-[11px] text-base-content/40"
-  >
+  <span v-if="loading" class="inline-flex items-center gap-1 text-[11px] text-base-content/40">
     <span class="loading loading-spinner" style="width: 10px; height: 10px" />
   </span>
 
-  <span
-    v-else-if="!profile"
-    class="text-[11px] text-base-content/40"
-  >{{ userId }}</span>
+  <span v-else-if="!profile" class="text-[11px] text-base-content/40">{{ userId }}</span>
 
-  <span
-    v-else
-    class="relative inline-flex"
-    @mouseenter="onEnter"
-    @mouseleave="onLeave"
-  >
+  <span v-else class="relative inline-flex" @mouseenter="onEnter" @mouseleave="onLeave">
     <!-- Capsule trigger -->
     <span class="bubble-trigger">
-      <McAvatar
-        v-if="profile.skinHash"
-        :hash="profile.skinHash"
-        :slim="profile.skinSlim"
-        :scale="4"
-        class="w-4 h-4 shrink-0"
-      />
+      <McAvatar v-if="profile.skinHash" :hash="profile.skinHash" :slim="profile.skinSlim" :scale="3"
+        class="w-3 h-3 shrink-0" />
       <span class="truncate">{{ profile.gameId }}</span>
     </span>
 
     <!-- Popover -->
     <Transition name="bubble-pop">
-      <div
-        v-if="show"
-        class="bubble-popover"
-        @mouseenter="onEnter"
-        @mouseleave="onLeave"
-      >
+      <div v-if="show" class="bubble-popover" @mouseenter="onEnter" @mouseleave="onLeave">
         <div class="flex items-center gap-3">
           <!-- Large avatar -->
-          <McAvatar
-            v-if="profile.skinHash"
-            :hash="profile.skinHash"
-            :slim="profile.skinSlim"
-            :scale="8"
-            class="w-10 h-10 shrink-0"
-          />
+          <McAvatar v-if="profile.skinHash" :hash="profile.skinHash" :slim="profile.skinSlim" :scale="8"
+            class="w-10 h-10 shrink-0" />
 
           <!-- Info -->
           <div class="min-w-0 flex flex-col gap-0.5">
             <span class="text-sm font-semibold truncate">{{ profile.gameId }}</span>
             <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="text-[10px] text-base-content/40 font-mono">{{ shortUuid(profile.uuid) }}</span>
-              <span
-                v-if="profile.isAdmin"
-                class="badge badge-info badge-sm"
-                style="font-size: 10px; padding: 0 6px; height: 16px"
-              >管理员</span>
+              <span class="text-[10px] text-base-content/40 font-mono">{{ profile.uuid }}</span>
+              <span v-if="profile.isAdmin" class="badge badge-info badge-sm"
+                style="font-size: 10px; padding: 0 6px; height: 16px">管理员</span>
             </div>
           </div>
         </div>
@@ -132,15 +99,11 @@ function shortUuid(uuid: string): string {
 @reference "~/assets/css/tailwind.css";
 
 .bubble-trigger {
-  @apply inline-flex items-center gap-1 px-1.5 py-0.5 text-[11px]
-    border border-base-300 bg-base-200/60 cursor-default
-    hover:bg-base-300/60 transition-colors;
+  @apply inline-flex items-center gap-1 px-1.5 py-0.5 text-[11px] border border-base-300 bg-base-200/60 cursor-default hover:bg-base-300/60 transition-colors;
 }
 
 .bubble-popover {
-  @apply absolute left-0 bottom-full mb-1 z-50
-    bg-base-100 border border-base-300 shadow-lg
-    p-3 whitespace-nowrap;
+  @apply absolute left-0 bottom-full mb-1 z-50 bg-base-100 border border-base-300 shadow-lg p-3 whitespace-nowrap;
 }
 
 .bubble-pop-enter-active {
