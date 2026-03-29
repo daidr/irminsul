@@ -75,7 +75,7 @@ describe("revokeBan", () => {
   });
 
   it("returns failure when ban already revoked, expired, or not found", async () => {
-    mockUpdateOne.mockResolvedValue({ modifiedCount: 0 });
+    mockUpdateOne.mockResolvedValue({ matchedCount: 0, modifiedCount: 0 });
     const result = await banRepo.revokeBan("user-uuid", "ban-id", "admin-uuid");
     expect(result).toEqual({ success: false, error: "该封禁已被撤销、已过期或不存在" });
   });
@@ -104,7 +104,7 @@ describe("editBan", () => {
   });
 
   it("returns failure when ban not found", async () => {
-    mockUpdateOne.mockResolvedValue({ modifiedCount: 0 });
+    mockUpdateOne.mockResolvedValue({ matchedCount: 0, modifiedCount: 0 });
     const result = await banRepo.editBan("user-uuid", "ban-id", { reason: "x" });
     expect(result).toEqual({ success: false, error: "封禁记录不存在" });
   });

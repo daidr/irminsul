@@ -51,7 +51,7 @@ export async function revokeBan(
     },
   );
 
-  if (result.modifiedCount === 0) {
+  if (result.matchedCount === 0) {
     return { success: false, error: "该封禁已被撤销、已过期或不存在" };
   }
   return { success: true };
@@ -88,7 +88,7 @@ export async function editBan(
     update,
   );
 
-  if (result.modifiedCount === 0) {
+  if (result.matchedCount === 0) {
     return { success: false, error: "封禁记录不存在" };
   }
   return { success: true };
