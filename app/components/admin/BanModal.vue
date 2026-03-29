@@ -360,9 +360,14 @@ async function handleRemove(banId: string) {
                       </div>
 
                       <!-- Operator -->
-                      <div class="mt-1 text-[11px] text-base-content/30">
-                        操作者：{{ ban.operatorId || '未知' }}
-                        <template v-if="ban.revokedBy"> · 撤销者：{{ ban.revokedBy }}</template>
+                      <div class="mt-1 text-[11px] text-base-content/30 flex items-center gap-1 flex-wrap">
+                        <span>操作者：</span>
+                        <AdminUserBubble v-if="ban.operatorId" :user-id="ban.operatorId" />
+                        <span v-else>未知</span>
+                        <template v-if="ban.revokedBy">
+                          <span> · 撤销者：</span>
+                          <AdminUserBubble :user-id="ban.revokedBy" />
+                        </template>
                       </div>
                     </div>
 
