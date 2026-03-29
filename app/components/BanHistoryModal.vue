@@ -1,8 +1,11 @@
 <script setup lang="ts">
 interface ClientBanRecord {
+  id?: string;
   start: number;
   end?: number;
   reason?: string;
+  operatorId?: string;
+  revokedAt?: number;
 }
 
 const { data: user } = useUser();
@@ -14,12 +17,17 @@ function formatTime(ts: number): string {
 }
 
 function isActive(ban: ClientBanRecord): boolean {
+  if (ban.revokedAt) return false;
   const now = Date.now();
   return ban.start <= now && (!ban.end || ban.end > now);
 }
 
 function isPermanent(ban: ClientBanRecord): boolean {
   return !ban.end;
+}
+
+function isRevoked(ban: ClientBanRecord): boolean {
+  return !!ban.revokedAt;
 }
 
 const bans = computed(() => (user.value?.bans as ClientBanRecord[]) ?? []);
@@ -75,6 +83,12 @@ const hasActiveBan = computed(() => bans.value.some(isActive));
           class="bg-error/15 px-2 py-0.5 text-[10px] font-semibold text-error"
         >
           生效中
+        </span>
+        <span
+          v-else-if="isRevoked(ban)"
+          class="bg-base-300 px-2 py-0.5 text-[10px] font-semibold opacity-50"
+        >
+          已撤销
         </span>
         <span v-else class="bg-base-300 px-2 py-0.5 text-[10px] font-semibold opacity-50">
           已过期
