@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
     endDate = null; // make permanent
   } else if (body.end !== undefined) {
     endDate = new Date(body.end);
-    if (isNaN(endDate.getTime())) {
+    if (Number.isNaN(endDate.getTime())) {
       return { success: false, error: "截止时间格式无效" };
     }
     // No future-time check here: editing historical records may need past dates

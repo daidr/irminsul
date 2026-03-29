@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
   let endDate: Date | undefined;
   if (body.end) {
     endDate = new Date(body.end);
-    if (isNaN(endDate.getTime())) {
+    if (Number.isNaN(endDate.getTime())) {
       return { success: false, error: "截止时间格式无效" };
     }
     if (endDate <= new Date()) {
