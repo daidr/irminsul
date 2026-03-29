@@ -7,9 +7,12 @@ export default defineEventHandler(async (event) => {
   const skinHash = userDoc?.skin?.hash || defaultSkinHash || undefined;
 
   const bans = (userDoc?.bans ?? []).map((ban) => ({
+    id: ban.id,
     start: ban.start.getTime(),
     end: ban.end?.getTime(),
     reason: ban.reason,
+    operatorId: ban.operatorId,
+    revokedAt: ban.revokedAt?.getTime(),
   }));
 
   const emailVerified = userDoc?.emailVerified ?? false;
