@@ -6,10 +6,19 @@ import { setCreateCanvas, renderAvatar } from "@daidr/minecraft-skin-renderer/ca
 // One-time setup: provide canvas factory to the renderer
 setCreateCanvas((w, h) => createCanvas(w, h) as any);
 
+// UUID with hyphens: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+const UUID_HYPHEN_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// UUID without hyphens: 32 hex chars
+const UUID_NOHYPHEN_RE = /^[0-9a-f]{32}$/i;
+
+function addHyphens(hex: string): string {
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 export default defineEventHandler(async (event) => {
-  const uuid = getRouterParam(event, "uuid");
-  if (!uuid) {
-    throw createError({ statusCode: 400, statusMessage: "Missing uuid" });
+  const identifier = getRouterParam(event, "identifier");
+  if (!identifier) {
+    throw createError({ statusCode: 400, statusMessage: "Missing identifier" });
   }
 
   // Parse scale from query (1-4, default 3)
@@ -17,8 +26,16 @@ export default defineEventHandler(async (event) => {
   const rawScale = Number(query.scale) || 3;
   const scale = Math.min(4, Math.max(1, Math.floor(rawScale)));
 
-  // Look up user to get skin hash
-  const user = await findUserByUuid(uuid);
+  // Resolve user by identifier type
+  let user;
+  if (UUID_HYPHEN_RE.test(identifier)) {
+    user = await findUserByUuid(identifier);
+  } else if (UUID_NOHYPHEN_RE.test(identifier)) {
+    user = await findUserByUuid(addHyphens(identifier));
+  } else {
+    user = await findUserByGameId(identifier);
+  }
+
   const skinHash = user?.skin?.hash || useRuntimeConfig(event).yggdrasilDefaultSkinHash;
 
   if (!skinHash) {
@@ -38,8 +55,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Render avatar
-  // renderAvatar expects scale in MC pixels, avatar is 8x8 MC pixels
-  // Output size = 8 * scale per MC pixel. We use scale * 2 to map user scale 1-4 to reasonable sizes.
+  // Avatar is 8x8 MC pixels, scale * 2 maps user scale 1-4 to output 16/32/48/64px
   const mcScale = scale * 2;
   const size = 8 * mcScale;
   const canvas = createCanvas(size, size);
