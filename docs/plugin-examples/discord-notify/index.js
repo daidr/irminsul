@@ -20,16 +20,31 @@ export function setup(ctx) {
     send(`🔑 用户登录：**${e.gameId}**（${methods[e.method]}）`);
   });
 
-  ctx.hook("user:banned", (e) => {
-    const duration = e.end
-      ? `至 ${new Date(e.end).toLocaleDateString()}`
+  ctx.hook("user:ban-created", (e) => {
+    const duration = e.ban.end
+      ? `至 ${new Date(e.ban.end).toLocaleDateString()}`
       : "永久";
     send(
-      `🚫 用户封禁：**${e.gameId}**（${duration}）${e.reason ? `\n理由：${e.reason}` : ""}`,
+      `🚫 用户封禁：**${e.gameId}**（${duration}）${e.ban.reason ? `\n理由：${e.ban.reason}` : ""}`,
     );
   });
 
-  ctx.hook("user:unbanned", (e) => {
+  ctx.hook("user:ban-edited", (e) => {
+    const oldDuration = e.old.end
+      ? `至 ${new Date(e.old.end).toLocaleDateString()}`
+      : "永久";
+    const newDuration = e.new.end
+      ? `至 ${new Date(e.new.end).toLocaleDateString()}`
+      : "永久";
+    send(`📝 封禁变更：**${e.gameId}**\n${oldDuration} → ${newDuration}`);
+  });
+
+  ctx.hook("user:ban-revoked", (e) => {
     send(`✅ 用户解封：**${e.gameId}**`);
+  });
+
+  ctx.hook("user:ban-deleted", (e) => {
+    const status = e.wasActive ? "（活跃封禁）" : "（已失效）";
+    send(`🗑️ 封禁记录删除：**${e.gameId}**${status}`);
   });
 }

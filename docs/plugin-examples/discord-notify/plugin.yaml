@@ -5,8 +5,10 @@ author: Irminsul
 hooks:
   - user:registered
   - user:login
-  - user:banned
-  - user:unbanned
+  - user:ban-created
+  - user:ban-edited
+  - user:ban-revoked
+  - user:ban-deleted
 config:
   - key: webhookUrl
     label: Webhook URL
