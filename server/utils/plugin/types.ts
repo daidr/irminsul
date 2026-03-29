@@ -179,8 +179,10 @@ export const KNOWN_FUNCTIONAL_HOOKS = [
 export const KNOWN_EVENT_HOOKS = [
   "user:registered",
   "user:login",
-  "user:banned",
-  "user:unbanned",
+  "user:ban-created",
+  "user:ban-edited",
+  "user:ban-revoked",
+  "user:ban-deleted",
   "user:password-changed",
   "user:password-reset",
   "user:oauth-bindchanged",
@@ -222,14 +224,35 @@ export interface UserLoginPayload extends UserHookBasePayload {
   method: "password" | "passkey" | "oauth";
 }
 
-export interface UserBannedPayload extends UserHookBasePayload {
-  reason?: string;
+export interface BanSnapshot {
+  start: number;
   end?: number;
+  reason?: string;
+  revokedAt?: number;
+  revokedBy?: string;
+}
+
+export interface BanHookBasePayload extends UserHookBasePayload {
+  banId: string;
   operator: string;
 }
 
-export interface UserUnbannedPayload extends UserHookBasePayload {
-  operator: string;
+export interface BanCreatedPayload extends BanHookBasePayload {
+  ban: BanSnapshot;
+}
+
+export interface BanEditedPayload extends BanHookBasePayload {
+  old: BanSnapshot;
+  new: BanSnapshot;
+}
+
+export interface BanRevokedPayload extends BanHookBasePayload {
+  ban: BanSnapshot;
+}
+
+export interface BanDeletedPayload extends BanHookBasePayload {
+  ban: BanSnapshot;
+  wasActive: boolean;
 }
 
 export interface UserPasswordChangedPayload extends UserHookBasePayload {
@@ -249,8 +272,10 @@ export interface UserOAuthBindChangedPayload extends UserHookBasePayload {
 export type UserHookPayloadMap = {
   "user:registered": UserRegisteredPayload;
   "user:login": UserLoginPayload;
-  "user:banned": UserBannedPayload;
-  "user:unbanned": UserUnbannedPayload;
+  "user:ban-created": BanCreatedPayload;
+  "user:ban-edited": BanEditedPayload;
+  "user:ban-revoked": BanRevokedPayload;
+  "user:ban-deleted": BanDeletedPayload;
   "user:password-changed": UserPasswordChangedPayload;
   "user:password-reset": UserPasswordResetPayload;
   "user:oauth-bindchanged": UserOAuthBindChangedPayload;
