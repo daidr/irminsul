@@ -52,7 +52,7 @@ export default defineNuxtConfig({
     redisUrl: "",
     redisScope: "irmin",
     evlogSamplingInfo: 100,
-    evlogSamplingDebug: 10,
+    evlogSamplingDebug: 0,
     evlogMaxFiles: 30,
     yggdrasilBaseUrl: "",
     yggdrasilSkinDomains: "",

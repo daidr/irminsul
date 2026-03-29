@@ -87,11 +87,13 @@ interface IrminsulConfig {
   IRMIN_DB_NAME: string;
   IRMIN_REDIS_URL: string;
   IRMIN_REDIS_SCOPE: string;
-  IRMIN_HOST: string;
-  IRMIN_PORT: string;
-  IRMIN_APP_LOG_LEVEL: string;
+  HOST: string;
+  PORT: string;
   IRMIN_PUBLIC_SITE_NAME: string;
   IRMIN_LEGACY_GLOBAL_SALT: string;
+  IRMIN_EVLOG_SAMPLING_INFO: string;
+  IRMIN_EVLOG_SAMPLING_DEBUG: string;
+  IRMIN_EVLOG_MAX_FILES: string;
   IRMIN_YGGDRASIL_BASE_URL: string;
   IRMIN_YGGDRASIL_SKIN_DOMAINS: string;
   IRMIN_YGGDRASIL_TOKEN_EXPIRY_MS: string;
@@ -127,13 +129,17 @@ IRMIN_REDIS_URL=${config.IRMIN_REDIS_URL}
 IRMIN_REDIS_SCOPE=${config.IRMIN_REDIS_SCOPE}
 
 # Server
-IRMIN_HOST=${config.IRMIN_HOST}
-IRMIN_PORT=${config.IRMIN_PORT}
-IRMIN_APP_LOG_LEVEL=${config.IRMIN_APP_LOG_LEVEL}
+HOST=${config.HOST}
+PORT=${config.PORT}
 IRMIN_PUBLIC_SITE_NAME=${config.IRMIN_PUBLIC_SITE_NAME}
 
 # Legacy password compatibility
 IRMIN_LEGACY_GLOBAL_SALT=${config.IRMIN_LEGACY_GLOBAL_SALT}
+
+# Logging
+IRMIN_EVLOG_SAMPLING_INFO=${config.IRMIN_EVLOG_SAMPLING_INFO}
+IRMIN_EVLOG_SAMPLING_DEBUG=${config.IRMIN_EVLOG_SAMPLING_DEBUG}
+IRMIN_EVLOG_MAX_FILES=${config.IRMIN_EVLOG_MAX_FILES}
 
 # Yggdrasil
 IRMIN_YGGDRASIL_BASE_URL=${config.IRMIN_YGGDRASIL_BASE_URL}
@@ -242,6 +248,14 @@ async function migrateUsers(
     await newUsers.createIndex({ uuid: 1 }, { unique: true });
     await newUsers.createIndex({ "skin.hash": 1 }, { sparse: true });
     await newUsers.createIndex({ "cape.hash": 1 }, { sparse: true });
+    await newUsers.createIndex(
+      { "passkeys.credentialId": 1 },
+      { unique: true, partialFilterExpression: { "passkeys.credentialId": { $exists: true } } },
+    );
+    await newUsers.createIndex(
+      { "oauthBindings.provider": 1, "oauthBindings.providerId": 1 },
+      { unique: true, sparse: true },
+    );
 
     const allOldUsers = await oldUsers.find({}).toArray();
     const adminEmailSet = new Set(adminEmails.map((e) => e.toLowerCase()));
@@ -302,6 +316,7 @@ async function migrateUsers(
           : [],
         tokens: [],
         passkeys: [],
+        oauthBindings: [],
         isAdmin,
         ip: {
           register: old.ip?.register ?? null,
@@ -393,6 +408,10 @@ async function importSettings(
         key: "general.announcement",
         value: ghConfig.common.showAnnouncement ? announcement.trim() : "",
       },
+      { key: "plugin.system.registry", value: [] },
+      { key: "plugin.system.watcher", value: true },
+      { key: "plugin.system.logBufferSize", value: 200 },
+      { key: "plugin.system.logRetentionDays", value: 7 },
     ];
 
     const ops = settingsData.map(({ key, value }) => ({
@@ -428,6 +447,10 @@ async function initDefaultSettings(mongoUrl: string, dbName: string): Promise<vo
       { key: "smtp.from", value: "" },
       { key: "auth.requireEmailVerification", value: false },
       { key: "general.announcement", value: "" },
+      { key: "plugin.system.registry", value: [] },
+      { key: "plugin.system.watcher", value: true },
+      { key: "plugin.system.logBufferSize", value: 200 },
+      { key: "plugin.system.logRetentionDays", value: 7 },
     ];
 
     const ops = defaults.map(({ key, value }) => ({
@@ -559,11 +582,13 @@ async function freshInstall(): Promise<void> {
     IRMIN_DB_NAME: mongoDbName,
     IRMIN_REDIS_URL: redisUrl,
     IRMIN_REDIS_SCOPE: redisScope,
-    IRMIN_HOST: appHost,
-    IRMIN_PORT: appPort,
-    IRMIN_APP_LOG_LEVEL: "info",
+    HOST: appHost,
+    PORT: appPort,
     IRMIN_PUBLIC_SITE_NAME: siteName,
     IRMIN_LEGACY_GLOBAL_SALT: "",
+    IRMIN_EVLOG_SAMPLING_INFO: "100",
+    IRMIN_EVLOG_SAMPLING_DEBUG: "0",
+    IRMIN_EVLOG_MAX_FILES: "30",
     IRMIN_YGGDRASIL_BASE_URL: baseUrl,
     IRMIN_YGGDRASIL_SKIN_DOMAINS: skinDomains,
     IRMIN_YGGDRASIL_TOKEN_EXPIRY_MS: "432000000",
@@ -593,7 +618,7 @@ async function freshInstall(): Promise<void> {
 
   // Create data dirs
   const dataDir = path.resolve("irminsul-data");
-  for (const dir of ["log", "textures", "auto-generate"]) {
+  for (const dir of ["log", "textures", "auto-generate", "plugins"]) {
     await fs.mkdir(path.join(dataDir, dir), { recursive: true });
   }
   console.log(`  ${chalk.green("✓")} 数据目录已创建`);
@@ -743,11 +768,13 @@ async function migrateFromGHAuth(): Promise<void> {
     IRMIN_DB_NAME: newDbName,
     IRMIN_REDIS_URL: redisUrl,
     IRMIN_REDIS_SCOPE: redisScope,
-    IRMIN_HOST: appHost,
-    IRMIN_PORT: appPort,
-    IRMIN_APP_LOG_LEVEL: "info",
+    HOST: appHost,
+    PORT: appPort,
     IRMIN_PUBLIC_SITE_NAME: siteName,
     IRMIN_LEGACY_GLOBAL_SALT: ghConfig.extra.slat ?? "",
+    IRMIN_EVLOG_SAMPLING_INFO: "100",
+    IRMIN_EVLOG_SAMPLING_DEBUG: "0",
+    IRMIN_EVLOG_MAX_FILES: "30",
     IRMIN_YGGDRASIL_BASE_URL: baseUrl,
     IRMIN_YGGDRASIL_SKIN_DOMAINS: skinDomains,
     IRMIN_YGGDRASIL_TOKEN_EXPIRY_MS: "432000000",
@@ -789,7 +816,7 @@ async function migrateFromGHAuth(): Promise<void> {
 
   // 2. Create data dirs
   const dataDir = path.resolve("irminsul-data");
-  for (const dir of ["log", "textures", "auto-generate"]) {
+  for (const dir of ["log", "textures", "auto-generate", "plugins"]) {
     await fs.mkdir(path.join(dataDir, dir), { recursive: true });
   }
   console.log(`  ${chalk.green("✓")} 数据目录已创建`);
