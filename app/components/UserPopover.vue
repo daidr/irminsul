@@ -73,7 +73,7 @@ const isBanned = computed(() => {
 
         <motion.div layout class="pointer-events-none w-16 h-16 -mt-16 translate-y-1/2 relative z-10"
           layoutId="user-avatar" :initial="{ opacity: 1 }">
-          <img :src="`/avatar/${props.user.gameId}?scale=4`" class="w-full h-full" style="image-rendering: pixelated">
+          <img :src="`/avatar/${props.user.gameId}?scale=4`" class="w-full h-full avatar-shadow" style="image-rendering: pixelated">
         </motion.div>
         <!-- Card -->
         <motion.div class="w-full bg-base-100 shadow-lg border border-base-300 relative"
