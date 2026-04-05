@@ -4,7 +4,7 @@ import { useLogger } from "evlog";
 import type { SessionData } from "~~/server/utils/session";
 
 const bodySchema = z.object({
-  credential: z.record(z.unknown()).optional(),
+  credential: z.record(z.string(), z.any()).optional(),
   challengeId: z.string().optional(),
 });
 

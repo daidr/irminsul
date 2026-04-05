@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const bodySchema = z.record(z.unknown());
+const bodySchema = z.record(z.string(), z.any());
 
 export default defineEventHandler(async (event) => {
   requireAdmin(event);

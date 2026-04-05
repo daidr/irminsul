@@ -4,7 +4,7 @@ import { useLogger } from "evlog";
 import type { PasskeyRecord } from "~~/server/types/user.schema";
 
 const bodySchema = z.object({
-  credential: z.record(z.unknown()).optional(),
+  credential: z.record(z.string(), z.any()).optional(),
 });
 
 export default defineEventHandler(async (event) => {

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const bodySchema = z.object({
   category: z.string().optional(),
-  values: z.record(z.unknown()).optional(),
+  values: z.record(z.string(), z.any()).optional(),
 });
 
 export default defineEventHandler(async (event) => {
