@@ -165,7 +165,7 @@ const visiblePages = computed(() => {
           </thead>
           <tbody>
             <tr v-for="u in users" :key="u.id" class="border-b border-base-300/50 hover:bg-base-300/30">
-              <td class="font-medium">{{ u.gameId }}</td>
+              <td class="font-medium"><AdminUserBubble :user-id="u.id" /></td>
               <td class="text-base-content/60 text-sm">{{ u.email }}</td>
               <td class="text-base-content/50 text-sm hidden sm:table-cell">{{ formatTime(u.registerAt) }}</td>
               <td>
