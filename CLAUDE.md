@@ -28,8 +28,20 @@ bun run lint       # Lint with oxlint (type-aware)
 bun run lint:fix   # Lint and auto-fix
 bun run fmt        # Format with oxfmt
 bun run fmt:check  # Check formatting
-bun run test       # Run tests with Vitest
+bun run test       # Run all tests with Vitest
+bun run test -- tests/utils/ban.repository.test.ts  # Run a single test file
 ```
+
+### CLI Tool (`cli/`)
+
+Standalone Bun CLI for setup and migration (separate package in `cli/`):
+
+```bash
+bun cli/src/init.ts      # Run CLI (dev)
+cd cli && bun run build  # Build CLI
+```
+
+Two modes: **fresh install** (configures MongoDB/Redis, generates `.env`) and **GHAuth migration** (imports users, skins, config from legacy GHAuth).
 
 ## Architecture
 
@@ -49,11 +61,12 @@ bun run test       # Run tests with Vitest
   - `plugins/` — Nitro server plugins (DB init, logging, key generation)
   - `middleware/` — Server middleware (session resolution)
   - `utils/` — Auto-imported server utilities (DB repos, auth helpers, crypto)
-- `tests/` — Vitest test files
+- `tests/` — Vitest test files (`tests/server/`, `tests/utils/`)
+- `cli/` — Standalone Bun CLI for setup/migration (separate package)
 
 ### Server Routes & API
 
-Nitro file-based API routes replace Telefunc. Convention:
+Nitro file-based API routes. Convention:
 
 - `server/api/**/*.get.ts` — GET endpoints
 - `server/api/**/*.post.ts` — POST endpoints
@@ -65,7 +78,6 @@ All server utils in `server/utils/` are auto-imported in server context.
 
 - **Page data:** Use `useAsyncData` + `$fetch('/api/...')` in pages/components
 - **User interactions:** Use `$fetch` directly for mutations (form submits, button clicks)
-- Do NOT use Telefunc (removed in Nuxt migration)
 
 ### Settings Table (`server/utils/settings.repository.ts`)
 
@@ -158,6 +170,21 @@ defineExpose({ open });
 - `modal-bottom sm:modal-middle` for responsive positioning
 - Parent calls `open()` via template ref
 
+### Testing Patterns
+
+Tests run in Node (not Bun) via Vitest (`vitest.config.ts`: `environment: "node"`). Key mocking patterns:
+
+- **Nitro auto-imports:** Not available in tests. Stub all server utils and Nitro helpers (`defineEventHandler`, `readBody`, `getHeader`, `setCookie`, etc.) with `vi.stubGlobal()`. See `tests/server/auth.test.ts` for the full pattern.
+- **Bun.password:** Tests touching password hashing stub `globalThis.Bun` with a fake SHA-256 implementation since Vitest runs in Node. See `tests/utils/password.test.ts`.
+- **Zod v4:** Mock with `vi.mock("zod", ...)` spreading `{ ...mod, z: mod }` because Zod v4's named `z` export is unavailable in the test environment.
+- **evlog:** Mock `useLogger` since it requires Nitro plugin initialization: `vi.mock("evlog", async () => ({ ...mod, useLogger: () => ({ set: vi.fn(), error: vi.fn(), emit: vi.fn() }) }))`.
+
+### Server Startup & Middleware
+
+Single plugin `server/plugins/server-startup.ts` orchestrates initialization in phases: evlog/runtime/dirs/DB → parallel index/settings/keys init → secrets → plugins.
+
+Server middleware uses numeric prefixes for ordering: `01.session.ts` → `02.security-headers.ts` → `03.evlog-context.ts`. The security headers middleware sets the `X-Authlib-Injector-API-Location` header required by authlib-injector clients.
+
 ## Conventions
 
 - **Commit style:** Conventional commits, enforced by commitlint (`feat:`, `fix:`, etc.)
@@ -183,6 +210,11 @@ Config via `IRMIN_*` environment variables or `.env` file (`nitro.envPrefix: 'IR
 - `IRMIN_YGGDRASIL_BASE_URL` — Yggdrasil base URL
 - `IRMIN_YGGDRASIL_SKIN_DOMAINS` — Trusted skin domains (comma-separated)
 - `IRMIN_PUBLIC_SITE_NAME` — Site name (default: `Irminsul`)
+- `IRMIN_TRUST_PROXY` — Trust reverse proxy headers (default: `false`)
+- `IRMIN_YGGDRASIL_TOKEN_EXPIRY_MS` — Token TTL in ms (default: `432000000` = 5 days)
+- `IRMIN_YGGDRASIL_DEFAULT_SKIN_HASH` — Default skin texture hash
+- `IRMIN_LEGACY_GLOBAL_SALT` — Legacy password salt (GHAuth migration)
+- `IRMIN_WEBAUTHN_RP_ID` / `IRMIN_WEBAUTHN_ORIGIN` — WebAuthn passkey config
 
 Secrets (Altcha HMAC keys) are auto-generated to `irminsul-data/auto-generate/secrets.yaml` on first run.
 
@@ -190,12 +222,9 @@ Secrets (Altcha HMAC keys) are auto-generated to `irminsul-data/auto-generate/se
 
 `irminsul-data/` stores runtime artifacts (not in git): textures, RSA keys, logs, auto-generated secrets. Created automatically on startup by server plugins.
 
-## Key Differences from Vike Version
+## Non-obvious Config
 
-- **RPC:** Telefunc replaced by Nitro server routes + `$fetch`
-- **Data fetching:** Vike `+data.ts` replaced by `useAsyncData` + `/api/` routes
-- **User context:** `pageContext.user` replaced by `event.context.user` (server) / `useUser()` composable (client)
-- **Auto-imports:** Components, composables, and server utils are auto-imported — no manual imports needed
-- **Routing:** Vike filesystem routing replaced by Nuxt `pages/` directory
-- **Layouts:** Vike `+Layout.vue` replaced by Nuxt `layouts/`
-- **Config:** `vite.config.ts` replaced by `nuxt.config.ts`
+- Build assets dir is `/_irmin/` (not default `/_nuxt/`) — set in `app.buildAssetsDir`
+- Root app element ID is `__irmin_app`
+- `mongodb`, `@napi-rs/canvas`, `jsdom` are excluded from Nitro bundling; `mongodb-connection-string-url` is force-inlined
+- `evlog/nuxt` module tags all wide events with `service: "irminsul"`
