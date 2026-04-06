@@ -5,7 +5,7 @@
 轻量的 MC 服务器 yggdrasil 验证/皮肤加载解决方案
 
 > [!WARNING]
-> 在设计上，Irminsul 将取代原先的 GHAuth 项目，在<./cli>目录下提供了一键迁移脚本，用于将原先的 GHAuth 数据迁移到 Irminsul 中。
+> 在设计上，Irminsul 将取代原先的 GHAuth 项目，在[./cli](./cli)目录下提供了一键迁移脚本，用于将原先的 GHAuth 数据迁移到 Irminsul 中。
 >
 > 但由于目前 Irminsul 正在早期开发中，为避免数据损坏或丢失，请在迁移前完整备份 GHAuth 的数据表，并做好随时回滚的准备。
 
