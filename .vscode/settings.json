@@ -6,5 +6,8 @@
     "source.fixAll.oxc": "always"
   },
   "oxc.typeAware": true,
-  "arrayIndexInlay.enabled": true
+  "arrayIndexInlay.enabled": true,
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  }
 }
