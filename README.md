@@ -6,6 +6,7 @@
 
 > [!WARNING]
 > 在设计上，Irminsul 将取代原先的 GHAuth 项目，在<./cli>目录下提供了一键迁移脚本，用于将原先的 GHAuth 数据迁移到 Irminsul 中。
+>
 > 但由于目前 Irminsul 正在早期开发中，为避免数据损坏或丢失，请在迁移前完整备份 GHAuth 的数据表，并做好随时回滚的准备。
 
 线上 GHAuth 已经迁移到了 Irminsul，可以通过下面的链接访问：
@@ -44,8 +45,12 @@ Irminsul 会在首次启动时创建RSA密钥对，用于 Yggdrasil 接口签名
 
 ## 安全警告
 
-yggdrasil 验证时明文传递密码（协议限制），你需要启用 https 以提升安全性
+Yggdrasil 验证时明文传递密码（协议限制），你需要启用 https 以提升安全性
 
 ## 协议
 
 MIT Licence
+
+## 命名的由来
+
+伊尔明苏尔(Irminsul)一词取自游戏《原神》中的世界树，在北欧神话中 Irminsul 与 Yggdrasil 都指代支撑天地的世界之树。
