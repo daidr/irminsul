@@ -312,7 +312,14 @@ async function migrateUsers(
           : null,
         cape: null,
         bans: old.isBanned
-          ? [{ start: new Date(), reason: "migrated from GHAuth (was banned)" }]
+          ? [
+              {
+                id: crypto.randomUUID(),
+                start: new Date(),
+                reason: "migrated from GHAuth (was banned)",
+                operatorId: "system",
+              },
+            ]
           : [],
         tokens: [],
         passkeys: [],
@@ -916,8 +923,10 @@ async function main(): Promise<void> {
 
   if (mode === "fresh") {
     await freshInstall();
-  } else {
+  } else if (mode === "migrate") {
     await migrateFromGHAuth();
+  } else {
+    process.exit(0);
   }
 }
 

@@ -5,7 +5,6 @@ import { initDb } from "../init-modules/db";
 import { initIndexes } from "../init-modules/init-indexes";
 import { initSettings } from "../init-modules/init-settings";
 import { initKeys } from "../init-modules/init-keys";
-import { initBanMigration } from "../init-modules/init-ban-migration";
 import { initSecrets } from "../init-modules/init-secrets";
 import { initPlugins } from "../init-modules/plugins";
 
@@ -25,7 +24,6 @@ export default defineNitroPlugin(async (nitroApp) => {
     initIndexes(),
     initSettings(),
     initKeys(),
-    initBanMigration(),
   ]);
   initSecrets();
 
