@@ -43,6 +43,11 @@ vi.mock("zod", async (importOriginal) => {
   return { ...mod, z: mod };
 });
 
+// Mock bun — not available in Node/Vitest environment
+vi.mock("bun", () => ({
+  randomUUIDv7: () => "01936b1c-5e3a-7def-8a1b-c2d3e4f56789",
+}));
+
 // Mock evlog — useLogger requires Nitro plugin initialization
 vi.mock("evlog", async (importOriginal) => {
   const mod = await importOriginal<typeof import("evlog")>();
