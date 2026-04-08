@@ -13,13 +13,9 @@ vi.stubGlobal("createError", (opts: any) => {
   return err;
 });
 
-// Mock Bun.password (before service import since authenticateClient uses it)
-vi.stubGlobal("Bun", {
-  password: {
-    hash: vi.fn().mockResolvedValue("hashed"),
-    verify: vi.fn().mockResolvedValue(true),
-  },
-});
+// Spy on Bun.password methods (Bun global is non-configurable in Bun runtime)
+vi.spyOn(Bun.password, "hash" as any).mockResolvedValue("hashed");
+vi.spyOn(Bun.password, "verify" as any).mockResolvedValue(true);
 
 // Mock settings
 vi.stubGlobal("getSetting", (key: string) => {
@@ -122,9 +118,9 @@ beforeEach(() => {
   (globalThis as any).revokeOAuthToken.mockResolvedValue(undefined);
   (globalThis as any).revokeAllOAuthTokensForUserAndClient.mockResolvedValue(undefined);
   mockRedis.send.mockResolvedValue(null);
-  // Re-set Bun.password mock after clearAllMocks
-  (globalThis as any).Bun.password.verify.mockResolvedValue(true);
-  (globalThis as any).Bun.password.hash.mockResolvedValue("hashed");
+  // Re-set Bun.password spies after clearAllMocks
+  vi.spyOn(Bun.password, "verify" as any).mockResolvedValue(true);
+  vi.spyOn(Bun.password, "hash" as any).mockResolvedValue("hashed");
 });
 
 describe("OAuth token endpoint", () => {

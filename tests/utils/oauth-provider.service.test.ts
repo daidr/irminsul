@@ -13,7 +13,10 @@ vi.stubGlobal("findOAuthTokenByHashIncludingRevoked", vi.fn());
 vi.stubGlobal("insertOAuthToken", vi.fn());
 vi.stubGlobal("revokeOAuthToken", vi.fn());
 vi.stubGlobal("revokeAllOAuthTokensForUserAndClient", vi.fn());
-vi.stubGlobal("Bun", { password: { hash: vi.fn(), verify: vi.fn() } });
+
+// Spy on Bun.password methods (Bun global is non-configurable in Bun runtime)
+vi.spyOn(Bun.password, "hash" as any).mockResolvedValue("hashed");
+const mockBunPasswordVerify = vi.spyOn(Bun.password, "verify" as any).mockResolvedValue(true);
 
 let service: typeof import("../../server/utils/oauth-provider.service");
 
@@ -24,7 +27,6 @@ const mockFindOAuthTokenByHashIncludingRevoked = globalThis.findOAuthTokenByHash
 const mockInsertOAuthToken = globalThis.insertOAuthToken as ReturnType<typeof vi.fn>;
 const mockRevokeOAuthToken = globalThis.revokeOAuthToken as ReturnType<typeof vi.fn>;
 const mockRevokeAllOAuthTokensForUserAndClient = globalThis.revokeAllOAuthTokensForUserAndClient as ReturnType<typeof vi.fn>;
-const mockBunPasswordVerify = (globalThis.Bun as any).password.verify as ReturnType<typeof vi.fn>;
 
 beforeEach(async () => {
   vi.clearAllMocks();
