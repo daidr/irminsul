@@ -23,7 +23,6 @@ const requestedScopes = computed(() => scope.value.split(" ").filter(Boolean));
 
 const appInfo = ref<{
   name: string;
-  icon: string | null;
   description: string;
 } | null>(null);
 const loadingApp = ref(true);
@@ -82,10 +81,7 @@ async function handleAction(action: "approve" | "deny") {
 
         <!-- App info -->
         <div class="flex flex-col items-center gap-3">
-          <div v-if="appInfo.icon" class="w-16 h-16 overflow-hidden border border-base-300">
-            <img :src="appInfo.icon" :alt="appInfo.name" class="w-full h-full object-cover" />
-          </div>
-          <div v-else class="w-16 h-16 bg-base-200 border border-base-300 flex items-center justify-center">
+          <div class="w-16 h-16 bg-base-200 border border-base-300 flex items-center justify-center">
             <Icon name="hugeicons:puzzle" class="text-2xl text-base-content/40" />
           </div>
           <div class="text-center">

@@ -7,7 +7,6 @@ const bodySchema = z.object({
   type: z.enum(["confidential", "public"]),
   redirectUris: z.array(z.string().url()).min(1).max(10),
   scopes: z.array(z.enum(VALID_SCOPES as [string, ...string[]])).min(1),
-  icon: z.string().url().nullable().default(null),
 });
 
 export default defineEventHandler(async (event) => {
@@ -18,7 +17,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: "Invalid request body" });
   }
 
-  const { name, description, type, redirectUris, scopes, icon } = parsed.data;
+  const { name, description, type, redirectUris, scopes } = parsed.data;
 
   const clientId = generateClientId();
   let clientSecret: string | null = null;
@@ -36,7 +35,6 @@ export default defineEventHandler(async (event) => {
     type,
     name,
     description,
-    icon,
     redirectUris,
     scopes,
     ownerId: user.userId,

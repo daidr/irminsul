@@ -24,7 +24,6 @@ const SCOPE_DESCRIPTIONS: Record<string, string> = {
 interface AuthorizationItem {
   clientId: string;
   appName: string | null;
-  appIcon: string | null;
   appDescription: string | null;
   scopes: string[];
   grantedAt: string;
@@ -104,10 +103,7 @@ function formatDate(dateStr: string): string {
           :key="auth.clientId"
           class="border border-base-300 bg-base-200 p-4 flex items-start gap-4"
         >
-          <div v-if="auth.appIcon" class="w-10 h-10 shrink-0 overflow-hidden border border-base-300">
-            <img :src="auth.appIcon" :alt="auth.appName ?? ''" class="w-full h-full object-cover" />
-          </div>
-          <div v-else class="w-10 h-10 shrink-0 bg-base-300 border border-base-300 flex items-center justify-center">
+          <div class="w-10 h-10 shrink-0 bg-base-300 border border-base-300 flex items-center justify-center">
             <Icon name="hugeicons:puzzle" class="text-base text-base-content/40" />
           </div>
 

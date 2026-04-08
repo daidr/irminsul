@@ -6,7 +6,6 @@ const bodySchema = z.object({
   description: z.string().max(500).optional(),
   redirectUris: z.array(z.string().url()).min(1).max(10).optional(),
   scopes: z.array(z.enum(VALID_SCOPES as [string, ...string[]])).min(1).optional(),
-  icon: z.string().url().nullable().optional(),
 });
 
 export default defineEventHandler(async (event) => {

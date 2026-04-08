@@ -21,7 +21,6 @@ interface OAuthAppItem {
   name: string;
   description: string;
   type: string;
-  icon: string | null;
   ownerId: string;
   approved: boolean;
   approvedBy: string | null;
@@ -163,12 +162,7 @@ function formatDate(dateStr: string): string {
               class="border-b border-base-300/50 hover:bg-base-300/30"
             >
               <td>
-                <div class="flex items-center gap-2">
-                  <div v-if="app.icon" class="w-6 h-6 shrink-0 overflow-hidden border border-base-300">
-                    <img :src="app.icon" :alt="app.name" class="w-full h-full object-cover" />
-                  </div>
-                  <span class="font-medium truncate">{{ app.name }}</span>
-                </div>
+                <span class="font-medium truncate">{{ app.name }}</span>
               </td>
               <td class="text-base-content/60 text-xs font-mono hidden sm:table-cell">
                 {{ app.clientId.slice(0, 12) }}...

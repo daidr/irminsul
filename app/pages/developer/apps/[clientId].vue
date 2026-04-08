@@ -29,7 +29,6 @@ interface AppDetail {
   name: string;
   description: string;
   type: string;
-  icon: string | null;
   redirectUris: string[];
   scopes: string[];
   approved: boolean;
@@ -44,7 +43,6 @@ const editName = ref("");
 const editDescription = ref("");
 const editRedirectUris = ref<string[]>([]);
 const editScopes = ref<string[]>([]);
-const editIcon = ref("");
 const isSaving = ref(false);
 
 async function fetchApp() {
@@ -56,7 +54,6 @@ async function fetchApp() {
     editDescription.value = data.description;
     editRedirectUris.value = [...data.redirectUris];
     editScopes.value = [...data.scopes];
-    editIcon.value = data.icon ?? "";
   } catch {
     toast.error("加载应用详情失败");
   } finally {
@@ -108,7 +105,6 @@ async function handleSave() {
         description: editDescription.value.trim(),
         redirectUris: validUris,
         scopes: editScopes.value,
-        icon: editIcon.value.trim() || null,
       },
     });
     toast.success("保存成功");
@@ -281,17 +277,6 @@ function copyToClipboard(text: string) {
             <span class="text-sm">{{ opt.label }}</span>
           </label>
         </div>
-      </fieldset>
-
-      <!-- Icon URL -->
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend text-sm font-semibold">图标 URL（可选）</legend>
-        <input
-          v-model="editIcon"
-          type="url"
-          class="input input-bordered w-full"
-          placeholder="https://example.com/icon.png"
-        />
       </fieldset>
 
       <!-- Save -->

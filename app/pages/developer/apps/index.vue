@@ -21,7 +21,6 @@ interface AppItem {
   name: string;
   description: string;
   type: string;
-  icon: string | null;
   approved: boolean;
   createdAt: string;
 }
@@ -77,10 +76,7 @@ onMounted(fetchApps);
             :to="`/developer/apps/${app.clientId}`"
             class="flex items-center gap-4 p-4 border-b border-base-300/50 hover:bg-base-300/30 transition-colors"
           >
-            <div v-if="app.icon" class="w-10 h-10 shrink-0 overflow-hidden border border-base-300">
-              <img :src="app.icon" :alt="app.name" class="w-full h-full object-cover" />
-            </div>
-            <div v-else class="w-10 h-10 shrink-0 bg-base-300 border border-base-300 flex items-center justify-center">
+            <div class="w-10 h-10 shrink-0 bg-base-300 border border-base-300 flex items-center justify-center">
               <Icon name="hugeicons:puzzle" class="text-base text-base-content/40" />
             </div>
 

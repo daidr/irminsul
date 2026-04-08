@@ -26,7 +26,6 @@ const description = ref("");
 const type = ref<"confidential" | "public">("confidential");
 const redirectUris = ref([""] as string[]);
 const scopes = ref<string[]>(["profile:read"]);
-const icon = ref("");
 
 const isSubmitting = ref(false);
 
@@ -84,7 +83,6 @@ async function handleSubmit() {
         type: type.value,
         redirectUris: validUris,
         scopes: scopes.value,
-        icon: icon.value.trim() || null,
       },
     });
 
@@ -200,17 +198,6 @@ function copyToClipboard(text: string) {
             <span class="text-sm">{{ opt.label }}</span>
           </label>
         </div>
-      </fieldset>
-
-      <!-- Icon URL -->
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend text-sm font-semibold">图标 URL（可选）</legend>
-        <input
-          v-model="icon"
-          type="url"
-          class="input input-bordered w-full"
-          placeholder="https://example.com/icon.png"
-        />
       </fieldset>
 
       <!-- Submit -->
