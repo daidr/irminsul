@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { VALID_SCOPES } from "../../../types/oauth-provider.types";
+import { VALID_SCOPES, REQUIRED_SCOPES } from "../../../types/oauth-provider.types";
 
 const bodySchema = z.object({
   name: z.string().min(1).max(100),
@@ -19,6 +19,9 @@ export default defineEventHandler(async (event) => {
 
   const { name, description, type, redirectUris, scopes } = parsed.data;
 
+  // 确保包含必选 scope
+  const finalScopes = [...new Set([...REQUIRED_SCOPES, ...scopes])];
+
   const clientId = generateClientId();
   let clientSecret: string | null = null;
   let clientSecretHash: string | null = null;
@@ -36,7 +39,7 @@ export default defineEventHandler(async (event) => {
     name,
     description,
     redirectUris,
-    scopes,
+    scopes: finalScopes,
     ownerId: user.userId,
     approved: false,
     approvedBy: null,

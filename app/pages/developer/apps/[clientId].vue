@@ -16,10 +16,11 @@ watch(
 );
 
 const SCOPE_OPTIONS = [
-  { value: "profile:read", label: "profile:read - 读取基础档案" },
-  { value: "profile:write", label: "profile:write - 修改材质" },
-  { value: "email:read", label: "email:read - 读取邮箱地址" },
-  { value: "account:read", label: "account:read - 读取账户信息" },
+  { value: "profile:read", label: "profile:read - 读取基础档案", required: true },
+  { value: "profile:write", label: "profile:write - 修改材质", required: false },
+  { value: "email:read", label: "email:read - 读取邮箱地址", required: false },
+  { value: "account:base", label: "account:base - 读取基础账户信息", required: false },
+  { value: "account:ban", label: "account:ban - 读取封禁信息", required: false },
 ];
 
 const clientId = computed(() => route.params.clientId as string);
@@ -272,9 +273,11 @@ function copyToClipboard(text: string) {
               type="checkbox"
               class="checkbox checkbox-sm"
               :checked="editScopes.includes(opt.value)"
+              :disabled="opt.required"
               @change="toggleScope(opt.value)"
             />
-            <span class="text-sm">{{ opt.label }}</span>
+            <span class="text-sm" :class="{ 'text-base-content/50': opt.required }">{{ opt.label }}</span>
+            <span v-if="opt.required" class="badge badge-ghost badge-xs">必选</span>
           </label>
         </div>
       </fieldset>

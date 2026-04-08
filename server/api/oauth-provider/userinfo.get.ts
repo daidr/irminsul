@@ -1,4 +1,4 @@
-import { hasActiveBan } from "../../types/user.schema";
+import { hasActiveBan, isBanActive } from "../../types/user.schema";
 import type { OAuthScope } from "../../types/oauth-provider.types";
 
 export default defineEventHandler(async (event) => {
@@ -38,10 +38,23 @@ export default defineEventHandler(async (event) => {
     result.emailVerified = user.emailVerified;
   }
 
-  // account:read -> registeredAt, hasBan
-  if (scopes.includes("account:read")) {
+  // account:base -> emailVerified, registeredAt
+  if (scopes.includes("account:base")) {
+    result.emailVerified = user.emailVerified;
     result.registeredAt = user.time.register;
-    result.hasBan = hasActiveBan(user.bans);
+  }
+
+  // account:ban -> isBanned, bans (full history)
+  if (scopes.includes("account:ban")) {
+    result.isBanned = hasActiveBan(user.bans);
+    result.bans = user.bans.map((ban) => ({
+      id: ban.id,
+      start: ban.start,
+      end: ban.end ?? null,
+      reason: ban.reason ?? null,
+      active: isBanActive(ban),
+      revokedAt: ban.revokedAt ?? null,
+    }));
   }
 
   return result;

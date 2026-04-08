@@ -18,7 +18,8 @@ const SCOPE_DESCRIPTIONS: Record<string, string> = {
   "profile:read": "读取基础档案",
   "profile:write": "修改材质",
   "email:read": "读取邮箱",
-  "account:read": "读取账户信息",
+  "account:base": "读取基础账户信息",
+  "account:ban": "读取封禁信息",
 };
 
 interface AuthorizationItem {
