@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
   const [users, total] = await Promise.all([
     collection
       .find(mongoFilter, {
-        projection: { uuid: 1, gameId: 1, email: 1, isAdmin: 1, bans: 1, time: 1 },
+        projection: { uuid: 1, gameId: 1, email: 1, isAdmin: 1, isDeveloper: 1, bans: 1, time: 1 },
       })
       .sort({ "time.register": -1 })
       .skip((page - 1) * pageSize)
@@ -54,6 +54,7 @@ export default defineEventHandler(async (event) => {
       gameId: u.gameId,
       email: u.email,
       isAdmin: u.isAdmin,
+      isDeveloper: u.isDeveloper === true,
       hasBan: hasActiveBan(u.bans),
       registerAt: u.time.register.getTime(),
     })),

@@ -19,6 +19,7 @@ interface UserItem {
   gameId: string;
   email: string;
   isAdmin: boolean;
+  isDeveloper: boolean;
   hasBan: boolean;
   registerAt: number;
 }
@@ -95,6 +96,21 @@ function openBanModal(userId: string) {
   banModalRef.value?.open(userId, u?.gameId ?? "");
 }
 
+async function toggleDeveloper(uuid: string, currentStatus: boolean) {
+  try {
+    if (currentStatus) {
+      await $fetch(`/api/oauth-provider/admin/developers/${uuid}`, { method: "DELETE" });
+      toast.success("已撤销开发者身份");
+    } else {
+      await $fetch(`/api/oauth-provider/admin/developers/${uuid}`, { method: "POST" });
+      toast.success("已标记为开发者");
+    }
+    await fetchUsers();
+  } catch {
+    toast.error("操作失败");
+  }
+}
+
 function formatTime(ts: number): string {
   const d = new Date(ts);
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -169,9 +185,12 @@ const visiblePages = computed(() => {
               <td class="text-base-content/60 text-sm">{{ u.email }}</td>
               <td class="text-base-content/50 text-sm hidden sm:table-cell">{{ formatTime(u.registerAt) }}</td>
               <td>
-                <span v-if="u.hasBan" class="badge badge-error badge-sm">封禁中</span>
-                <span v-else-if="u.isAdmin" class="badge badge-info badge-sm">管理员</span>
-                <span v-else class="badge badge-ghost badge-sm">正常</span>
+                <div class="flex flex-wrap gap-1">
+                  <span v-if="u.hasBan" class="badge badge-error badge-sm">封禁中</span>
+                  <span v-else-if="u.isAdmin" class="badge badge-info badge-sm">管理员</span>
+                  <span v-else class="badge badge-ghost badge-sm">正常</span>
+                  <span v-if="u.isDeveloper" class="badge badge-warning badge-sm">开发者</span>
+                </div>
               </td>
               <td class="text-right">
                 <div class="dropdown dropdown-end">
@@ -180,6 +199,7 @@ const visiblePages = computed(() => {
                   </div>
                   <ul tabindex="0" class="dropdown-content z-10 menu menu-sm shadow-lg bg-base-100 border border-base-300 w-36">
                     <li><a @click="openBanModal(u.id)">封禁信息</a></li>
+                    <li><a @click="toggleDeveloper(u.id, u.isDeveloper)">{{ u.isDeveloper ? '撤销开发者' : '标记为开发者' }}</a></li>
                   </ul>
                 </div>
               </td>

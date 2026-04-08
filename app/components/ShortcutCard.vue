@@ -1,6 +1,7 @@
 <script setup lang="ts">
 defineProps<{
   isAdmin?: boolean;
+  isDeveloper?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -74,6 +75,21 @@ function handleClick(item: (typeof shortcuts)[number]) {
       <NuxtLink v-if="isAdmin" to="/admin/plugins" class="btn border border-base-300">
         <Icon name="hugeicons:plug-01" class="h-[18px] w-[18px] shrink-0" />
         <span class="text-[13px] font-medium">插件管理</span>
+      </NuxtLink>
+      <!-- Developer apps (developer or admin) -->
+      <NuxtLink v-if="isDeveloper || isAdmin" to="/developer/apps" class="btn border border-base-300">
+        <Icon name="hugeicons:code" class="h-[18px] w-[18px] shrink-0" />
+        <span class="text-[13px] font-medium">开发者</span>
+      </NuxtLink>
+      <!-- OAuth authorizations (all logged-in users) -->
+      <NuxtLink to="/settings/authorizations" class="btn border border-base-300">
+        <Icon name="hugeicons:authorize" class="h-[18px] w-[18px] shrink-0" />
+        <span class="text-[13px] font-medium">第三方应用授权</span>
+      </NuxtLink>
+      <!-- OAuth apps admin (admin only) -->
+      <NuxtLink v-if="isAdmin" to="/admin/oauth-apps" class="btn border border-base-300">
+        <Icon name="hugeicons:api" class="h-[18px] w-[18px] shrink-0" />
+        <span class="text-[13px] font-medium">OAuth 应用</span>
       </NuxtLink>
     </div>
   </div>

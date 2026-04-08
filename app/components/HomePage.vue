@@ -139,6 +139,7 @@ async function handleSendVerification() {
         <AnnouncementCard :announcement="pageData?.announcement ?? ''" />
         <ShortcutCard
           :is-admin="user?.isAdmin"
+          :is-developer="user?.isDeveloper"
           @change-password="openModal('change-password')"
           @session-manage="openModal('session-manage')"
           @passkey-manage="openModal('passkey')"
