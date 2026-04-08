@@ -173,12 +173,12 @@ function formatDate(dateStr: string): string {
                   {{ app.type === "confidential" ? "机密" : "公开" }}
                 </span>
               </td>
-              <td class="hidden md:table-cell">
-                <AdminUserBubble :user-id="app.ownerId" />
-              </td>
               <td>
                 <span v-if="app.approved" class="badge badge-success badge-sm">已审批</span>
                 <span v-else class="badge badge-warning badge-sm">待审批</span>
+              </td>
+              <td class="hidden md:table-cell">
+                <AdminUserBubble :user-id="app.ownerId" />
               </td>
               <td class="text-base-content/50 text-sm hidden lg:table-cell">
                 {{ formatDate(app.createdAt) }}
