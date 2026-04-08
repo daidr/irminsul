@@ -172,10 +172,10 @@ defineExpose({ open });
 
 ### Testing Patterns
 
-Tests run in Node (not Bun) via Vitest (`vitest.config.ts`: `environment: "node"`). Key mocking patterns:
+Tests run via `bun run test` (Vitest with Bun as runtime). Key mocking patterns:
 
 - **Nitro auto-imports:** Not available in tests. Stub all server utils and Nitro helpers (`defineEventHandler`, `readBody`, `getHeader`, `setCookie`, etc.) with `vi.stubGlobal()`. See `tests/server/auth.test.ts` for the full pattern.
-- **Bun.password:** Tests touching password hashing stub `globalThis.Bun` with a fake SHA-256 implementation since Vitest runs in Node. See `tests/utils/password.test.ts`.
+- **Bun global:** `Bun` is a non-configurable global in Bun runtime — **never use `vi.stubGlobal("Bun", ...)`**. To mock `Bun.password`, use `vi.spyOn(Bun.password, "hash" as any)` / `vi.spyOn(Bun.password, "verify" as any)`. See `tests/utils/oauth-provider.service.test.ts`. For tests that must also run in Node, guard with `if (typeof globalThis.Bun === "undefined")` before stubbing (see `tests/utils/password.test.ts`).
 - **Zod v4:** Mock with `vi.mock("zod", ...)` spreading `{ ...mod, z: mod }` because Zod v4's named `z` export is unavailable in the test environment.
 - **evlog:** Mock `useLogger` since it requires Nitro plugin initialization: `vi.mock("evlog", async () => ({ ...mod, useLogger: () => ({ set: vi.fn(), error: vi.fn(), emit: vi.fn() }) }))`.
 
