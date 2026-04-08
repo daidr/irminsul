@@ -165,6 +165,9 @@ export interface UserDocument {
   /** 是否为管理员 */
   isAdmin: boolean;
 
+  /** 是否为开发者（可创建 OAuth 应用） */
+  isDeveloper: boolean;
+
   /** IP 记录 */
   ip: {
     register: string | null;
