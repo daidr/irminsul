@@ -151,6 +151,7 @@ function formatDate(dateStr: string): string {
               <th class="font-semibold hidden sm:table-cell">Client ID</th>
               <th class="font-semibold hidden md:table-cell">类型</th>
               <th class="font-semibold">状态</th>
+              <th class="font-semibold hidden md:table-cell">开发者</th>
               <th class="font-semibold hidden lg:table-cell">创建时间</th>
               <th class="font-semibold text-right">操作</th>
             </tr>
@@ -171,6 +172,9 @@ function formatDate(dateStr: string): string {
                 <span class="badge badge-sm" :class="app.type === 'confidential' ? 'badge-info' : 'badge-ghost'">
                   {{ app.type === "confidential" ? "机密" : "公开" }}
                 </span>
+              </td>
+              <td class="hidden md:table-cell">
+                <AdminUserBubble :user-id="app.ownerId" />
               </td>
               <td>
                 <span v-if="app.approved" class="badge badge-success badge-sm">已审批</span>
