@@ -5,6 +5,9 @@ export async function initIndexes() {
   log.set({ step: "init-indexes" });
   await ensureUserIndexes();
   await ensureSettingsIndexes();
+  await ensureOAuthAppIndexes();
+  await ensureOAuthTokenIndexes();
+  await ensureOAuthAuthorizationIndexes();
   log.set({ status: "ok" });
   log.emit();
 }

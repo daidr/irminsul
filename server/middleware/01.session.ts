@@ -27,6 +27,7 @@ export default defineEventHandler(async (event) => {
     registerAt: userDoc?.time.register.getTime() ?? null,
     bans,
     isAdmin: userDoc?.isAdmin === true,
+    isDeveloper: userDoc?.isDeveloper ?? false,
     emailVerified,
     needsEmailVerification: !!requireEmailVerification && !emailVerified,
     oauthBindings: (userDoc?.oauthBindings ?? []).map((b) => ({
