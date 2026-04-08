@@ -33,37 +33,12 @@ function handleClick(item: (typeof shortcuts)[number]) {
       <h2>快捷入口</h2>
     </div>
     <div class="mt-4 grid grid-cols-2 gap-3">
-      <button
-        v-for="item in shortcuts"
-        :key="item.label"
-        class="btn border border-base-300"
-        @click="handleClick(item)"
-      >
-        <Icon
-          v-if="item.icon === 'lock'"
-          name="hugeicons:square-lock-password"
-          class="h-[18px] w-[18px] shrink-0"
-        />
-        <Icon
-          v-else-if="item.icon === 'game'"
-          name="hugeicons:game-controller-03"
-          class="h-[18px] w-[18px] shrink-0"
-        />
-        <Icon
-          v-else-if="item.icon === 'passkeys'"
-          name="hugeicons:key-01"
-          class="h-[18px] w-[18px] shrink-0"
-        />
-        <Icon
-          v-else-if="item.icon === 'ban'"
-          name="hugeicons:calendar-remove-01"
-          class="h-[18px] w-[18px] shrink-0"
-        />
-        <Icon
-          v-else-if="item.icon === 'oauth'"
-          name="hugeicons:link-circle-02"
-          class="h-[18px] w-[18px] shrink-0"
-        />
+      <button v-for="item in shortcuts" :key="item.label" class="btn border border-base-300" @click="handleClick(item)">
+        <Icon v-if="item.icon === 'lock'" name="hugeicons:square-lock-password" class="h-[18px] w-[18px] shrink-0" />
+        <Icon v-else-if="item.icon === 'game'" name="hugeicons:game-controller-03" class="h-[18px] w-[18px] shrink-0" />
+        <Icon v-else-if="item.icon === 'passkeys'" name="hugeicons:key-01" class="h-[18px] w-[18px] shrink-0" />
+        <Icon v-else-if="item.icon === 'ban'" name="hugeicons:calendar-remove-01" class="h-[18px] w-[18px] shrink-0" />
+        <Icon v-else-if="item.icon === 'oauth'" name="hugeicons:link-circle-02" class="h-[18px] w-[18px] shrink-0" />
         <span class="text-[13px] font-medium">{{ item.label }}</span>
       </button>
       <!-- Admin panel (admin only) -->
@@ -78,13 +53,13 @@ function handleClick(item: (typeof shortcuts)[number]) {
       </NuxtLink>
       <!-- Developer apps (developer or admin) -->
       <NuxtLink v-if="isDeveloper || isAdmin" to="/developer/apps" class="btn border border-base-300">
-        <Icon name="hugeicons:code" class="h-[18px] w-[18px] shrink-0" />
+        <Icon name="hugeicons:source-code" class="h-[18px] w-[18px] shrink-0" />
         <span class="text-[13px] font-medium">开发者</span>
       </NuxtLink>
       <!-- OAuth authorizations (all logged-in users) -->
       <NuxtLink to="/settings/authorizations" class="btn border border-base-300">
-        <Icon name="hugeicons:authorize" class="h-[18px] w-[18px] shrink-0" />
-        <span class="text-[13px] font-medium">第三方应用授权</span>
+        <Icon name="hugeicons:authorized" class="h-[18px] w-[18px] shrink-0" />
+        <span class="text-[13px] font-medium">第三方应用</span>
       </NuxtLink>
       <!-- OAuth apps admin (admin only) -->
       <NuxtLink v-if="isAdmin" to="/admin/oauth-apps" class="btn border border-base-300">
