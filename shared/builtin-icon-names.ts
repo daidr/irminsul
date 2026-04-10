@@ -30,6 +30,12 @@ export const BUILTIN_ICON_NAMES = [
   "saturn",
   "chat",
   "image",
+  "leaf",
+  "fingerprint",
+  "mountain",
+  "archive",
+  "cellular",
+  "source-code",
 ] as const;
 
 export type BuiltInIconName = (typeof BUILTIN_ICON_NAMES)[number];
