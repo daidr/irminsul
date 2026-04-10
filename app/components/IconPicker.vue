@@ -42,7 +42,6 @@ function updateHue(event: Event) {
   emit("update:modelValue", { name: currentName.value, hue: value });
 }
 
-const colorVars = useIconColorVars(currentHue);
 </script>
 
 <template>
@@ -67,19 +66,14 @@ const colorVars = useIconColorVars(currentHue);
           class="absolute top-full left-0 mt-2 z-50 bg-base-100 border border-base-300 shadow-lg p-4 w-80"
         >
           <!-- Icon grid -->
-          <div class="grid grid-cols-6 gap-1.5 mb-4" :style="colorVars">
+          <div class="grid grid-cols-6 gap-1.5 mb-4" style="--theme-fg: oklch(0.40 0 0 / 0.80)">
             <button
               v-for="iconName in BUILTIN_ICON_NAMES"
               :key="iconName"
               v-memo="[currentName === iconName]"
               type="button"
               class="w-10 h-10 flex items-center justify-center cursor-pointer transition-colors"
-              :style="{
-                background: currentName === iconName ? 'var(--theme-bg)' : undefined,
-                border: currentName === iconName
-                  ? '1px solid var(--theme-border)'
-                  : '1px solid transparent',
-              }"
+              :class="currentName === iconName ? 'bg-base-300 border border-base-content/20' : 'border border-transparent hover:bg-base-200'"
               @click="selectIcon(iconName)"
             >
               <NuxtIsland name="BuiltInIcon" :props="{ name: iconName, size: 18 }" />
