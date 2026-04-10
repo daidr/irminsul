@@ -1,6 +1,6 @@
 <!-- app/components/IconPicker.vue -->
 <script setup lang="ts">
-import { BUILTIN_ICON_NAMES, DEFAULT_ICON } from "~/shared/builtin-icon-names";
+import { BUILTIN_ICON_NAMES, DEFAULT_ICON } from "~~/shared/builtin-icon-names";
 
 const props = defineProps<{
   modelValue: { name: string; hue: number } | null;

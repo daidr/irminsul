@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { VALID_SCOPES, REQUIRED_SCOPES } from "../../../types/oauth-provider.types";
-import { BUILTIN_ICON_NAMES } from "~/shared/builtin-icon-names";
+import { BUILTIN_ICON_NAMES } from "~~/shared/builtin-icon-names";
 
 const bodySchema = z.object({
   name: z.string().min(1).max(100),

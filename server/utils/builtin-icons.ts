@@ -31,8 +31,8 @@ import {
   Chat01Icon,
   Image03Icon,
 } from "@hugeicons/core-free-icons";
-import type { BuiltInIconName } from "~/shared/builtin-icon-names";
-import { DEFAULT_ICON } from "~/shared/builtin-icon-names";
+import type { BuiltInIconName } from "~~/shared/builtin-icon-names";
+import { DEFAULT_ICON } from "~~/shared/builtin-icon-names";
 
 export const BUILTIN_ICONS = {
   "link": Link01Icon,

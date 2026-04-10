@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DEFAULT_ICON } from "~/shared/builtin-icon-names";
+import { DEFAULT_ICON } from "~~/shared/builtin-icon-names";
 
 const props = defineProps<{
   name?: string | null;
