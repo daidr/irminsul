@@ -64,5 +64,15 @@ export default defineEventHandler(async (event) => {
     return { success: true };
   }
 
+  if (category === "oauth") {
+    const enabled = values["oauth.enabled"];
+    if (typeof enabled !== "boolean") {
+      return { success: false, error: "参数类型错误" };
+    }
+
+    await setSetting("oauth.enabled", enabled);
+    return { success: true };
+  }
+
   return { success: false, error: "未知的配置分类" };
 });
