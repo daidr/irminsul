@@ -14,6 +14,14 @@ const currentName = computed(() => props.modelValue?.name ?? DEFAULT_ICON.name);
 const currentHue = computed(() => props.modelValue?.hue ?? DEFAULT_ICON.hue);
 
 const popoverId = useId();
+const hasOpened = ref(false);
+const popoverRef = useTemplateRef<HTMLDivElement>("popoverRef");
+
+function onPopoverToggle(event: ToggleEvent) {
+  if (event.newState === "open") {
+    hasOpened.value = true;
+  }
+}
 
 function selectIcon(name: string) {
   emit("update:modelValue", { name, hue: currentHue.value });
@@ -43,43 +51,49 @@ const colorVars = useIconColorVars(currentHue);
     </div>
 
     <!-- Popover -->
-    <div
-      :id="popoverId"
-      popover
-      class="bg-base-100 border border-base-300 shadow-lg p-4 w-80"
-    >
-      <!-- Icon grid -->
-      <div class="grid grid-cols-6 gap-1.5 mb-4" :style="colorVars">
-        <button
-          v-for="iconName in BUILTIN_ICON_NAMES"
-          :key="iconName"
-          type="button"
-          class="w-10 h-10 flex items-center justify-center cursor-pointer transition-colors"
-          :style="{
-            background: currentName === iconName ? 'var(--theme-bg)' : undefined,
-            border: currentName === iconName
-              ? '1px solid var(--theme-border)'
-              : '1px solid transparent',
-          }"
-          @click="selectIcon(iconName)"
-        >
-          <NuxtIsland name="BuiltInIcon" :props="{ name: iconName, size: 18 }" />
-        </button>
-      </div>
+    <ClientOnly>
+      <div
+        :id="popoverId"
+        ref="popoverRef"
+        popover
+        class="bg-base-100 border border-base-300 shadow-lg p-4 w-80"
+        @toggle="onPopoverToggle"
+      >
+        <template v-if="hasOpened">
+          <!-- Icon grid -->
+          <div class="grid grid-cols-6 gap-1.5 mb-4" :style="colorVars">
+            <button
+              v-for="iconName in BUILTIN_ICON_NAMES"
+              :key="iconName"
+              type="button"
+              class="w-10 h-10 flex items-center justify-center cursor-pointer transition-colors"
+              :style="{
+                background: currentName === iconName ? 'var(--theme-bg)' : undefined,
+                border: currentName === iconName
+                  ? '1px solid var(--theme-border)'
+                  : '1px solid transparent',
+              }"
+              @click="selectIcon(iconName)"
+            >
+              <NuxtIsland name="BuiltInIcon" :props="{ name: iconName, size: 18 }" />
+            </button>
+          </div>
 
-      <!-- Hue slider -->
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs text-base-content/60">色相</label>
-        <input
-          type="range"
-          min="0"
-          max="360"
-          :value="currentHue"
-          class="w-full h-2 appearance-none cursor-pointer hue-slider"
-          @input="updateHue"
-        />
+          <!-- Hue slider -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs text-base-content/60">色相</label>
+            <input
+              type="range"
+              min="0"
+              max="360"
+              :value="currentHue"
+              class="w-full h-2 appearance-none cursor-pointer hue-slider"
+              @input="updateHue"
+            />
+          </div>
+        </template>
       </div>
-    </div>
+    </ClientOnly>
   </div>
 </template>
 

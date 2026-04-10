@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { HugeiconsIcon } from "@hugeicons/vue";
+import { resolveBuiltInIcon } from "~~/server/utils/builtin-icons";
 
 const props = defineProps<{
   name: string;
