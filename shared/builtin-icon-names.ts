@@ -1,0 +1,37 @@
+export const BUILTIN_ICON_NAMES = [
+  "link",
+  "ai-brain",
+  "robot",
+  "ranking",
+  "honor",
+  "star-honor",
+  "bookmark",
+  "star",
+  "tag",
+  "lighthouse",
+  "anvil",
+  "firepit",
+  "activity",
+  "balance",
+  "analytics",
+  "calculate",
+  "id-card",
+  "support",
+  "fireworks",
+  "git-merge",
+  "discover",
+  "dashboard",
+  "timer",
+  "cable",
+  "gamepad",
+  "globe",
+  "flag",
+  "map",
+  "saturn",
+  "chat",
+  "image",
+] as const;
+
+export type BuiltInIconName = (typeof BUILTIN_ICON_NAMES)[number];
+
+export const DEFAULT_ICON = { name: "link" as const, hue: 240 };

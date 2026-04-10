@@ -1,6 +1,9 @@
 export default defineNuxtConfig({
   compatibilityDate: "2026-03-23",
   future: { compatibilityVersion: 4 },
+  experimental: {
+    componentIslands: true,
+  },
 
   routeRules: {},
 
