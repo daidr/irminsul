@@ -36,6 +36,11 @@ import {
   Archive01Icon,
   CellularNetworkIcon,
   SourceCodeSquareIcon,
+  UserAccountIcon,
+  StickyNote01Icon,
+  Rocket01Icon,
+  FlashIcon,
+  Plant03Icon,
 } from "@hugeicons/core-free-icons";
 import type { BuiltInIconName } from "~~/shared/builtin-icon-names";
 import { DEFAULT_ICON } from "~~/shared/builtin-icon-names";
@@ -78,6 +83,11 @@ export const BUILTIN_ICONS = {
   "archive": Archive01Icon,
   "cellular": CellularNetworkIcon,
   "source-code": SourceCodeSquareIcon,
+  "user": UserAccountIcon,
+  "sticky-note": StickyNote01Icon,
+  "rocket": Rocket01Icon,
+  "flash": FlashIcon,
+  "plant": Plant03Icon,
 } satisfies Record<BuiltInIconName, unknown>;
 
 export function resolveBuiltInIcon(name: string) {

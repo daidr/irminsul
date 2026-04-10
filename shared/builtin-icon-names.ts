@@ -36,6 +36,11 @@ export const BUILTIN_ICON_NAMES = [
   "archive",
   "cellular",
   "source-code",
+  "user",
+  "sticky-note",
+  "rocket",
+  "flash",
+  "plant",
 ] as const;
 
 export type BuiltInIconName = (typeof BUILTIN_ICON_NAMES)[number];
