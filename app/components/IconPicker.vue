@@ -49,7 +49,7 @@ function updateHue(event: Event) {
     <!-- Preview trigger -->
     <button
       type="button"
-      class="w-full h-full cursor-pointer"
+      class="w-full aspect-square cursor-pointer"
       @click.stop="toggle"
     >
       <OAuthAppIcon :name="currentName" :hue="currentHue" :size="24" />
