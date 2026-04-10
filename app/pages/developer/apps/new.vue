@@ -30,6 +30,7 @@ const description = ref("");
 const type = ref<"confidential" | "public">("confidential");
 const redirectUris = ref([""] as string[]);
 const scopes = ref<string[]>(["profile:read"]);
+const icon = ref<{ name: string; hue: number } | null>(null);
 
 const isSubmitting = ref(false);
 
@@ -87,6 +88,7 @@ async function handleSubmit() {
         type: type.value,
         redirectUris: validUris,
         scopes: scopes.value,
+        icon: icon.value,
       },
     });
 
@@ -116,6 +118,9 @@ function copyToClipboard(text: string) {
   <div class="flex justify-center px-4 py-8 bg-base-100 min-h-dvh -mt-18 pt-22">
     <form class="w-full max-w-140 flex flex-col gap-6" @submit.prevent="handleSubmit">
       <h1 class="text-2xl font-bold">创建应用</h1>
+
+      <!-- Icon -->
+      <IconPicker v-model="icon" />
 
       <!-- Name -->
       <fieldset class="fieldset">
