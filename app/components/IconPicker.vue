@@ -45,56 +45,52 @@ function updateHue(event: Event) {
 </script>
 
 <template>
-  <div class="flex flex-col gap-2">
-    <span class="fieldset-legend text-sm font-semibold">应用图标</span>
-    <div ref="wrapperRef" class="relative inline-flex items-center gap-3">
-      <!-- Preview trigger -->
-      <button
-        type="button"
-        class="w-14 h-14 shrink-0 cursor-pointer"
-        @click.stop="toggle"
+  <div ref="wrapperRef" class="relative">
+    <!-- Preview trigger -->
+    <button
+      type="button"
+      class="w-full h-full cursor-pointer"
+      @click.stop="toggle"
+    >
+      <OAuthAppIcon :name="currentName" :hue="currentHue" :size="24" />
+    </button>
+
+    <!-- Dropdown -->
+    <ClientOnly>
+      <div
+        v-if="hasOpened"
+        v-show="isOpen"
+        class="absolute top-full left-0 mt-2 z-50 bg-base-100 border border-base-300 shadow-lg p-4 w-80"
       >
-        <OAuthAppIcon :name="currentName" :hue="currentHue" :size="24" />
-      </button>
-      <span class="text-sm text-base-content/60">点击选择图标和颜色</span>
-
-      <!-- Dropdown -->
-      <ClientOnly>
-        <div
-          v-if="hasOpened"
-          v-show="isOpen"
-          class="absolute top-full left-0 mt-2 z-50 bg-base-100 border border-base-300 shadow-lg p-4 w-80"
-        >
-          <!-- Icon grid -->
-          <div class="grid grid-cols-6 gap-1.5 mb-4" style="--theme-fg: oklch(0.40 0 0 / 0.80)">
-            <button
-              v-for="iconName in BUILTIN_ICON_NAMES"
-              :key="iconName"
-              v-memo="[currentName === iconName]"
-              type="button"
-              class="w-10 h-10 flex items-center justify-center cursor-pointer transition-colors"
-              :class="currentName === iconName ? 'bg-base-300 border border-base-content/20' : 'border border-transparent hover:bg-base-200'"
-              @click="selectIcon(iconName)"
-            >
-              <NuxtIsland name="BuiltInIcon" :props="{ name: iconName, size: 18 }" />
-            </button>
-          </div>
-
-          <!-- Hue slider -->
-          <div class="flex flex-col gap-1.5">
-            <label class="text-xs text-base-content/60">色相</label>
-            <input
-              type="range"
-              min="0"
-              max="360"
-              :value="currentHue"
-              class="w-full h-2 appearance-none cursor-pointer hue-slider"
-              @input="updateHue"
-            />
-          </div>
+        <!-- Icon grid -->
+        <div class="grid grid-cols-6 gap-1.5 mb-4" style="--theme-fg: oklch(0.40 0 0 / 0.80)">
+          <button
+            v-for="iconName in BUILTIN_ICON_NAMES"
+            :key="iconName"
+            v-memo="[currentName === iconName]"
+            type="button"
+            class="w-10 h-10 flex items-center justify-center cursor-pointer transition-colors"
+            :class="currentName === iconName ? 'bg-base-300 border border-base-content/20' : 'border border-transparent hover:bg-base-200'"
+            @click="selectIcon(iconName)"
+          >
+            <NuxtIsland name="BuiltInIcon" :props="{ name: iconName, size: 18 }" />
+          </button>
         </div>
-      </ClientOnly>
-    </div>
+
+        <!-- Hue slider -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs text-base-content/60">色相</label>
+          <input
+            type="range"
+            min="0"
+            max="360"
+            :value="currentHue"
+            class="w-full h-2 appearance-none cursor-pointer hue-slider"
+            @input="updateHue"
+          />
+        </div>
+      </div>
+    </ClientOnly>
   </div>
 </template>
 

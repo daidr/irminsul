@@ -185,9 +185,6 @@ function copyToClipboard(text: string) {
         <h1 class="text-2xl font-bold">编辑应用</h1>
       </div>
 
-      <!-- Icon -->
-      <IconPicker v-model="editIcon" />
-
       <!-- Client ID (readonly) -->
       <fieldset class="fieldset">
         <legend class="fieldset-legend text-sm font-semibold">Client ID</legend>
@@ -214,16 +211,21 @@ function copyToClipboard(text: string) {
         </span>
       </div>
 
-      <!-- Name -->
+      <!-- Icon + Name -->
       <fieldset class="fieldset">
         <legend class="fieldset-legend text-sm font-semibold">应用名称</legend>
-        <input
-          v-model="editName"
-          type="text"
-          class="input input-bordered w-full"
-          maxlength="100"
-          required
-        />
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 shrink-0">
+            <IconPicker v-model="editIcon" />
+          </div>
+          <input
+            v-model="editName"
+            type="text"
+            class="input input-bordered w-full"
+            maxlength="100"
+            required
+          />
+        </div>
       </fieldset>
 
       <!-- Description -->

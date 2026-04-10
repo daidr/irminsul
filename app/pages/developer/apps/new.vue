@@ -119,20 +119,22 @@ function copyToClipboard(text: string) {
     <form class="w-full max-w-140 flex flex-col gap-6" @submit.prevent="handleSubmit">
       <h1 class="text-2xl font-bold">创建应用</h1>
 
-      <!-- Icon -->
-      <IconPicker v-model="icon" />
-
-      <!-- Name -->
+      <!-- Icon + Name -->
       <fieldset class="fieldset">
         <legend class="fieldset-legend text-sm font-semibold">应用名称</legend>
-        <input
-          v-model="name"
-          type="text"
-          class="input input-bordered w-full"
-          placeholder="我的应用"
-          maxlength="100"
-          required
-        />
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 shrink-0">
+            <IconPicker v-model="icon" />
+          </div>
+          <input
+            v-model="name"
+            type="text"
+            class="input input-bordered w-full"
+            placeholder="我的应用"
+            maxlength="100"
+            required
+          />
+        </div>
       </fieldset>
 
       <!-- Description -->
