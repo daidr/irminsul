@@ -54,15 +54,15 @@ function handleClick(item: (typeof shortcuts)[number]) {
         <HugeiconsIcon :icon="Plug01Icon" :size="18" class="shrink-0" />
         <span class="text-[13px] font-medium">插件管理</span>
       </NuxtLink>
+      <!-- OAuth authorizations (all logged-in users) -->
+      <NuxtLink to="/settings/authorizations" class="btn border border-base-300">
+        <HugeiconsIcon :icon="AuthorizedIcon" :size="18" class="shrink-0" />
+        <span class="text-[13px] font-medium">应用授权</span>
+      </NuxtLink>
       <!-- Developer apps (developer or admin) -->
       <NuxtLink v-if="isDeveloper || isAdmin" to="/developer/apps" class="btn border border-base-300">
         <HugeiconsIcon :icon="SourceCodeIcon" :size="18" class="shrink-0" />
         <span class="text-[13px] font-medium">开发者</span>
-      </NuxtLink>
-      <!-- OAuth authorizations (all logged-in users) -->
-      <NuxtLink to="/settings/authorizations" class="btn border border-base-300">
-        <HugeiconsIcon :icon="AuthorizedIcon" :size="18" class="shrink-0" />
-        <span class="text-[13px] font-medium">第三方应用</span>
       </NuxtLink>
       <!-- OAuth apps admin (admin only) -->
       <NuxtLink v-if="isAdmin" to="/admin/oauth-apps" class="btn border border-base-300">
