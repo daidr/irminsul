@@ -13,7 +13,7 @@ const emit = defineEmits<{
 const currentName = computed(() => props.modelValue?.name ?? DEFAULT_ICON.name);
 const currentHue = computed(() => props.modelValue?.hue ?? DEFAULT_ICON.hue);
 
-const popoverRef = useTemplateRef<HTMLDivElement>("popoverRef");
+const popoverId = useId();
 
 function selectIcon(name: string) {
   emit("update:modelValue", { name, hue: currentHue.value });
@@ -24,11 +24,7 @@ function updateHue(event: Event) {
   emit("update:modelValue", { name: currentName.value, hue: value });
 }
 
-const colorVars = computed(() => ({
-  "--theme-bg": `oklch(0.75 0.08 ${currentHue.value} / 0.20)`,
-  "--theme-border": `oklch(0.62 0.10 ${currentHue.value} / 0.30)`,
-  "--theme-fg": `oklch(0.40 0.12 ${currentHue.value} / 0.80)`,
-}));
+const colorVars = useIconColorVars(currentHue);
 </script>
 
 <template>
@@ -39,7 +35,7 @@ const colorVars = computed(() => ({
       <button
         type="button"
         class="w-14 h-14 shrink-0 cursor-pointer"
-        :popovertarget="'icon-picker-popover'"
+        :popovertarget="popoverId"
       >
         <OAuthAppIcon :name="currentName" :hue="currentHue" :size="24" />
       </button>
@@ -48,8 +44,7 @@ const colorVars = computed(() => ({
 
     <!-- Popover -->
     <div
-      id="icon-picker-popover"
-      ref="popoverRef"
+      :id="popoverId"
       popover
       class="bg-base-100 border border-base-300 shadow-lg p-4 w-80"
     >

@@ -10,11 +10,7 @@ const props = defineProps<{
 const iconName = computed(() => props.name ?? DEFAULT_ICON.name);
 const iconHue = computed(() => props.hue ?? DEFAULT_ICON.hue);
 
-const colorVars = computed(() => ({
-  "--theme-bg": `oklch(0.75 0.08 ${iconHue.value} / 0.20)`,
-  "--theme-border": `oklch(0.62 0.10 ${iconHue.value} / 0.30)`,
-  "--theme-fg": `oklch(0.40 0.12 ${iconHue.value} / 0.80)`,
-}));
+const colorVars = useIconColorVars(iconHue);
 </script>
 
 <template>

@@ -31,9 +31,10 @@ import {
   Chat01Icon,
   Image03Icon,
 } from "@hugeicons/core-free-icons";
+import type { BuiltInIconName } from "~/shared/builtin-icon-names";
 import { DEFAULT_ICON } from "~/shared/builtin-icon-names";
 
-export const BUILTIN_ICONS: Record<string, any> = {
+export const BUILTIN_ICONS = {
   "link": Link01Icon,
   "ai-brain": AiBrain01Icon,
   "robot": RoboticIcon,
@@ -65,7 +66,7 @@ export const BUILTIN_ICONS: Record<string, any> = {
   "saturn": SaturnIcon,
   "chat": Chat01Icon,
   "image": Image03Icon,
-};
+} satisfies Record<BuiltInIconName, unknown>;
 
 export function resolveBuiltInIcon(name: string) {
   return BUILTIN_ICONS[name] ?? BUILTIN_ICONS[DEFAULT_ICON.name];
