@@ -17,8 +17,14 @@ const isLoading = ref(false);
 const toast = useToast();
 const altchaRef = ref<InstanceType<typeof AltchaField> | null>(null);
 
-// OAuth 回调 toast 提示
 const route = useRoute();
+const redirectTarget = computed(() => {
+  const r = route.query.redirect as string | undefined;
+  // 仅允许站内路径，防止 open redirect
+  return r?.startsWith("/") ? r : "/";
+});
+
+// OAuth 回调 toast 提示
 const oauthMessages: Record<string, { type: "error" | "success"; text: string }> = {
   "not-bound": { type: "error", text: "该第三方账号未绑定任何用户" },
   denied: { type: "error", text: "你取消了第三方授权" },
@@ -51,7 +57,7 @@ async function handleSubmit() {
     });
     if (result.success) {
       await refreshNuxtData("current-user");
-      await navigateTo("/");
+      await navigateTo(redirectTarget.value);
     } else {
       toast.error(result.error || "登录失败");
       altchaRef.value?.reset();
@@ -78,7 +84,7 @@ async function handlePasskeyResult(
     });
     if (result.success) {
       await refreshNuxtData("current-user");
-      await navigateTo("/");
+      await navigateTo(redirectTarget.value);
     } else {
       toast.error(result.error || "通行密钥验证失败");
     }
