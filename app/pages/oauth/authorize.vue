@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { HugeiconsIcon } from "@hugeicons/vue";
-import { PuzzleIcon, ShieldKeyIcon } from "@hugeicons/core-free-icons";
+import { ShieldKeyIcon } from "@hugeicons/core-free-icons";
 
 useHead({ title: "授权确认" });
 
@@ -28,6 +28,7 @@ const requestedScopes = computed(() => scope.value.split(" ").filter(Boolean));
 const appInfo = ref<{
   name: string;
   description: string;
+  icon: { name: string; hue: number } | null;
 } | null>(null);
 const loadingApp = ref(true);
 const isSubmitting = ref(false);
@@ -85,8 +86,8 @@ async function handleAction(action: "approve" | "deny") {
 
         <!-- App info -->
         <div class="flex flex-col items-center gap-3">
-          <div class="w-16 h-16 bg-base-200 border border-base-300 flex items-center justify-center">
-            <HugeiconsIcon :icon="PuzzleIcon" class="text-base-content/40" />
+          <div class="w-16 h-16">
+            <OAuthAppIcon :name="appInfo.icon?.name" :hue="appInfo.icon?.hue" :size="24" />
           </div>
           <div class="text-center">
             <p class="text-lg font-semibold">{{ appInfo.name }}</p>
