@@ -23,6 +23,7 @@ interface AppItem {
   clientId: string;
   name: string;
   description: string;
+  icon: { name: string; hue: number } | null;
   type: string;
   approved: boolean;
   createdAt: string;
@@ -79,8 +80,8 @@ onMounted(fetchApps);
             :to="`/developer/apps/${app.clientId}`"
             class="flex items-center gap-4 p-4 border-b border-base-300/50 hover:bg-base-300/30 transition-colors"
           >
-            <div class="w-10 h-10 shrink-0 bg-base-300 border border-base-300 flex items-center justify-center">
-              <HugeiconsIcon :icon="PuzzleIcon" :size="16" class="text-base-content/40" />
+            <div class="w-10 h-10 shrink-0">
+              <OAuthAppIcon :name="app.icon?.name" :hue="app.icon?.hue" :size="16" />
             </div>
 
             <div class="flex-1 min-w-0">
