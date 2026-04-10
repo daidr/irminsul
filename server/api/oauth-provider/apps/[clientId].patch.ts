@@ -1,11 +1,19 @@
 import { z } from "zod";
 import { VALID_SCOPES } from "../../../types/oauth-provider.types";
+import { BUILTIN_ICON_NAMES } from "~/shared/builtin-icon-names";
 
 const bodySchema = z.object({
   name: z.string().min(1).max(100).optional(),
   description: z.string().max(500).optional(),
   redirectUris: z.array(z.string().url()).min(1).max(10).optional(),
   scopes: z.array(z.enum(VALID_SCOPES as [string, ...string[]])).min(1).optional(),
+  icon: z
+    .object({
+      name: z.enum(BUILTIN_ICON_NAMES as unknown as [string, ...string[]]),
+      hue: z.number().int().min(0).max(360),
+    })
+    .nullable()
+    .optional(),
 });
 
 export default defineEventHandler(async (event) => {

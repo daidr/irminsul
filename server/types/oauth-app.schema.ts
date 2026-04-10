@@ -8,6 +8,7 @@ export interface OAuthAppDocument {
   type: OAuthClientType;
   name: string;
   description: string;
+  icon: { name: string; hue: number } | null;
   redirectUris: string[];
   scopes: OAuthScope[];
   ownerId: string;

@@ -9,6 +9,7 @@ export default defineEventHandler(async (event) => {
         clientId: auth.clientId,
         appName: app?.name ?? null,
         appDescription: app?.description ?? null,
+        appIcon: app?.icon ?? null,
         scopes: auth.scopes,
         grantedAt: auth.grantedAt,
         updatedAt: auth.updatedAt,
