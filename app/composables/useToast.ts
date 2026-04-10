@@ -70,3 +70,7 @@ export function useToast() {
     },
   };
 }
+
+if (import.meta.env.DEV && import.meta.client) {
+  (window as any).debug = useToast();
+}

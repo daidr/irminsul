@@ -9,5 +9,8 @@
   "arrayIndexInlay.enabled": true,
   "[json]": {
     "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
   }
 }

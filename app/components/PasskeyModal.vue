@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { startRegistration } from "@simplewebauthn/browser";
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { CheckmarkCircle02Icon, Cancel01Icon, PencilEdit01Icon, Delete02Icon, AddCircleHalfDotIcon } from "@hugeicons/core-free-icons";
 
 interface PasskeyItem {
   credentialId: string;
@@ -171,10 +173,10 @@ onMounted(() => {
                 :disabled="actionLoading === pk.credentialId"
                 @click="confirmRename(pk.credentialId)"
               >
-                <Icon name="hugeicons:checkmark-circle-02" class="text-base text-success" />
+                <HugeiconsIcon :icon="CheckmarkCircle02Icon" :size="16" class="text-success" />
               </button>
               <button class="btn btn-ghost btn-xs" @click="cancelRename">
-                <Icon name="hugeicons:cancel-01" class="text-base opacity-40" />
+                <HugeiconsIcon :icon="Cancel01Icon" :size="16" class="opacity-40" />
               </button>
             </template>
             <!-- Display mode -->
@@ -200,7 +202,7 @@ onMounted(() => {
           class="flex items-center gap-1 shrink-0 ml-2"
         >
           <button class="btn btn-ghost btn-xs" @click="startRename(pk)">
-            <Icon name="hugeicons:pencil-edit-01" class="text-sm opacity-60" />
+            <HugeiconsIcon :icon="PencilEdit01Icon" :size="14" class="opacity-60" />
           </button>
           <button
             class="btn btn-ghost btn-xs text-error"
@@ -211,7 +213,7 @@ onMounted(() => {
               v-if="actionLoading === pk.credentialId"
               class="loading loading-spinner loading-xs"
             />
-            <Icon v-else name="hugeicons:delete-02" class="text-sm" />
+            <HugeiconsIcon v-else :icon="Delete02Icon" :size="14" />
           </button>
         </div>
       </div>
@@ -225,7 +227,7 @@ onMounted(() => {
     >
       <span v-if="actionLoading === 'add'" class="loading loading-spinner loading-sm" />
       <template v-else>
-        <Icon name="hugeicons:add-circle-half-dot" class="text-base" />
+        <HugeiconsIcon :icon="AddCircleHalfDotIcon" :size="16" />
         添加通行密钥
       </template>
     </button>

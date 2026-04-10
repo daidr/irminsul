@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { ThreeDViewIcon } from "@hugeicons/core-free-icons";
+
 type ViewTab = "model" | "orthographic" | "raw" | "render";
 
 const activeTab = ref<ViewTab>("model");
@@ -7,7 +10,7 @@ const activeTab = ref<ViewTab>("model");
 <template>
   <div class="border border-base-300 bg-base-200 p-5">
     <div class="flex flex-wrap items-center gap-2.5 text-lg">
-      <Icon name="hugeicons:three-d-view" />
+      <HugeiconsIcon :icon="ThreeDViewIcon" :size="20" />
       <h2>皮肤预览</h2>
       <!-- 标签页切换 -->
       <div class="basis-full md:basis-auto"></div>

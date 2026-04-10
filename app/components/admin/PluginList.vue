@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { DragDropIcon } from "@hugeicons/core-free-icons";
+
 const props = defineProps<{
   modelValue: any[];
   selectedId: string | null;
@@ -30,7 +33,7 @@ const statusBadge = (status: string) => {
     <div v-for="plugin in modelValue" :key="plugin.id"
       class="flex items-center gap-2 px-3 py-2 cursor-pointer border-b border-base-300 transition-colors"
       :class="selectedId === plugin.id ? 'bg-primary/10' : 'hover:bg-base-300/50'" @click="emit('select', plugin.id)">
-      <Icon name="hugeicons:drag-drop" class="drag-handle text-base-content/30 cursor-grab text-sm shrink-0" />
+      <HugeiconsIcon :icon="DragDropIcon" :size="14" class="drag-handle text-base-content/30 cursor-grab shrink-0" />
       <div class="flex-1 min-w-0">
         <div class="text-sm font-medium truncate">{{ plugin.name }}</div>
         <div class="text-xs text-base-content/50">v{{ plugin.version }}</div>

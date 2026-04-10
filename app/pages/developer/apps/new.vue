@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { Delete02Icon, PlusSignIcon, Copy01Icon } from "@hugeicons/core-free-icons";
+
 useHead({ title: "创建应用" });
 
 const { data: user } = useUser();
@@ -166,7 +169,7 @@ function copyToClipboard(text: string) {
               class="btn btn-ghost btn-sm"
               @click="removeRedirectUri(index)"
             >
-              <Icon name="hugeicons:delete-02" class="text-base" />
+              <HugeiconsIcon :icon="Delete02Icon" :size="16" />
             </button>
           </div>
           <button
@@ -175,7 +178,7 @@ function copyToClipboard(text: string) {
             class="btn btn-ghost btn-sm self-start"
             @click="addRedirectUri"
           >
-            <Icon name="hugeicons:plus-sign" class="text-base" />
+            <HugeiconsIcon :icon="PlusSignIcon" :size="16" />
             添加回调地址
           </button>
         </div>
@@ -228,7 +231,7 @@ function copyToClipboard(text: string) {
               <div class="flex items-center gap-2 bg-base-200 border border-base-300 p-2">
                 <code class="text-sm flex-1 break-all">{{ createdClientId }}</code>
                 <button type="button" class="btn btn-ghost btn-xs" @click="copyToClipboard(createdClientId)">
-                  <Icon name="hugeicons:copy-01" class="text-base" />
+                  <HugeiconsIcon :icon="Copy01Icon" :size="16" />
                 </button>
               </div>
             </div>
@@ -238,7 +241,7 @@ function copyToClipboard(text: string) {
               <div class="flex items-center gap-2 bg-base-200 border border-base-300 p-2">
                 <code class="text-sm flex-1 break-all">{{ createdClientSecret }}</code>
                 <button type="button" class="btn btn-ghost btn-xs" @click="copyToClipboard(createdClientSecret)">
-                  <Icon name="hugeicons:copy-01" class="text-base" />
+                  <HugeiconsIcon :icon="Copy01Icon" :size="16" />
                 </button>
               </div>
             </div>

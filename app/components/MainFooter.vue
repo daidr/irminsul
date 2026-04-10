@@ -5,7 +5,7 @@
         <p>
           Powered By
           <a class="link" href="https://github.com/daidr/irminsul"
-            ><Icon name="hugeicons:tree-06" class="text-base text-primary inline" />Irminsul</a
+            ><HugeiconsIcon :icon="Tree06Icon" :size="16" class="text-primary inline" />Irminsul</a
           >.
           <br />
           Designed with all the love in the world by
@@ -16,6 +16,9 @@
   </footer>
 </template>
 
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { Tree06Icon } from "@hugeicons/core-free-icons";
+</script>
 
 <style scoped></style>

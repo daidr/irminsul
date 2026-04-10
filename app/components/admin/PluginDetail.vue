@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
+
 const props = defineProps<{ pluginId: string; showBack?: boolean }>();
 const emit = defineEmits<{ action: []; back: [] }>();
 
@@ -54,7 +57,7 @@ async function toggleEnabled() {
     <div class="flex items-center justify-between p-4 border-b border-base-300 gap-2">
       <div class="flex items-center gap-2 min-w-0">
         <button v-if="showBack" class="btn btn-sm btn-square btn-ghost md:hidden shrink-0" @click="emit('back')">
-          <Icon name="hugeicons:arrow-left-01" class="text-lg" />
+          <HugeiconsIcon :icon="ArrowLeft01Icon" :size="18" />
         </button>
         <div class="min-w-0">
           <h3 class="text-lg font-bold truncate">{{ plugin.name }}</h3>

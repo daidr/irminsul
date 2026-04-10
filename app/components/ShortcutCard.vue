@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { ParagraphBulletsPoint01Icon, SquareLockPasswordIcon, GameController03Icon, Key01Icon, CalendarRemove01Icon, LinkCircle02Icon, DashboardSquareSettingIcon, Plug01Icon, SourceCodeIcon, AuthorizedIcon, ApiIcon } from "@hugeicons/core-free-icons";
+
 defineProps<{
   isAdmin?: boolean;
   isDeveloper?: boolean;
@@ -29,41 +32,41 @@ function handleClick(item: (typeof shortcuts)[number]) {
 <template>
   <div class="border border-base-300 bg-base-200 p-5">
     <div class="flex items-center gap-2.5 text-lg">
-      <Icon name="hugeicons:paragraph-bullets-point-01" />
+      <HugeiconsIcon :icon="ParagraphBulletsPoint01Icon" :size="20" />
       <h2>快捷入口</h2>
     </div>
     <div class="mt-4 grid grid-cols-2 gap-3">
       <button v-for="item in shortcuts" :key="item.label" class="btn border border-base-300" @click="handleClick(item)">
-        <Icon v-if="item.icon === 'lock'" name="hugeicons:square-lock-password" class="h-[18px] w-[18px] shrink-0" />
-        <Icon v-else-if="item.icon === 'game'" name="hugeicons:game-controller-03" class="h-[18px] w-[18px] shrink-0" />
-        <Icon v-else-if="item.icon === 'passkeys'" name="hugeicons:key-01" class="h-[18px] w-[18px] shrink-0" />
-        <Icon v-else-if="item.icon === 'ban'" name="hugeicons:calendar-remove-01" class="h-[18px] w-[18px] shrink-0" />
-        <Icon v-else-if="item.icon === 'oauth'" name="hugeicons:link-circle-02" class="h-[18px] w-[18px] shrink-0" />
+        <HugeiconsIcon v-if="item.icon === 'lock'" :icon="SquareLockPasswordIcon" :size="18" class="shrink-0" />
+        <HugeiconsIcon v-else-if="item.icon === 'game'" :icon="GameController03Icon" :size="18" class="shrink-0" />
+        <HugeiconsIcon v-else-if="item.icon === 'passkeys'" :icon="Key01Icon" :size="18" class="shrink-0" />
+        <HugeiconsIcon v-else-if="item.icon === 'ban'" :icon="CalendarRemove01Icon" :size="18" class="shrink-0" />
+        <HugeiconsIcon v-else-if="item.icon === 'oauth'" :icon="LinkCircle02Icon" :size="18" class="shrink-0" />
         <span class="text-[13px] font-medium">{{ item.label }}</span>
       </button>
       <!-- Admin panel (admin only) -->
       <button v-if="isAdmin" class="btn border border-base-300" @click="emit('admin-panel')">
-        <Icon name="hugeicons:dashboard-square-setting" class="h-[18px] w-[18px] shrink-0" />
+        <HugeiconsIcon :icon="DashboardSquareSettingIcon" :size="18" class="shrink-0" />
         <span class="text-[13px] font-medium">管理面板</span>
       </button>
       <!-- Plugin management (admin only) -->
       <NuxtLink v-if="isAdmin" to="/admin/plugins" class="btn border border-base-300">
-        <Icon name="hugeicons:plug-01" class="h-[18px] w-[18px] shrink-0" />
+        <HugeiconsIcon :icon="Plug01Icon" :size="18" class="shrink-0" />
         <span class="text-[13px] font-medium">插件管理</span>
       </NuxtLink>
       <!-- Developer apps (developer or admin) -->
       <NuxtLink v-if="isDeveloper || isAdmin" to="/developer/apps" class="btn border border-base-300">
-        <Icon name="hugeicons:source-code" class="h-[18px] w-[18px] shrink-0" />
+        <HugeiconsIcon :icon="SourceCodeIcon" :size="18" class="shrink-0" />
         <span class="text-[13px] font-medium">开发者</span>
       </NuxtLink>
       <!-- OAuth authorizations (all logged-in users) -->
       <NuxtLink to="/settings/authorizations" class="btn border border-base-300">
-        <Icon name="hugeicons:authorized" class="h-[18px] w-[18px] shrink-0" />
+        <HugeiconsIcon :icon="AuthorizedIcon" :size="18" class="shrink-0" />
         <span class="text-[13px] font-medium">第三方应用</span>
       </NuxtLink>
       <!-- OAuth apps admin (admin only) -->
       <NuxtLink v-if="isAdmin" to="/admin/oauth-apps" class="btn border border-base-300">
-        <Icon name="hugeicons:api" class="h-[18px] w-[18px] shrink-0" />
+        <HugeiconsIcon :icon="ApiIcon" :size="18" class="shrink-0" />
         <span class="text-[13px] font-medium">OAuth 应用</span>
       </NuxtLink>
     </div>

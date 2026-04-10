@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { Settings02Icon } from "@hugeicons/core-free-icons";
+
 definePageMeta({ hideFooter: true });
 
 const { data: user } = useUser();
@@ -95,7 +98,7 @@ async function handleHostRestarted() {
       </div>
       <div class="p-3 border-t border-base-300">
         <button class="btn btn-sm btn-ghost w-full justify-start gap-2" @click="settingsRef?.open()">
-          <Icon name="hugeicons:settings-02" class="text-base" />
+          <HugeiconsIcon :icon="Settings02Icon" :size="16" />
           系统设置
         </button>
       </div>

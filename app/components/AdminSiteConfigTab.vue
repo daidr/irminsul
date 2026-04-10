@@ -15,11 +15,16 @@ const auth = reactive({
   requireEmailVerification: false,
 });
 
+const oauth = reactive({
+  enabled: false,
+});
+
 const announcement = ref("");
 
 // ---- 原始快照（用于脏检查） ----
 const smtpSnapshot = ref({ ...smtp });
 const authSnapshot = ref({ ...auth });
+const oauthSnapshot = ref({ ...oauth });
 const announcementSnapshot = ref("");
 
 // ---- 状态 ----
@@ -28,6 +33,7 @@ const loadError = ref("");
 
 const smtpSaving = ref(false);
 const authSaving = ref(false);
+const oauthSaving = ref(false);
 const announcementSaving = ref(false);
 
 // ---- 脏检查 ----
@@ -45,9 +51,11 @@ const authDirty = computed(
   () => auth.requireEmailVerification !== authSnapshot.value.requireEmailVerification,
 );
 
+const oauthDirty = computed(() => oauth.enabled !== oauthSnapshot.value.enabled);
+
 const announcementDirty = computed(() => announcement.value !== announcementSnapshot.value);
 
-const anyDirty = computed(() => smtpDirty.value || authDirty.value || announcementDirty.value);
+const anyDirty = computed(() => smtpDirty.value || authDirty.value || oauthDirty.value || announcementDirty.value);
 
 defineExpose({ anyDirty });
 
@@ -69,11 +77,13 @@ onMounted(async () => {
     smtp.pass = (s["smtp.pass"] as string) ?? "";
     smtp.from = (s["smtp.from"] as string) ?? "";
     auth.requireEmailVerification = (s["auth.requireEmailVerification"] as boolean) ?? false;
+    oauth.enabled = (s["oauth.enabled"] as boolean) ?? false;
     announcement.value = (s["general.announcement"] as string) ?? "";
 
     // 更新快照
     smtpSnapshot.value = { ...smtp };
     authSnapshot.value = { ...auth };
+    oauthSnapshot.value = { ...oauth };
     announcementSnapshot.value = announcement.value;
   } catch {
     loadError.value = "加载配置失败";
@@ -131,6 +141,28 @@ async function saveAuth() {
     toast.error("保存失败");
   } finally {
     authSaving.value = false;
+  }
+}
+
+async function saveOAuth() {
+  oauthSaving.value = true;
+  try {
+    const result = await $fetch<{ success: boolean; error: string }>("/api/admin/settings", {
+      method: "POST",
+      body: {
+        category: "oauth",
+        values: { "oauth.enabled": oauth.enabled },
+      },
+    });
+    if (!result.success) {
+      toast.error(result.error);
+    } else {
+      oauthSnapshot.value = { ...oauth };
+    }
+  } catch {
+    toast.error("保存失败");
+  } finally {
+    oauthSaving.value = false;
   }
 }
 
@@ -270,6 +302,36 @@ async function saveAnnouncement() {
           @click="saveAuth"
         >
           <span v-if="authSaving" class="loading loading-spinner loading-xs" />
+          保存
+        </button>
+      </div>
+    </div>
+
+    <!-- 分割线 -->
+    <div class="divider my-0" />
+
+    <!-- OAuth 设置 -->
+    <div class="py-5">
+      <h4 class="flex items-center gap-1.5 text-sm font-semibold text-primary">
+        <span v-if="oauthDirty" class="inline-block h-2 w-2 rounded-full bg-warning" />
+        OAuth 授权服务
+      </h4>
+      <label class="mt-3 flex cursor-pointer items-center gap-2 text-sm">
+        <input
+          v-model="oauth.enabled"
+          type="checkbox"
+          class="checkbox checkbox-sm"
+        />
+        启用 OAuth 授权服务
+      </label>
+      <p class="ml-6 mt-1 text-xs opacity-50">开启后，经审批的第三方应用可通过 OAuth 协议获取玩家数据</p>
+      <div class="mt-3 flex justify-end">
+        <button
+          class="btn btn-primary btn-sm"
+          :disabled="!oauthDirty || oauthSaving"
+          @click="saveOAuth"
+        >
+          <span v-if="oauthSaving" class="loading loading-spinner loading-xs" />
           保存
         </button>
       </div>

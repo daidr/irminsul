@@ -1,4 +1,14 @@
 <script setup lang="ts">
+import type { IconArray } from "@hugeicons/vue";
+import { HugeiconsIcon } from "@hugeicons/vue";
+import {
+  Alert02Icon,
+  AlertCircleIcon,
+  Cancel01Icon,
+  CheckmarkCircle02Icon,
+  InformationCircleIcon,
+  Loading03Icon,
+} from "@hugeicons/core-free-icons";
 import type { ToastInfo } from "~/composables/useToast";
 
 const props = defineProps<{
@@ -9,12 +19,12 @@ const emit = defineEmits<{
   close: [];
 }>();
 
-const DEFAULT_ICONS: Record<string, string> = {
-  success: "hugeicons:checkmark-circle-02",
-  error: "hugeicons:alert-circle",
-  warning: "hugeicons:alert-02",
-  info: "hugeicons:information-circle",
-  loading: "hugeicons:loading-03",
+const DEFAULT_ICONS: Record<string, IconArray> = {
+  success: CheckmarkCircle02Icon,
+  error: AlertCircleIcon,
+  warning: Alert02Icon,
+  info: InformationCircleIcon,
+  loading: Loading03Icon,
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -77,9 +87,9 @@ onUnmounted(() => {
 
 <template>
   <div
-    class="relative flex items-center gap-2 bg-base-100 border border-base-300 shadow-lg pl-3 pr-1 min-w-[10px] whitespace-nowrap overflow-hidden select-none"
+    class="relative flex items-center gap-2 bg-base-100 border border-base-300 shadow-lg pl-2 py-1 pr-1 min-w-[10px] whitespace-nowrap overflow-hidden select-none"
     @mouseenter="paused = true" @mouseleave="paused = false">
-    <Icon :name="iconName" class="text-base shrink-0"
+    <HugeiconsIcon :icon="iconName" :size="16" class="shrink-0"
       :class="[typeColor, info.type === 'loading' ? 'animate-spin' : '']" />
 
     <span class="flex-1 text-sm text-base-content leading-snug">{{ info.content }}</span>
@@ -87,7 +97,7 @@ onUnmounted(() => {
     <button v-if="!info.hideClose"
       class="shrink-0 p-1 text-base-content/30 hover:text-base-content/60 transition-colors cursor-pointer"
       @click="emit('close')">
-      <Icon name="hugeicons:cancel-01" class="text-sm" />
+      <HugeiconsIcon :icon="Cancel01Icon" :size="14" />
     </button>
 
     <div v-if="hasDuration" class="absolute bottom-0 left-0 h-[2px] transition-[width] ease-linear"

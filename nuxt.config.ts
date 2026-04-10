@@ -33,16 +33,11 @@ export default defineNuxtConfig({
   modules: [
     "@nuxtjs/tailwindcss",
     "@pinia/nuxt",
-    "@nuxt/icon",
     "@nuxt/test-utils/module",
     "@nuxt/a11y",
     "@nuxt/hints",
     "evlog/nuxt",
   ],
-
-  icon: {
-    // Hugeicons via Iconify
-  },
 
   evlog: {
     env: { service: "irminsul" },

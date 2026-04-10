@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { ComputerIcon, SmartPhone02Icon } from "@hugeicons/core-free-icons";
+
 interface GameSessionItem {
   tokenId: string;
   label: string;
@@ -262,16 +265,18 @@ onMounted(() => {
         "
       >
         <div class="flex items-center gap-3">
-          <Icon
+          <HugeiconsIcon
             v-if="parseWebUA(s.ua).icon === 'monitor'"
-            name="hugeicons:computer"
-            class="h-5 w-5 shrink-0"
+            :icon="ComputerIcon"
+            :size="20"
+            class="shrink-0"
             :class="s.isCurrent ? 'text-success' : 'opacity-40'"
           />
-          <Icon
+          <HugeiconsIcon
             v-else
-            name="hugeicons:smart-phone-02"
-            class="h-5 w-5 shrink-0"
+            :icon="SmartPhone02Icon"
+            :size="20"
+            class="shrink-0"
             :class="s.isCurrent ? 'text-success' : 'opacity-40'"
           />
           <div class="flex flex-col gap-1">

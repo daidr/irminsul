@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { RefreshIcon, InformationCircleIcon, LinkSquare01Icon } from "@hugeicons/core-free-icons";
+
 const props = defineProps<{
   pluginId: string;
   configSchema: any[];
@@ -164,7 +167,7 @@ async function save() {
                 <input v-model="formData[field.key]" type="checkbox" class="checkbox checkbox-sm"
                   :disabled="isDisabled(field)" />
                 {{ field.label }}
-                <Icon v-if="field.restart" name="hugeicons:refresh" class="text-warning text-xs"
+                <HugeiconsIcon v-if="field.restart" :icon="RefreshIcon" :size="12" class="text-warning"
                   title="修改此项需要重启 Plugin Host" />
               </label>
 
@@ -173,7 +176,7 @@ async function save() {
                 <legend class="fieldset-legend text-xs">
                   {{ field.label }}
                   <span v-if="isRequired(field)" class="text-error">*</span>
-                  <Icon v-if="field.restart" name="hugeicons:refresh" class="text-warning text-xs"
+                  <HugeiconsIcon v-if="field.restart" :icon="RefreshIcon" :size="12" class="text-warning"
                     title="修改此项需要重启 Plugin Host" />
                 </legend>
                 <select v-model="formData[field.key]" class="select select-bordered w-full"
@@ -201,7 +204,7 @@ async function save() {
                 <legend class="fieldset-legend text-xs">
                   {{ field.label }}
                   <span v-if="isRequired(field)" class="text-error">*</span>
-                  <Icon v-if="field.restart" name="hugeicons:refresh" class="text-warning text-xs"
+                  <HugeiconsIcon v-if="field.restart" :icon="RefreshIcon" :size="12" class="text-warning"
                     title="修改此项需要重启 Plugin Host" />
                 </legend>
                 <input v-model.number="formData[field.key]" type="number" class="input input-bordered w-full"
@@ -211,7 +214,7 @@ async function save() {
 
               <!-- OAuth Callback URL (只读提示) -->
               <div v-else-if="field.type === 'oauth-callback-url'" class="alert alert-info alert-outline text-sm">
-                <Icon name="hugeicons:information-circle" class="text-base shrink-0" />
+                <HugeiconsIcon :icon="InformationCircleIcon" :size="16" class="shrink-0" />
                 <div class="flex flex-col gap-1">
                   <span class="font-medium">{{ field.label }}</span>
                   <span v-if="field.description" class="opacity-70 text-xs">{{ field.description }}</span>
@@ -220,7 +223,7 @@ async function save() {
                   <span v-else class="text-xs opacity-60">启用插件后将在此显示 Callback URL</span>
                   <a v-if="field.url" :href="field.url" target="_blank" rel="noopener noreferrer"
                     class="link link-primary text-xs inline-flex items-center gap-1 w-fit">
-                    <Icon name="hugeicons:link-square-01" class="text-sm" />
+                    <HugeiconsIcon :icon="LinkSquare01Icon" :size="14" />
                     前往配置
                   </a>
                 </div>
@@ -231,7 +234,7 @@ async function save() {
                 <legend class="fieldset-legend text-xs">
                   {{ field.label }}
                   <span v-if="isRequired(field)" class="text-error">*</span>
-                  <Icon v-if="field.restart" name="hugeicons:refresh" class="text-warning text-xs"
+                  <HugeiconsIcon v-if="field.restart" :icon="RefreshIcon" :size="12" class="text-warning"
                     title="修改此项需要重启 Plugin Host" />
                 </legend>
                 <input v-model="formData[field.key]" :type="field.type === 'password' ? 'password' : 'text'"

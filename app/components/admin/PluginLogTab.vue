@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { Delete02Icon, Download04Icon } from "@hugeicons/core-free-icons";
+
 const props = defineProps<{
   pluginId: string;
   active: boolean;
@@ -145,11 +148,11 @@ const levelBadge = (level: string) => {
       </select>
       <div class="flex-1" />
       <button class="btn btn-xs btn-ghost" :disabled="clearing" @click="clearLogs">
-        <Icon name="hugeicons:delete-02" class="text-sm" />
+        <HugeiconsIcon :icon="Delete02Icon" :size="14" />
         清空
       </button>
       <button class="btn btn-xs btn-ghost" @click="downloadLogs">
-        <Icon name="hugeicons:download-04" class="text-sm" />
+        <HugeiconsIcon :icon="Download04Icon" :size="14" />
         下载
       </button>
     </div>

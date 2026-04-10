@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { Plug01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
+
 const siteConfigRef = ref<InstanceType<typeof AdminSiteConfigTab> | null>(null);
 const activeTab = ref<"site-config" | "user-manage">("site-config");
 const emit = defineEmits<{ close: [] }>();
@@ -45,9 +48,9 @@ defineExpose({ canClose });
   <!-- 插件管理入口 -->
   <div class="mt-3 flex justify-end">
     <NuxtLink to="/admin/plugins" class="btn btn-sm btn-ghost gap-1" @click="emit('close')">
-      <Icon name="hugeicons:plug-01" class="text-base" />
+      <HugeiconsIcon :icon="Plug01Icon" :size="16" />
       插件管理
-      <Icon name="hugeicons:arrow-right-01" class="text-sm" />
+      <HugeiconsIcon :icon="ArrowRight01Icon" :size="14" />
     </NuxtLink>
   </div>
 

@@ -124,7 +124,20 @@ Tailwind CSS v4 with DaisyUI v5. Two custom themes (`irminsul-light`, `irminsul-
 
 ### Icons
 
-Use Nuxt Icon module with Iconify. Usage: `<Icon name="hugeicons:icon-name" />` (auto-resolved by @nuxt/icon).
+Use `@hugeicons/vue` with `@hugeicons/core-free-icons`. Each component directly imports the icons it needs:
+
+```vue
+<script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
+</script>
+
+<template>
+  <HugeiconsIcon :icon="ArrowRight01Icon" :size="16" />
+</template>
+```
+
+Icon names in `@hugeicons/core-free-icons` use PascalCase + `Icon` suffix (e.g. `arrow-right-01` → `ArrowRight01Icon`). The `size` prop accepts a pixel number (default 24).
 
 ### Modals
 

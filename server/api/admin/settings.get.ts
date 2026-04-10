@@ -6,6 +6,7 @@ const ALL_SETTING_KEYS = [
   "smtp.pass",
   "smtp.from",
   "auth.requireEmailVerification",
+  "oauth.enabled",
   "general.announcement",
 ];
 

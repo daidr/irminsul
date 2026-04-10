@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { Cancel01Icon } from "@hugeicons/core-free-icons";
+
 const dialogRef = useTemplateRef<HTMLDialogElement>("dialogRef");
 const watcher = ref(true);
 const logBufferSize = ref(200);
@@ -54,7 +57,7 @@ defineExpose({ open });
           <h3 class="text-lg font-bold">插件系统设置</h3>
           <form method="dialog">
             <button class="btn btn-ghost btn-sm">
-              <Icon name="hugeicons:cancel-01" class="text-xl opacity-40" />
+              <HugeiconsIcon :icon="Cancel01Icon" :size="20" class="opacity-40" />
             </button>
           </form>
         </div>

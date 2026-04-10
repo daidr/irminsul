@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { ShieldKeyIcon, PuzzleIcon } from "@hugeicons/core-free-icons";
+
 useHead({ title: "已授权应用" });
 
 const { data: user } = useUser();
@@ -93,7 +96,7 @@ function formatDate(dateStr: string): string {
 
       <!-- Empty -->
       <div v-else-if="authorizations.length === 0" class="flex flex-col items-center justify-center p-12 gap-3 text-base-content/40">
-        <Icon name="hugeicons:shield-key" class="text-4xl" />
+        <HugeiconsIcon :icon="ShieldKeyIcon" :size="36" />
         <p>还没有授权过任何应用</p>
       </div>
 
@@ -105,7 +108,7 @@ function formatDate(dateStr: string): string {
           class="border border-base-300 bg-base-200 p-4 flex items-start gap-4"
         >
           <div class="w-10 h-10 shrink-0 bg-base-300 border border-base-300 flex items-center justify-center">
-            <Icon name="hugeicons:puzzle" class="text-base text-base-content/40" />
+            <HugeiconsIcon :icon="PuzzleIcon" :size="16" class="text-base-content/40" />
           </div>
 
           <div class="flex-1 min-w-0">

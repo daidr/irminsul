@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { RefreshIcon } from "@hugeicons/core-free-icons";
+
 const emit = defineEmits<{ restarted: [] }>();
 
 const status = ref<string | null>(null);
@@ -83,7 +86,7 @@ const reasonLabel = (reason: string) => {
       <button v-if="status" class="btn btn-xs" :class="status === 'dirty' || status === 'crashed' ? 'btn-warning' : 'btn-ghost'" :disabled="restarting"
         @click="restartHost">
         <span v-if="restarting" class="loading loading-spinner loading-xs" />
-        <Icon v-else name="hugeicons:refresh" class="text-sm" />
+        <HugeiconsIcon v-else :icon="RefreshIcon" :size="14" />
         重启
       </button>
     </div>

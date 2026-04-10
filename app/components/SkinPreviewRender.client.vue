@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { ArrowLeft01Icon, ArrowRight01Icon, UserIcon } from "@hugeicons/core-free-icons";
+
 const profileStore = useProfileStore();
 const { skinUrl } = storeToRefs(profileStore);
 
@@ -36,7 +39,7 @@ const renderGraph = useRenderGraph(renderCanvasRef, skinUrl);
           :disabled="!renderGraph.canGoPrev.value"
           @click="renderGraph.goPrev()"
         >
-          <Icon name="hugeicons:arrow-left-01" class="text-base" />
+          <HugeiconsIcon :icon="ArrowLeft01Icon" :size="16" />
         </button>
         <span
           v-if="renderGraph.scenes.value[renderGraph.currentIndex.value]?.copyright"
@@ -49,12 +52,12 @@ const renderGraph = useRenderGraph(renderCanvasRef, skinUrl);
           :disabled="!renderGraph.canGoNext.value"
           @click="renderGraph.goNext()"
         >
-          <Icon name="hugeicons:arrow-right-01" class="text-base" />
+          <HugeiconsIcon :icon="ArrowRight01Icon" :size="16" />
         </button>
       </div>
     </template>
     <div v-else class="flex flex-col items-center justify-center gap-2 text-base-content/30 py-16">
-      <Icon name="hugeicons:user" class="text-[5rem]" />
+      <HugeiconsIcon :icon="UserIcon" :size="80" />
       <span class="text-sm">暂无皮肤</span>
     </div>
   </div>

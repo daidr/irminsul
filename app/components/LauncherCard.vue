@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { CursorMagicSelection03Icon, DragDropIcon, CheckmarkSquare04Icon } from "@hugeicons/core-free-icons";
+
 const props = defineProps<{
   apiUrl: string;
 }>();
@@ -34,7 +37,7 @@ function onDragStart(e: DragEvent) {
 <template>
   <div class="border border-base-300 bg-base-200 p-5">
     <div class="flex items-center gap-2.5 text-lg">
-      <Icon name="hugeicons:cursor-magic-selection-03" />
+      <HugeiconsIcon :icon="CursorMagicSelection03Icon" :size="20" />
       <h2>快速配置启动器</h2>
     </div>
 
@@ -54,8 +57,8 @@ function onDragStart(e: DragEvent) {
         @dragstart="onDragStart"
         @click="copyApiUrl"
       >
-        <Icon v-if="!copied" name="hugeicons:drag-drop" class="text-base" />
-        <Icon v-else name="hugeicons:checkmark-square-04" class="text-base" />
+        <HugeiconsIcon v-if="!copied" :icon="DragDropIcon" :size="16" />
+        <HugeiconsIcon v-else :icon="CheckmarkSquare04Icon" :size="16" />
         <span>{{ copied ? "已复制" : "将此按钮拖至启动器" }}</span>
       </button>
     </div>

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { CalendarRemove01Icon } from "@hugeicons/core-free-icons";
+
 interface ClientBanRecord {
   id?: string;
   start: number;
@@ -63,9 +66,10 @@ const hasActiveBan = computed(() => bans.value.some(isActive));
     >
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <Icon
-            name="hugeicons:calendar-remove-01"
-            class="h-4 w-4 shrink-0"
+          <HugeiconsIcon
+            :icon="CalendarRemove01Icon"
+            :size="16"
+            class="shrink-0"
             :class="isActive(ban) ? 'text-error' : 'opacity-40'"
           />
           <span class="text-sm font-semibold">

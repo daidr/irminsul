@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { MoreVerticalIcon } from "@hugeicons/core-free-icons";
+
 definePageMeta({ hideFooter: true });
 
 useHead({ title: "OAuth 应用审批" });
@@ -186,7 +189,7 @@ function formatDate(dateStr: string): string {
               <td class="text-right">
                 <div class="dropdown dropdown-end">
                   <div tabindex="0" role="button" class="btn btn-ghost btn-xs">
-                    <Icon name="hugeicons:more-vertical" class="text-base" />
+                    <HugeiconsIcon :icon="MoreVerticalIcon" :size="16" />
                   </div>
                   <ul tabindex="0" class="dropdown-content z-10 menu menu-sm shadow-lg bg-base-100 border border-base-300 w-36">
                     <li v-if="!app.approved">

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { LinkCircle02Icon } from "@hugeicons/core-free-icons";
+
 interface OAuthProvider {
   id: string;
   name: string;
@@ -62,7 +65,7 @@ function cancelConfirm() {
 <template>
   <div>
     <div class="flex items-center gap-2.5 text-lg">
-      <Icon name="hugeicons:link-circle-02" class="text-xl" />
+      <HugeiconsIcon :icon="LinkCircle02Icon" :size="20" />
       <h2>账号绑定</h2>
     </div>
     <p class="text-sm opacity-60 mt-1">绑定后可直接使用第三方账号快捷登录</p>

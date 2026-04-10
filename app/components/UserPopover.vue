@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { AnimatePresence, motion } from "motion-v";
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { Mail01Icon, Calendar03Icon, Logout05Icon } from "@hugeicons/core-free-icons";
 
 const props = defineProps<{
   user: any;
@@ -90,11 +92,11 @@ const isBanned = computed(() => {
 
             <div class="info-section">
               <div class="info-row">
-                <Icon name="hugeicons:mail-01" class="info-icon" />
+                <HugeiconsIcon :icon="Mail01Icon" :size="14" class="shrink-0" />
                 <span class="truncate">{{ user.email }}</span>
               </div>
               <div v-if="registerDate" class="info-row">
-                <Icon name="hugeicons:calendar-03" class="info-icon" />
+                <HugeiconsIcon :icon="Calendar03Icon" :size="14" class="shrink-0" />
                 <span>注册于 {{ registerDate }}</span>
               </div>
             </div>
@@ -102,7 +104,7 @@ const isBanned = computed(() => {
             <div class="tooltip absolute right-2 top-2" data-tip="退出登录">
               <button class="btn btn-error btn-soft btn-sm btn-square" :class="{ 'btn-disabled': loggingOut }"
                 :disabled="loggingOut" @click="handleLogout">
-                <Icon v-if="!loggingOut" name="hugeicons:logout-05" class="action-icon" />
+                <HugeiconsIcon v-if="!loggingOut" :icon="Logout05Icon" :size="16" />
                 <span v-if="loggingOut" class="loading loading-spinner loading-xs" />
               </button>
             </div>
@@ -149,16 +151,8 @@ const isBanned = computed(() => {
   @apply flex items-center gap-1.5;
 }
 
-.info-icon {
-  @apply w-3.5 h-3.5 shrink-0;
-}
-
 /* --- Action bar --- */
 .action-bar {
   @apply flex justify-between w-full;
-}
-
-.action-icon {
-  @apply w-4 h-4;
 }
 </style>

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { PlusSignIcon, PuzzleIcon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
+
 definePageMeta({ hideFooter: true });
 
 useHead({ title: "我的应用" });
@@ -49,7 +52,7 @@ onMounted(fetchApps);
       <div class="p-4 border-b border-base-300 flex items-center justify-between shrink-0">
         <h1 class="text-lg font-bold">我的应用</h1>
         <NuxtLink to="/developer/apps/new" class="btn btn-primary btn-sm">
-          <Icon name="hugeicons:plus-sign" class="text-base" />
+          <HugeiconsIcon :icon="PlusSignIcon" :size="16" />
           创建应用
         </NuxtLink>
       </div>
@@ -63,7 +66,7 @@ onMounted(fetchApps);
 
         <!-- Empty -->
         <div v-else-if="apps.length === 0" class="flex flex-col items-center justify-center p-12 gap-3 text-base-content/40">
-          <Icon name="hugeicons:puzzle" class="text-4xl" />
+          <HugeiconsIcon :icon="PuzzleIcon" :size="36" />
           <p>还没有创建任何应用</p>
           <NuxtLink to="/developer/apps/new" class="btn btn-primary btn-sm">创建第一个应用</NuxtLink>
         </div>
@@ -77,7 +80,7 @@ onMounted(fetchApps);
             class="flex items-center gap-4 p-4 border-b border-base-300/50 hover:bg-base-300/30 transition-colors"
           >
             <div class="w-10 h-10 shrink-0 bg-base-300 border border-base-300 flex items-center justify-center">
-              <Icon name="hugeicons:puzzle" class="text-base text-base-content/40" />
+              <HugeiconsIcon :icon="PuzzleIcon" :size="16" class="text-base-content/40" />
             </div>
 
             <div class="flex-1 min-w-0">
@@ -92,7 +95,7 @@ onMounted(fetchApps);
               <p v-if="app.description" class="text-sm text-base-content/60 truncate mt-0.5">{{ app.description }}</p>
             </div>
 
-            <Icon name="hugeicons:arrow-right-01" class="text-base text-base-content/40 shrink-0" />
+            <HugeiconsIcon :icon="ArrowRight01Icon" :size="16" class="text-base-content/40 shrink-0" />
           </NuxtLink>
         </div>
       </div>

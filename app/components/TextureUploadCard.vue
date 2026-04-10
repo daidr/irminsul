@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { BackgroundIcon, Delete02Icon, ImageUploadIcon, UserFullViewIcon } from "@hugeicons/core-free-icons";
+
 const profileStore = useProfileStore();
 const { skinHash, capeHash, skinSlim, hasCustomSkin } = storeToRefs(profileStore);
 
@@ -280,7 +283,7 @@ function cancelSwitchTab() {
     <!-- 头部 -->
     <div class="flex flex-wrap items-start justify-between gap-2">
       <div class="flex flex-wrap items-center gap-2.5 text-lg">
-        <Icon name="hugeicons:background" />
+        <HugeiconsIcon :icon="BackgroundIcon" :size="20" />
         <h2>材质上传</h2>
         <!-- 皮肤/披风切换 -->
         <div class="basis-full md:basis-auto"></div>
@@ -312,7 +315,7 @@ function cancelSwitchTab() {
             <button class="btn btn-xs bg-error/10 border-error/30 text-error hover:bg-error/20" :disabled="deleting"
               @click="deleteTexture">
               <span v-if="deleting" class="loading loading-spinner loading-xs" />
-              <Icon v-else name="hugeicons:delete-02" class="text-base" />
+              <HugeiconsIcon v-else :icon="Delete02Icon" :size="16" />
               {{ activeTab === "skin" ? "重置皮肤" : "重置披风" }}
             </button>
           </div>
@@ -331,7 +334,7 @@ function cancelSwitchTab() {
         <span class="text-xs text-base-content/50">{{ selectedFile?.name }}</span>
       </template>
       <template v-else>
-        <Icon name="hugeicons:image-upload" class="text-4xl text-base-content/25" />
+        <HugeiconsIcon :icon="ImageUploadIcon" :size="36" class="text-base-content/25" />
         <div class="flex flex-col items-center gap-1">
           <span class="text-sm text-base-content/50">
             拖放{{ activeTab === "skin" ? "皮肤" : "披风" }}文件到此处
@@ -350,7 +353,7 @@ function cancelSwitchTab() {
     <!-- 皮肤模型选择（皮肤 tab 且有皮肤/选了文件时显示） -->
     <div v-if="activeTab === 'skin' && (hasCustomSkin || hasFile)" class="mt-4">
       <div class="flex items-center gap-2 mb-2">
-        <Icon name="hugeicons:user-full-view" />
+        <HugeiconsIcon :icon="UserFullViewIcon" :size="16" />
         <span class="text-sm">皮肤模型</span>
       </div>
       <div class="join w-full">

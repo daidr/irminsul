@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { PuzzleIcon, ShieldKeyIcon } from "@hugeicons/core-free-icons";
+
 useHead({ title: "授权确认" });
 
 const route = useRoute();
@@ -83,7 +86,7 @@ async function handleAction(action: "approve" | "deny") {
         <!-- App info -->
         <div class="flex flex-col items-center gap-3">
           <div class="w-16 h-16 bg-base-200 border border-base-300 flex items-center justify-center">
-            <Icon name="hugeicons:puzzle" class="text-2xl text-base-content/40" />
+            <HugeiconsIcon :icon="PuzzleIcon" class="text-base-content/40" />
           </div>
           <div class="text-center">
             <p class="text-lg font-semibold">{{ appInfo.name }}</p>
@@ -106,7 +109,7 @@ async function handleAction(action: "approve" | "deny") {
               :key="s"
               class="flex items-start gap-2 bg-base-200 border border-base-300 p-2.5 text-sm"
             >
-              <Icon name="hugeicons:shield-key" class="text-base text-primary shrink-0 mt-0.5" />
+              <HugeiconsIcon :icon="ShieldKeyIcon" :size="16" class="text-primary shrink-0 mt-0.5" />
               <div>
                 <span class="font-medium">{{ s }}</span>
                 <p v-if="SCOPE_DESCRIPTIONS[s]" class="text-base-content/60 text-xs mt-0.5">

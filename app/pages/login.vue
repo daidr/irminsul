@@ -4,6 +4,8 @@ import {
   browserSupportsWebAuthn,
   WebAuthnAbortService,
 } from "@simplewebauthn/browser";
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { Key01Icon } from "@hugeicons/core-free-icons";
 import type AltchaField from "~/components/AltchaField.vue";
 
 useHead({ title: "登录" });
@@ -217,7 +219,7 @@ onBeforeUnmount(() => {
       >
         <span v-if="passkeyLoading" class="loading loading-spinner loading-sm" />
         <template v-else>
-          <Icon name="hugeicons:key-01" class="text-base" />
+          <HugeiconsIcon :icon="Key01Icon" :size="16" />
           使用通行密钥登录
         </template>
       </button>

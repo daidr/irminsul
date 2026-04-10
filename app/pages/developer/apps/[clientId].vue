@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { ArrowLeft01Icon, Copy01Icon, Delete02Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
+
 useHead({ title: "应用详情" });
 
 const route = useRoute();
@@ -173,7 +176,7 @@ function copyToClipboard(text: string) {
     <form v-else-if="app" class="w-full max-w-140 flex flex-col gap-6" @submit.prevent="handleSave">
       <div class="flex items-center gap-3">
         <NuxtLink to="/developer/apps" class="btn btn-ghost btn-sm">
-          <Icon name="hugeicons:arrow-left-01" class="text-base" />
+          <HugeiconsIcon :icon="ArrowLeft01Icon" :size="16" />
         </NuxtLink>
         <h1 class="text-2xl font-bold">编辑应用</h1>
       </div>
@@ -189,7 +192,7 @@ function copyToClipboard(text: string) {
             readonly
           />
           <button type="button" class="btn btn-ghost btn-sm" @click="copyToClipboard(app.clientId)">
-            <Icon name="hugeicons:copy-01" class="text-base" />
+            <HugeiconsIcon :icon="Copy01Icon" :size="16" />
           </button>
         </div>
       </fieldset>
@@ -245,7 +248,7 @@ function copyToClipboard(text: string) {
               class="btn btn-ghost btn-sm"
               @click="removeRedirectUri(index)"
             >
-              <Icon name="hugeicons:delete-02" class="text-base" />
+              <HugeiconsIcon :icon="Delete02Icon" :size="16" />
             </button>
           </div>
           <button
@@ -254,7 +257,7 @@ function copyToClipboard(text: string) {
             class="btn btn-ghost btn-sm self-start"
             @click="addRedirectUri"
           >
-            <Icon name="hugeicons:plus-sign" class="text-base" />
+            <HugeiconsIcon :icon="PlusSignIcon" :size="16" />
             添加回调地址
           </button>
         </div>
@@ -342,7 +345,7 @@ function copyToClipboard(text: string) {
           <div class="flex items-center gap-2 bg-base-200 border border-base-300 p-2 mt-4">
             <code class="text-sm flex-1 break-all">{{ newSecret }}</code>
             <button type="button" class="btn btn-ghost btn-xs" @click="copyToClipboard(newSecret)">
-              <Icon name="hugeicons:copy-01" class="text-base" />
+              <HugeiconsIcon :icon="Copy01Icon" :size="16" />
             </button>
           </div>
           <div class="modal-action">
