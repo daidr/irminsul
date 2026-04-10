@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { HugeiconsIcon } from "@hugeicons/vue";
-import { ShieldKeyIcon, PuzzleIcon } from "@hugeicons/core-free-icons";
+import { ShieldKeyIcon } from "@hugeicons/core-free-icons";
 
 useHead({ title: "已授权应用" });
 
@@ -29,6 +29,7 @@ interface AuthorizationItem {
   clientId: string;
   appName: string | null;
   appDescription: string | null;
+  appIcon: { name: string; hue: number } | null;
   scopes: string[];
   grantedAt: string;
   updatedAt: string;
@@ -107,8 +108,8 @@ function formatDate(dateStr: string): string {
           :key="auth.clientId"
           class="border border-base-300 bg-base-200 p-4 flex items-start gap-4"
         >
-          <div class="w-10 h-10 shrink-0 bg-base-300 border border-base-300 flex items-center justify-center">
-            <HugeiconsIcon :icon="PuzzleIcon" :size="16" class="text-base-content/40" />
+          <div class="w-10 h-10 shrink-0">
+            <OAuthAppIcon :name="auth.appIcon?.name" :hue="auth.appIcon?.hue" :size="16" />
           </div>
 
           <div class="flex-1 min-w-0">
