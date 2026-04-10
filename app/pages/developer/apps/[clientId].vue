@@ -32,6 +32,7 @@ interface AppDetail {
   clientId: string;
   name: string;
   description: string;
+  icon: { name: string; hue: number } | null;
   type: string;
   redirectUris: string[];
   scopes: string[];
@@ -47,6 +48,7 @@ const editName = ref("");
 const editDescription = ref("");
 const editRedirectUris = ref<string[]>([]);
 const editScopes = ref<string[]>([]);
+const editIcon = ref<{ name: string; hue: number } | null>(null);
 const isSaving = ref(false);
 
 async function fetchApp() {
@@ -58,6 +60,7 @@ async function fetchApp() {
     editDescription.value = data.description;
     editRedirectUris.value = [...data.redirectUris];
     editScopes.value = [...data.scopes];
+    editIcon.value = data.icon ? { ...data.icon } : null;
   } catch {
     toast.error("加载应用详情失败");
   } finally {
@@ -109,6 +112,7 @@ async function handleSave() {
         description: editDescription.value.trim(),
         redirectUris: validUris,
         scopes: editScopes.value,
+        icon: editIcon.value,
       },
     });
     toast.success("保存成功");
@@ -180,6 +184,9 @@ function copyToClipboard(text: string) {
         </NuxtLink>
         <h1 class="text-2xl font-bold">编辑应用</h1>
       </div>
+
+      <!-- Icon -->
+      <IconPicker v-model="editIcon" />
 
       <!-- Client ID (readonly) -->
       <fieldset class="fieldset">
