@@ -13,15 +13,25 @@ const emit = defineEmits<{
 const currentName = computed(() => props.modelValue?.name ?? DEFAULT_ICON.name);
 const currentHue = computed(() => props.modelValue?.hue ?? DEFAULT_ICON.hue);
 
-const popoverId = useId();
+const isOpen = ref(false);
 const hasOpened = ref(false);
-const popoverRef = useTemplateRef<HTMLDivElement>("popoverRef");
+const wrapperRef = useTemplateRef<HTMLDivElement>("wrapperRef");
 
-function onPopoverToggle(event: ToggleEvent) {
-  if (event.newState === "open") {
+function toggle() {
+  isOpen.value = !isOpen.value;
+  if (isOpen.value) {
     hasOpened.value = true;
   }
 }
+
+function onClickOutside(event: MouseEvent) {
+  if (isOpen.value && wrapperRef.value && !wrapperRef.value.contains(event.target as Node)) {
+    isOpen.value = false;
+  }
+}
+
+onMounted(() => document.addEventListener("click", onClickOutside));
+onUnmounted(() => document.removeEventListener("click", onClickOutside));
 
 function selectIcon(name: string) {
   emit("update:modelValue", { name, hue: currentHue.value });
@@ -38,33 +48,30 @@ const colorVars = useIconColorVars(currentHue);
 <template>
   <div class="flex flex-col gap-2">
     <span class="fieldset-legend text-sm font-semibold">应用图标</span>
-    <div class="flex items-center gap-3">
+    <div ref="wrapperRef" class="relative inline-flex items-center gap-3">
       <!-- Preview trigger -->
       <button
         type="button"
         class="w-14 h-14 shrink-0 cursor-pointer"
-        :popovertarget="popoverId"
+        @click.stop="toggle"
       >
         <OAuthAppIcon :name="currentName" :hue="currentHue" :size="24" />
       </button>
       <span class="text-sm text-base-content/60">点击选择图标和颜色</span>
-    </div>
 
-    <!-- Popover -->
-    <ClientOnly>
-      <div
-        :id="popoverId"
-        ref="popoverRef"
-        popover
-        class="bg-base-100 border border-base-300 shadow-lg p-4 w-80"
-        @toggle="onPopoverToggle"
-      >
-        <template v-if="hasOpened">
+      <!-- Dropdown -->
+      <ClientOnly>
+        <div
+          v-if="hasOpened"
+          v-show="isOpen"
+          class="absolute top-full left-0 mt-2 z-50 bg-base-100 border border-base-300 shadow-lg p-4 w-80"
+        >
           <!-- Icon grid -->
           <div class="grid grid-cols-6 gap-1.5 mb-4" :style="colorVars">
             <button
               v-for="iconName in BUILTIN_ICON_NAMES"
               :key="iconName"
+              v-memo="[currentName === iconName]"
               type="button"
               class="w-10 h-10 flex items-center justify-center cursor-pointer transition-colors"
               :style="{
@@ -91,9 +98,9 @@ const colorVars = useIconColorVars(currentHue);
               @input="updateHue"
             />
           </div>
-        </template>
-      </div>
-    </ClientOnly>
+        </div>
+      </ClientOnly>
+    </div>
   </div>
 </template>
 
