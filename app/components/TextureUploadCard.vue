@@ -75,6 +75,7 @@ function resetSelection() {
     fileInputRef.value.value = "";
   }
   selectedModelType.value = savedModelType.value;
+  profileStore.setPreviewSlim(undefined);
   emitPreview(undefined);
 }
 
@@ -288,11 +289,11 @@ function cancelSwitchTab() {
         <!-- 皮肤/披风切换 -->
         <div class="basis-full md:basis-auto"></div>
         <div class="join">
-          <button class="btn btn-xs join-item" :class="activeTab === 'skin' ? 'btn-active' : ''"
+          <button class="btn btn-xs join-item" :class="activeTab === 'skin' ? 'btn-primary' : ''"
             @click="switchTab('skin')">
             皮肤
           </button>
-          <button class="btn btn-xs join-item" :class="activeTab === 'cape' ? 'btn-active' : ''"
+          <button class="btn btn-xs join-item" :class="activeTab === 'cape' ? 'btn-primary' : ''"
             @click="switchTab('cape')">
             披风
           </button>
@@ -357,11 +358,11 @@ function cancelSwitchTab() {
         <span class="text-sm">皮肤模型</span>
       </div>
       <div class="join w-full">
-        <button class="btn btn-sm join-item flex-1" :class="selectedModelType === 0 ? 'btn-active' : ''"
+        <button class="btn btn-sm join-item flex-1" :class="selectedModelType === 0 ? 'btn-primary' : ''"
           @click="setModelType(0)">
           默认 (Steve)
         </button>
-        <button class="btn btn-sm join-item flex-1" :class="selectedModelType === 1 ? 'btn-active' : ''"
+        <button class="btn btn-sm join-item flex-1" :class="selectedModelType === 1 ? 'btn-primary' : ''"
           @click="setModelType(1)">
           纤细 (Alex)
         </button>

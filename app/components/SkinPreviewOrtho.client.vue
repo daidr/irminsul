@@ -34,10 +34,7 @@ useRenderSkinLeftSide(leftCanvasRef, renderOptions);
 </script>
 
 <template>
-  <div
-    class="mt-4 overflow-x-auto border border-base-300 bg-base-100 p-4"
-    style="min-height: 320px"
-  >
+  <div class="mt-4 overflow-x-auto border border-base-300 bg-base-100 p-4" style="min-height: 320px">
     <ClientOnly>
       <div v-if="skinUrl" class="flex items-end justify-center gap-8 min-w-max mx-auto">
         <div class="flex flex-col items-center">
@@ -72,19 +69,11 @@ useRenderSkinLeftSide(leftCanvasRef, renderOptions);
   </div>
 
   <div class="mt-4 flex gap-3">
-    <button
-      class="btn btn-sm"
-      :class="showOverlay ? 'btn-active' : ''"
-      @click="showOverlay = !showOverlay"
-    >
+    <button class="btn btn-sm" :class="showOverlay ? 'btn-primary' : ''" @click="showOverlay = !showOverlay">
       覆盖层
     </button>
-    <button
-      v-if="showOverlay"
-      class="btn btn-sm"
-      :class="overlayInflated ? 'btn-active' : ''"
-      @click="overlayInflated = !overlayInflated"
-    >
+    <button v-if="showOverlay" class="btn btn-sm" :class="overlayInflated ? 'btn-primary' : ''"
+      @click="overlayInflated = !overlayInflated">
       覆盖层交错
     </button>
   </div>

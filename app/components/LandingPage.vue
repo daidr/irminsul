@@ -45,12 +45,12 @@ const features = computed(() => [
 </script>
 
 <template>
-  <section class="h-dvh -mt-18 overflow-hidden flex items-center justify-center">
+  <section class="h-[calc(100dvh+48px)] -mt-18 overflow-hidden flex items-center justify-center">
     <motion.div class="flex flex-col items-center justify-center gap-9 relative" :style="{ y: heroY }">
       <div
-        class="backdrop-blur-sm bg-black/2 border-black/7 border px-4 py-1.5 text-[#6B7280] text-sm flex gap-2 items-center">
+        class="backdrop-blur-sm bg-black/2 border-black/7 dark:bg-white/5 dark:border-white/17 border px-4 py-1.5 text-sm flex gap-2 items-center">
         <div class="w-1.5 h-1.5 bg-primary"></div>
-        开源 · 安全 · 自托管
+        <span class="opacity-60">开源 · 安全 · 自托管</span>
       </div>
       <h1 class="text-7xl font-semibold tracking-tighter">Irminsul</h1>
       <p class="opacity-60">轻量的 Minecraft 服务器 yggdrasil 验证</p>

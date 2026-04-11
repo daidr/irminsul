@@ -26,27 +26,27 @@ const backEquipment = ref<BackEquipment>("cape");
     <!-- 动画控制 -->
     <div class="mt-4 flex items-center gap-3 flex-wrap">
       <div class="join">
-        <button class="btn btn-sm join-item" :class="animationType === 'walk' ? 'btn-active' : ''"
+        <button class="btn btn-sm join-item" :class="animationType === 'walk' ? 'btn-primary' : ''"
           @click="animationType = 'walk'">
           走
         </button>
-        <button class="btn btn-sm join-item" :class="animationType === 'run' ? 'btn-active' : ''"
+        <button class="btn btn-sm join-item" :class="animationType === 'run' ? 'btn-primary' : ''"
           @click="animationType = 'run'">
           跑
         </button>
-        <button class="btn btn-sm join-item" :class="animationType === 'fly' ? 'btn-active' : ''"
+        <button class="btn btn-sm join-item" :class="animationType === 'fly' ? 'btn-primary' : ''"
           @click="animationType = 'fly'">
           飞行
         </button>
-        <button class="btn btn-sm join-item" :class="animationType === 'idle' ? 'btn-active' : ''"
+        <button class="btn btn-sm join-item" :class="animationType === 'idle' ? 'btn-primary' : ''"
           @click="animationType = 'idle'">
           待机
         </button>
       </div>
-      <button class="btn btn-sm" :class="autoRotate ? 'btn-active' : ''" @click="autoRotate = !autoRotate">
+      <button class="btn btn-sm" :class="autoRotate ? 'btn-primary' : ''" @click="autoRotate = !autoRotate">
         旋转
       </button>
-      <button class="btn btn-sm" :class="paused ? 'btn-active' : ''" @click="paused = !paused">
+      <button class="btn btn-sm" :class="paused ? 'btn-primary' : ''" @click="paused = !paused">
         暂停
       </button>
     </div>

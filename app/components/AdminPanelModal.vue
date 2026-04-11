@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { HugeiconsIcon } from "@hugeicons/vue";
 import { Plug01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import type AdminSiteConfigTab from "./AdminSiteConfigTab.vue";
 
 const siteConfigRef = ref<InstanceType<typeof AdminSiteConfigTab> | null>(null);
 const activeTab = ref<"site-config" | "user-manage">("site-config");
@@ -11,11 +12,6 @@ function canClose(): boolean {
     return window.confirm("有未保存的修改，确定关闭？");
   }
   return true;
-}
-
-function handleClose() {
-  if (!canClose()) return;
-  emit("close");
 }
 
 defineExpose({ canClose });
@@ -29,18 +25,12 @@ defineExpose({ canClose });
 
   <!-- Tab 栏 -->
   <div class="join w-full mt-5">
-    <button
-      class="btn btn-sm join-item flex-1"
-      :class="activeTab === 'site-config' ? 'btn-active' : ''"
-      @click="activeTab = 'site-config'"
-    >
+    <button class="btn btn-sm join-item flex-1" :class="activeTab === 'site-config' ? 'btn-primary' : ''"
+      @click="activeTab = 'site-config'">
       站点配置
     </button>
-    <button
-      class="btn btn-sm join-item flex-1"
-      :class="activeTab === 'user-manage' ? 'btn-active' : ''"
-      @click="activeTab = 'user-manage'"
-    >
+    <button class="btn btn-sm join-item flex-1" :class="activeTab === 'user-manage' ? 'btn-primary' : ''"
+      @click="activeTab = 'user-manage'">
       用户管理
     </button>
   </div>
@@ -55,9 +45,6 @@ defineExpose({ canClose });
   </div>
 
   <!-- Tab 内容 -->
-  <AdminSiteConfigTab
-    v-show="activeTab === 'site-config'"
-    ref="siteConfigRef"
-  />
+  <AdminSiteConfigTab v-show="activeTab === 'site-config'" ref="siteConfigRef" />
   <AdminUserManageTab v-show="activeTab === 'user-manage'" />
 </template>

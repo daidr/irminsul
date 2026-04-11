@@ -15,19 +15,19 @@ const activeTab = ref<ViewTab>("model");
       <!-- 标签页切换 -->
       <div class="basis-full md:basis-auto"></div>
       <div class="join">
-        <button class="btn btn-xs join-item" :class="activeTab === 'model' ? 'btn-active' : ''"
+        <button class="btn btn-xs join-item" :class="activeTab === 'model' ? 'btn-primary' : ''"
           @click="activeTab = 'model'">
           3D 模型
         </button>
-        <button class="btn btn-xs join-item" :class="activeTab === 'orthographic' ? 'btn-active' : ''"
+        <button class="btn btn-xs join-item" :class="activeTab === 'orthographic' ? 'btn-primary' : ''"
           @click="activeTab = 'orthographic'">
           多面视图
         </button>
-        <button class="btn btn-xs join-item" :class="activeTab === 'raw' ? 'btn-active' : ''"
+        <button class="btn btn-xs join-item" :class="activeTab === 'raw' ? 'btn-primary' : ''"
           @click="activeTab = 'raw'">
           原始图片
         </button>
-        <button class="btn btn-xs join-item" :class="activeTab === 'render' ? 'btn-active' : ''"
+        <button class="btn btn-xs join-item" :class="activeTab === 'render' ? 'btn-primary' : ''"
           @click="activeTab = 'render'">
           渲染图
         </button>

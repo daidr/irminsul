@@ -81,11 +81,11 @@ async function toggleEnabled() {
     <!-- Tab 栏 -->
     <div class="px-4 pt-3">
       <div class="join w-full">
-        <button class="btn btn-sm join-item flex-1" :class="activeTab === 'config' ? 'btn-active' : ''"
+        <button class="btn btn-sm join-item flex-1" :class="activeTab === 'config' ? 'btn-primary' : ''"
           @click="activeTab = 'config'">配置</button>
-        <button class="btn btn-sm join-item flex-1" :class="activeTab === 'logs' ? 'btn-active' : ''"
+        <button class="btn btn-sm join-item flex-1" :class="activeTab === 'logs' ? 'btn-primary' : ''"
           @click="activeTab = 'logs'">日志</button>
-        <button class="btn btn-sm join-item flex-1" :class="activeTab === 'info' ? 'btn-active' : ''"
+        <button class="btn btn-sm join-item flex-1" :class="activeTab === 'info' ? 'btn-primary' : ''"
           @click="activeTab = 'info'">信息</button>
       </div>
     </div>
