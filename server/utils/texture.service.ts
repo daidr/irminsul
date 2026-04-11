@@ -109,6 +109,8 @@ export async function processTextureUpload(event: H3Event, params: {
     await updateUserCape(uuid, { hash });
   }
 
+  await invalidateSessionUserCache(uuid);
+
   // 清理旧材质文件（若无人使用）
   if (oldHash && oldHash !== hash) {
     await tryRemoveUnusedTexture(event, oldHash);
@@ -137,6 +139,8 @@ export async function processTextureDelete(event: H3Event, params: {
   } else {
     await updateUserCape(uuid, null);
   }
+
+  await invalidateSessionUserCache(uuid);
 
   // 清理旧材质文件（若无人使用）
   if (oldHash) {

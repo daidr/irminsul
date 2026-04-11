@@ -11,5 +11,6 @@ export default defineEventHandler(async (event) => {
   }
 
   await setDeveloperStatus(uuid, false);
+  await invalidateSessionUserCache(uuid);
   return { success: true };
 });

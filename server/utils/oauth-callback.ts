@@ -104,6 +104,7 @@ export async function handleOAuthCallback(event: H3Event, params: CallbackParams
         if (!added) {
           return sendRedirect(event, "/?oauth=duplicate");
         }
+        await invalidateSessionUserCache(stateData.userId!);
       } catch (err: any) {
         if (err?.code === 11000) {
           return sendRedirect(event, "/?oauth=already-bound");

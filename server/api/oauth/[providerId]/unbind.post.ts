@@ -11,6 +11,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "No binding found for this provider" });
   }
 
+  await invalidateSessionUserCache(user.userId);
+
   emitUserHook("user:oauth-bindchanged", {
     uuid: user.userId,
     email: user.email,

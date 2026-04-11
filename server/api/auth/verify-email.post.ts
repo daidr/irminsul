@@ -38,6 +38,7 @@ export default defineEventHandler(async (event) => {
   }
 
   await setEmailVerified(result.userId, true);
+  await invalidateSessionUserCache(result.userId);
   log.set({ emailVerification: { verified: true, userId: result.userId, email: result.email } });
   return { success: true } as const;
 });

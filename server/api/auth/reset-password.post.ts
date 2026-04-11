@@ -63,6 +63,7 @@ export default defineEventHandler(async (event) => {
   // Hash and update password
   const newHash = await hashPassword(password);
   await updatePasswordHash(user.uuid, newHash, "argon2id");
+  await invalidateSessionUserCache(user.uuid);
 
   // Invalidate all Yggdrasil tokens
   await removeAllTokens(user.uuid);

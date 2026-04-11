@@ -2,7 +2,15 @@ export default defineEventHandler(async (event) => {
   const sessionData = await getSessionData(event);
   if (!sessionData) return;
 
-  const userDoc = await findUserForSession(sessionData.userId);
+  // Try cache first, fall back to MongoDB
+  let userDoc = await getCachedSessionUser(sessionData.userId);
+  if (!userDoc) {
+    userDoc = await findUserForSession(sessionData.userId);
+    if (userDoc) {
+      await setCachedSessionUser(sessionData.userId, userDoc);
+    }
+  }
+
   const defaultSkinHash = useRuntimeConfig(event).yggdrasilDefaultSkinHash;
   const skinHash = userDoc?.skin?.hash || defaultSkinHash || undefined;
 

@@ -22,5 +22,7 @@ export default defineEventHandler(async (event) => {
     return { success: false, error: "请先上传皮肤" };
   }
 
+  await invalidateSessionUserCache(user.userId);
+
   return { success: true };
 });
