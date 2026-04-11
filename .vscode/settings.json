@@ -12,5 +12,6 @@
   },
   "[typescript]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
-  }
+  },
+  "typescript.experimental.useTsgo": false
 }
