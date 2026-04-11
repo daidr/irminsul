@@ -26,6 +26,7 @@ export async function ensureUserIndexes(): Promise<void> {
   await col.createIndex({ uuid: 1 }, { unique: true });
   await col.createIndex({ "skin.hash": 1 }, { sparse: true });
   await col.createIndex({ "cape.hash": 1 }, { sparse: true });
+  await col.createIndex({ "tokens.accessToken": 1 }, { sparse: true });
   await col.createIndex(
     { "passkeys.credentialId": 1 },
     { unique: true, partialFilterExpression: { "passkeys.credentialId": { $exists: true } } },
