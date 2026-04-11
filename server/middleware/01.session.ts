@@ -16,11 +16,11 @@ export default defineEventHandler(async (event) => {
 
   const bans = (userDoc?.bans ?? []).map((ban) => ({
     id: ban.id,
-    start: ban.start.getTime(),
-    end: ban.end?.getTime(),
+    start: new Date(ban.start).getTime(),
+    end: ban.end ? new Date(ban.end).getTime() : undefined,
     reason: ban.reason,
     operatorId: ban.operatorId,
-    revokedAt: ban.revokedAt?.getTime(),
+    revokedAt: ban.revokedAt ? new Date(ban.revokedAt).getTime() : undefined,
   }));
 
   const emailVerified = userDoc?.emailVerified ?? false;
@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
     skinSlim: userDoc?.skin?.type === 1,
     hasCustomSkin: !!userDoc?.skin?.hash,
     capeHash: userDoc?.cape?.hash ?? undefined,
-    registerAt: userDoc?.time.register.getTime() ?? null,
+    registerAt: userDoc?.time.register ? new Date(userDoc.time.register).getTime() : null,
     bans,
     isAdmin: userDoc?.isAdmin === true,
     isDeveloper: userDoc?.isDeveloper ?? false,
@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
       provider: b.provider,
       providerId: b.providerId,
       displayName: b.displayName,
-      boundAt: b.boundAt.getTime(),
+      boundAt: new Date(b.boundAt).getTime(),
     })),
   };
 
