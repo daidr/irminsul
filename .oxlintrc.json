@@ -28,7 +28,6 @@
     "unicorn/prefer-number-properties": "error",
     "unicorn/prefer-string-starts-ends-with": "error",
     "unicorn/prefer-type-error": "error",
-    "unicorn/better-regex": "error",
     "unicorn/throw-new-error": "error"
   },
   "settings": {

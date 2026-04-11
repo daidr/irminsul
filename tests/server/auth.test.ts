@@ -29,6 +29,18 @@ vi.stubGlobal("createSession", mockCreateSession);
 vi.stubGlobal("extractClientIp", mockExtractClientIp);
 vi.stubGlobal("emitUserHook", mockEmitUserHook);
 
+// Stub rate limiting (added by security fix)
+const mockCheckRateLimit = vi.fn();
+vi.stubGlobal("checkRateLimit", mockCheckRateLimit);
+
+// Stub YggdrasilError (used by rate limit catch block)
+class MockYggdrasilError extends Error {
+  constructor(public httpStatus: number, public error: string, public errorMessage: string) {
+    super(errorMessage);
+  }
+}
+vi.stubGlobal("YggdrasilError", MockYggdrasilError);
+
 // Stub Nitro's defineEventHandler to just return the handler fn
 vi.stubGlobal("defineEventHandler", (handler: Function) => handler);
 
