@@ -2,8 +2,8 @@ import { usePreferredDark } from "@vueuse/core";
 import type { MaybeRef } from "vue";
 
 export function useIconColorVars(hue: MaybeRef<number>) {
+  const darkMode = usePreferredDark();
   return computed(() => {
-    const darkMode = usePreferredDark();
     const h = toValue(hue);
     return darkMode.value
       ? {
