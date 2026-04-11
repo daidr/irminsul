@@ -360,7 +360,7 @@ export async function yggdrasilPlayerCertificates(authorization: string | undefi
     return JSON.parse(cached as string);
   }
 
-  const result = generatePlayerCertificates(user.uuid);
+  const result = await generatePlayerCertificates(user.uuid);
 
   await redis.send("SET", [cacheKey, JSON.stringify(result), "EX", CERT_TTL_SECONDS.toString()]);
 

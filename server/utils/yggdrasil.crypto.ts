@@ -1,6 +1,9 @@
 import { createLogger } from "evlog";
 import fs from "node:fs/promises";
 import crypto from "node:crypto";
+import { promisify } from "node:util";
+
+const generateKeyPair = promisify(crypto.generateKeyPair);
 
 const RSA_PRIVATE_KEY_PATH = "./irminsul-data/auto-generate/yggdrasil-private.pem";
 const RSA_PUBLIC_KEY_PATH = "./irminsul-data/auto-generate/yggdrasil-public.pem";
@@ -35,7 +38,7 @@ export async function loadOrGenerateKeys(): Promise<void> {
 
   if (!privateExists) {
     log.set({ action: "generateRsaKeys" });
-    const { privateKey: privPem, publicKey: pubPem } = crypto.generateKeyPairSync("rsa", {
+    const { privateKey: privPem, publicKey: pubPem } = await generateKeyPair("rsa", {
       modulusLength: 4096,
       publicKeyEncoding: { type: "spki", format: "pem" },
       privateKeyEncoding: { type: "pkcs8", format: "pem" },
@@ -96,7 +99,7 @@ function repackPem(pem: string, keyType: "PUBLIC" | "PRIVATE"): string {
 /**
  * 为玩家生成证书密钥对（用于 1.19+ 聊天签名）
  */
-export function generatePlayerCertificates(playerUuid: string) {
+export async function generatePlayerCertificates(playerUuid: string) {
   if (!privateKey) {
     throw new Error("Server RSA keys not loaded");
   }
@@ -106,7 +109,7 @@ export function generatePlayerCertificates(playerUuid: string) {
   const refreshedAfter = now + CERT_REFRESH_MS;
 
   // 生成 2048 位玩家密钥对（SPKI/PKCS8 编码，头部替换为 RSA 前缀）
-  const playerKeyPair = crypto.generateKeyPairSync("rsa", {
+  const playerKeyPair = await generateKeyPair("rsa", {
     modulusLength: 2048,
     publicKeyEncoding: { type: "spki", format: "pem" },
     privateKeyEncoding: { type: "pkcs8", format: "pem" },
