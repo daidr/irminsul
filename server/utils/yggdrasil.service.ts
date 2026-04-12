@@ -229,8 +229,9 @@ export async function yggdrasilHasJoined(params: {
 // --- profile ---
 
 export async function yggdrasilGetProfile(uuidHex: string) {
-  if (uuidHex.length !== 32) return null;
-  const uuidWithHyphens = addUuidHyphens(uuidHex);
+  const normalized = uuidHex.replaceAll("-", "");
+  if (normalized.length !== 32) return null;
+  const uuidWithHyphens = addUuidHyphens(normalized);
   const user = await findUserByUuid(uuidWithHyphens);
   if (!user) return null;
 
