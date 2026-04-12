@@ -37,7 +37,7 @@ async function fetchApp() {
   if (!clientId.value) return;
   loadingApp.value = true;
   try {
-    const data = await $fetch<any>(`/api/oauth-provider/apps/${clientId.value}`);
+    const data = await $fetch<any>(`/api/oauth-provider/consent/${clientId.value}`);
     appInfo.value = data;
   } catch {
     toast.error("无法加载应用信息");
