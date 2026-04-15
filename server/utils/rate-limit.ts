@@ -22,13 +22,27 @@ const defaultOptions: RateLimitOptions = {
   fastFail: false,
 };
 
+/**
+ * Atomic increment + conditional expire + TTL readback.
+ * Returns [count, ttlSeconds]. TTL is the authoritative retry-after window.
+ */
+const ATOMIC_INCR_SCRIPT = `
+local count = redis.call('INCR', KEYS[1])
+if count == 1 then
+  redis.call('EXPIRE', KEYS[1], ARGV[1])
+end
+local ttl = redis.call('TTL', KEYS[1])
+return {count, ttl}
+`.trim();
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
  * Check rate limit for given IP/username key.
- * Uses Redis INCR + EXPIRE for distributed, atomic counting.
+ * Uses a single EVAL call so INCR + EXPIRE are guaranteed atomic
+ * (prevents the "EXPIRE lost on crash" self-DoS).
  * Throws YggdrasilError(429) if exceeded.
  */
 export async function checkRateLimit(
@@ -39,20 +53,20 @@ export async function checkRateLimit(
   const options = { ...defaultOptions, ...userOptions };
   const key = buildRedisKey("ratelimit", keyIdentifier);
   const redis = getRedisClient();
+  const ttlSeconds = Math.ceil(options.duration / 1000);
 
-  // Atomic increment; returns current count after increment
-  const count = (await redis.send("INCR", [key])) as number;
+  const result = (await redis.send("EVAL", [
+    ATOMIC_INCR_SCRIPT,
+    "1",
+    key,
+    ttlSeconds.toString(),
+  ])) as [number, number];
 
-  // Set expiry only on first request in window (when count becomes 1)
-  if (count === 1) {
-    const ttlSeconds = Math.ceil(options.duration / 1000);
-    await redis.send("EXPIRE", [key, ttlSeconds.toString()]);
-  }
+  const count = result[0];
+  const ttl = result[1];
+  const retryAfter = ttl > 0 ? ttl : ttlSeconds;
 
-  // Reject if over max
   if (count > options.max) {
-    const ttl = (await redis.send("TTL", [key])) as number;
-    const retryAfter = ttl > 0 ? ttl : Math.ceil(options.duration / 1000);
     useLogger(event).set({ rateLimit: { exceeded: true, key: keyIdentifier, count } });
     throw new YggdrasilError(
       429,
@@ -61,11 +75,8 @@ export async function checkRateLimit(
     );
   }
 
-  // Progressive delay or fast-fail after threshold
   if (count > options.delayAfter) {
     if (options.fastFail) {
-      const ttl = (await redis.send("TTL", [key])) as number;
-      const retryAfter = ttl > 0 ? ttl : Math.ceil(options.duration / 1000);
       useLogger(event).set({ rateLimit: { exceeded: true, key: keyIdentifier, count, fastFail: true } });
       throw new YggdrasilError(
         429,
