@@ -210,6 +210,30 @@ describe("rate-limit coverage: web auth helper endpoints", () => {
     });
   });
 
+  describe("/api/user/texture.post", () => {
+    let handler: Function;
+    beforeEach(async () => {
+      handler = (await import("../../server/api/user/texture.post")).default;
+    });
+
+    it("calls checkRateLimit with web:texture-upload:uid: scope", async () => {
+      mockRequireAuth.mockReturnValue({ userId: "user-uuid", email: "u@x.c", gameId: "P1" });
+      // mock processTextureUpload — texture upload calls it after rate-limit
+      vi.stubGlobal("processTextureUpload", vi.fn().mockResolvedValue({ hash: "abc" }));
+      const event = createFakeEvent({
+        type: "skin",
+        data: "AAAA", // tiny base64, passes size check
+        model: 0,
+      }, { userId: "user-uuid" });
+      await handler(event);
+      expect(mockCheckRateLimit).toHaveBeenCalledWith(
+        event,
+        "web:texture-upload:uid:user-uuid",
+        expect.objectContaining({ max: 10, fastFail: true }),
+      );
+    });
+  });
+
   describe("/api/passkey/auth-verify", () => {
     let handler: Function;
     beforeEach(async () => {
