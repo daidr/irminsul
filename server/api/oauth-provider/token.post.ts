@@ -62,7 +62,7 @@ async function handleAuthorizationCode(
   }
 
   // Verify PKCE
-  if (codeData.codeChallenge) {
+  if (codeData.codeChallenge !== null) {
     if (!code_verifier) {
       throw new OAuthError("invalid_grant", "code_verifier required", 400);
     }

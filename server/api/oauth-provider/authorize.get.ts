@@ -115,7 +115,7 @@ export default defineEventHandler(async (event) => {
         userId: user.userId,
         scopes: requestedScopes,
         redirectUri,
-        codeChallenge: codeChallenge || "",
+        codeChallenge: codeChallenge ?? null,
         codeChallengeMethod: "S256",
         createdAt: Date.now(),
       });

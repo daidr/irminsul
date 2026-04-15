@@ -59,6 +59,19 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // Enforce PKCE for public clients
+  if (app.type === "public") {
+    if (!code_challenge || code_challenge_method !== "S256") {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "Public clients must use PKCE with S256",
+      });
+    }
+  }
+  if (code_challenge_method && code_challenge_method !== "S256") {
+    throw createError({ statusCode: 400, statusMessage: "Only S256 code_challenge_method is supported" });
+  }
+
   // 4. If deny, return error redirect
   if (action === "deny") {
     return {
@@ -77,7 +90,7 @@ export default defineEventHandler(async (event) => {
     userId: user.userId,
     scopes: requestedScopes,
     redirectUri: redirect_uri,
-    codeChallenge: code_challenge || "",
+    codeChallenge: code_challenge ?? null,
     codeChallengeMethod: "S256",
     createdAt: Date.now(),
   });
