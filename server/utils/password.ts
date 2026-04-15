@@ -7,6 +7,30 @@ import type { HashVersion } from "~~/server/types/user.schema";
 const LEGACY_PASSWORD_SUFFIX = "dKfkZh";
 
 /**
+ * Burn an argon2id verify on a fixed dummy hash so "user not found" and
+ * "user found / password wrong" branches take the same wall time.
+ * Always returns false.
+ *
+ * The hash is a pre-computed argon2id of a random string generated at build
+ * time. Any argon2id hash at identical params burns the same time, so
+ * the exact plaintext does not matter.
+ */
+const DUMMY_ARGON2_HASH =
+  "$argon2id$v=19$m=19456,t=2,p=1$Tc8QLOk0kKZ1Yk7yI7SDqw$qmS1i0hX0w39dNwtv3j58Tm6KOGf4lHq7Pw+Vk7YqYA";
+
+export async function dummyPasswordVerify(plaintext: string): Promise<false> {
+  try {
+    await Bun.password.verify(plaintext, DUMMY_ARGON2_HASH);
+  } catch (err) {
+    // Should never happen in production. Log loudly if it ever does —
+    // silent failure here would silently degrade the timing-side-channel
+    // defense.
+    console.warn("[security] dummyPasswordVerify threw:", (err as Error).message);
+  }
+  return false;
+}
+
+/**
  * 验证密码，根据 hashVersion 分派到不同的验证逻辑
  */
 export async function verifyPassword(
@@ -39,8 +63,16 @@ async function verifyLegacy(plaintext: string, storedHash: string): Promise<bool
   const legacyGlobalSalt = (useRuntimeConfig().legacyGlobalSalt as string) || "";
   const preprocessed = legacyPreprocess(plaintext);
   const computed = await hmacSha256(preprocessed, legacyGlobalSalt);
-  if (computed.length !== storedHash.length) return false;
-  return timingSafeEqual(Buffer.from(computed), Buffer.from(storedHash));
+  let ok = false;
+  if (computed.length === storedHash.length) {
+    ok = timingSafeEqual(Buffer.from(computed), Buffer.from(storedHash));
+  }
+  if (!ok) {
+    // Pad to argon2id timing so legacy / argon2id / not-found all cost the same
+    // on the failure path — prevents legacy-user fingerprinting by timing.
+    await dummyPasswordVerify(plaintext);
+  }
+  return ok;
 }
 
 /**
@@ -77,26 +109,4 @@ export async function hashPassword(plaintext: string): Promise<string> {
     memoryCost: 19456,
     timeCost: 2,
   });
-}
-
-/**
- * Burn an argon2id verify on a fixed dummy hash so "user not found" and
- * "user found / password wrong" branches take the same wall time.
- * Always returns false.
- *
- * The hash is a pre-computed argon2id of a random string generated at build
- * time. Any argon2id hash at identical params burns the same time, so
- * the exact plaintext does not matter.
- */
-const DUMMY_ARGON2_HASH =
-  "$argon2id$v=19$m=19456,t=2,p=1$Tc8QLOk0kKZ1Yk7yI7SDqw$qmS1i0hX0w39dNwtv3j58Tm6KOGf4lHq7Pw+Vk7YqYA";
-
-export async function dummyPasswordVerify(plaintext: string): Promise<false> {
-  try {
-    await Bun.password.verify(plaintext, DUMMY_ARGON2_HASH);
-  } catch {
-    // ignore — verify may throw on malformed hash in some envs; we still
-    // want constant-time cost to approximate a real failed verify.
-  }
-  return false;
 }
