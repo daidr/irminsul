@@ -101,4 +101,43 @@ describe("OAuth authorize.post PKCE enforcement", () => {
     const stored = mockStoreAuthorizationCode.mock.calls[0][1];
     expect(stored.codeChallenge).toBe("abc123xyz");
   });
+
+  it("normalizes empty-string code_challenge to null for confidential client", async () => {
+    mockFindOAuthAppByClientId.mockResolvedValueOnce({
+      clientId: "cid",
+      approved: true,
+      redirectUris: ["https://app.example.com/cb"],
+      scopes: ["profile:read"],
+      type: "confidential",
+    });
+
+    (globalThis as any).readBody.mockResolvedValue({
+      client_id: "cid",
+      redirect_uri: "https://app.example.com/cb",
+      scope: "profile:read",
+      action: "approve",
+      code_challenge: "", // empty string from broken client
+    });
+
+    await authorizePost({ context: {} });
+
+    const stored = mockStoreAuthorizationCode.mock.calls[0][1];
+    expect(stored.codeChallenge).toBeNull();
+  });
+
+  it("rejects public client with empty-string code_challenge", async () => {
+    (globalThis as any).readBody.mockResolvedValue({
+      client_id: "cid",
+      redirect_uri: "https://app.example.com/cb",
+      scope: "profile:read",
+      action: "approve",
+      code_challenge: "",
+      code_challenge_method: "S256",
+    });
+
+    await expect(authorizePost({ context: {} })).rejects.toMatchObject({
+      statusCode: 400,
+    });
+    expect(mockStoreAuthorizationCode).not.toHaveBeenCalled();
+  });
 });
