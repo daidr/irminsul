@@ -57,6 +57,8 @@ export default defineEventHandler(async (event) => {
   // Find user
   const user = await findUserByEmail(email);
   if (!user) {
+    // Run a dummy verify so timing does not leak user existence
+    await dummyPasswordVerify(password);
     return { success: false, error: "邮箱或密码错误" };
   }
 
