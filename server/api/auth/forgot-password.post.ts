@@ -43,6 +43,22 @@ export default defineEventHandler(async (event) => {
     return { success: false, error: "人机验证失败，请重试" };
   }
 
+  // Rate limit by IP (after altcha so bots burn PoW first)
+  try {
+    await checkRateLimit(event, `web:forgot-password:ip:${extractClientIp(event)}`, {
+      duration: 60_000,
+      max: 3,
+      delayAfter: 2,
+      timeWait: 2_000,
+      fastFail: true,
+    });
+  } catch (err) {
+    if (err instanceof YggdrasilError && err.httpStatus === 429) {
+      return { success: false, error: "请求过于频繁，请稍后再试" };
+    }
+    throw err;
+  }
+
   // Validate email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!email || !emailRegex.test(email)) {
