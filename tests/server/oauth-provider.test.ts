@@ -2,23 +2,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createHash } from "node:crypto";
 
 // --- Mock Nitro auto-imports ---
-vi.stubGlobal("defineEventHandler", (handler: Function) => handler);
-vi.stubGlobal("readBody", vi.fn());
-vi.stubGlobal("setResponseHeader", vi.fn());
-vi.stubGlobal("setResponseStatus", vi.fn());
-vi.stubGlobal("getHeader", vi.fn());
-vi.stubGlobal("createError", (opts: any) => {
-  const err = new Error(opts.statusMessage);
-  (err as any).statusCode = opts.statusCode;
-  return err;
-});
+// Module-level fn refs (stubs applied per-test via beforeEach for unstubGlobals compatibility)
+const mockReadBody = vi.fn();
+const mockSetResponseHeader = vi.fn();
+const mockSetResponseStatus = vi.fn();
+const mockGetHeader = vi.fn();
 
-// Spy on Bun.password methods (Bun global is non-configurable in Bun runtime)
-vi.spyOn(Bun.password, "hash" as any).mockResolvedValue("hashed");
-vi.spyOn(Bun.password, "verify" as any).mockResolvedValue(true);
-
-// Mock settings
-vi.stubGlobal("getSetting", (key: string) => {
+const mockGetSetting = (key: string) => {
   const s: Record<string, unknown> = {
     "oauth.enabled": true,
     "oauth.accessTokenTtlMs": 3600000,
@@ -26,20 +16,22 @@ vi.stubGlobal("getSetting", (key: string) => {
     "oauth.authorizationCodeTtlS": 60,
   };
   return s[key];
-});
+};
+
+// Spy on Bun.password methods (Bun global is non-configurable in Bun runtime)
+vi.spyOn(Bun.password, "hash" as any).mockResolvedValue("hashed");
+vi.spyOn(Bun.password, "verify" as any).mockResolvedValue(true);
 
 // Mock Redis
 const mockRedis = { send: vi.fn() };
-vi.stubGlobal("getRedisClient", () => mockRedis);
-vi.stubGlobal("buildRedisKey", (...args: string[]) => `irmin:${args.join(":")}`);
 
 // Mock repositories
-vi.stubGlobal("findOAuthAppByClientId", vi.fn());
-vi.stubGlobal("findOAuthTokenByHash", vi.fn());
-vi.stubGlobal("findOAuthTokenByHashIncludingRevoked", vi.fn());
-vi.stubGlobal("insertOAuthToken", vi.fn());
-vi.stubGlobal("revokeOAuthToken", vi.fn());
-vi.stubGlobal("revokeAllOAuthTokensForUserAndClient", vi.fn());
+const mockFindOAuthAppByClientId = vi.fn();
+const mockFindOAuthTokenByHash = vi.fn();
+const mockFindOAuthTokenByHashIncludingRevoked = vi.fn();
+const mockInsertOAuthToken = vi.fn();
+const mockRevokeOAuthToken = vi.fn();
+const mockRevokeAllOAuthTokensForUserAndClient = vi.fn();
 
 // Fix zod v4 named export
 vi.mock("zod", async (importOriginal) => {
@@ -57,7 +49,7 @@ vi.mock("evlog", async (importOriginal) => {
   };
 });
 
-// Import actual service functions and expose as globals (Nitro auto-import simulation)
+// Import actual service functions (re-stubbed as globals in beforeEach for Nitro auto-import simulation)
 import {
   OAuthError,
   authenticateClient,
@@ -68,15 +60,6 @@ import {
   hashToken,
   generateOpaqueToken,
 } from "../../server/utils/oauth-provider.service";
-
-vi.stubGlobal("OAuthError", OAuthError);
-vi.stubGlobal("authenticateClient", authenticateClient);
-vi.stubGlobal("consumeAuthorizationCode", consumeAuthorizationCode);
-vi.stubGlobal("verifyPkce", verifyPkce);
-vi.stubGlobal("issueTokenPair", issueTokenPair);
-vi.stubGlobal("refreshAccessToken", refreshAccessToken);
-vi.stubGlobal("hashToken", hashToken);
-vi.stubGlobal("generateOpaqueToken", generateOpaqueToken);
 
 // --- Helpers ---
 
@@ -114,13 +97,53 @@ const publicApp = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  (globalThis as any).insertOAuthToken.mockResolvedValue(undefined);
-  (globalThis as any).revokeOAuthToken.mockResolvedValue(undefined);
-  (globalThis as any).revokeAllOAuthTokensForUserAndClient.mockResolvedValue(undefined);
+  mockInsertOAuthToken.mockResolvedValue(undefined);
+  mockRevokeOAuthToken.mockResolvedValue(undefined);
+  mockRevokeAllOAuthTokensForUserAndClient.mockResolvedValue(undefined);
   mockRedis.send.mockResolvedValue(null);
   // Re-set Bun.password spies after clearAllMocks
   vi.spyOn(Bun.password, "verify" as any).mockResolvedValue(true);
   vi.spyOn(Bun.password, "hash" as any).mockResolvedValue("hashed");
+  // Re-stub Nitro auto-imports each test for unstubGlobals compatibility
+  vi.stubGlobal("defineEventHandler", (handler: Function) => handler);
+  vi.stubGlobal("readBody", mockReadBody);
+  vi.stubGlobal("setResponseHeader", mockSetResponseHeader);
+  vi.stubGlobal("setResponseStatus", mockSetResponseStatus);
+  vi.stubGlobal("getHeader", mockGetHeader);
+  vi.stubGlobal("createError", (opts: any) => {
+    const err = new Error(opts.statusMessage);
+    (err as any).statusCode = opts.statusCode;
+    return err;
+  });
+  vi.stubGlobal("getSetting", mockGetSetting);
+  vi.stubGlobal("getRedisClient", () => mockRedis);
+  vi.stubGlobal("buildRedisKey", (...args: string[]) => `irmin:${args.join(":")}`);
+  vi.stubGlobal("findOAuthAppByClientId", mockFindOAuthAppByClientId);
+  vi.stubGlobal("findOAuthTokenByHash", mockFindOAuthTokenByHash);
+  vi.stubGlobal("findOAuthTokenByHashIncludingRevoked", mockFindOAuthTokenByHashIncludingRevoked);
+  vi.stubGlobal("insertOAuthToken", mockInsertOAuthToken);
+  vi.stubGlobal("revokeOAuthToken", mockRevokeOAuthToken);
+  vi.stubGlobal("revokeAllOAuthTokensForUserAndClient", mockRevokeAllOAuthTokensForUserAndClient);
+  // Rate-limit related stubs (no-op passthrough for these tests)
+  vi.stubGlobal("checkRateLimit", vi.fn().mockResolvedValue(undefined));
+  vi.stubGlobal("extractClientIp", vi.fn(() => "127.0.0.1"));
+  vi.stubGlobal(
+    "YggdrasilError",
+    class MockYggdrasilError extends Error {
+      constructor(public httpStatus: number, public error: string, public errorMessage: string) {
+        super(errorMessage);
+      }
+    },
+  );
+  // Real service functions exposed as globals (Nitro auto-import simulation)
+  vi.stubGlobal("OAuthError", OAuthError);
+  vi.stubGlobal("authenticateClient", authenticateClient);
+  vi.stubGlobal("consumeAuthorizationCode", consumeAuthorizationCode);
+  vi.stubGlobal("verifyPkce", verifyPkce);
+  vi.stubGlobal("issueTokenPair", issueTokenPair);
+  vi.stubGlobal("refreshAccessToken", refreshAccessToken);
+  vi.stubGlobal("hashToken", hashToken);
+  vi.stubGlobal("generateOpaqueToken", generateOpaqueToken);
 });
 
 describe("OAuth token endpoint", () => {

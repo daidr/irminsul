@@ -4,15 +4,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // ─── Stub Nitro auto-imports ───
 
 const mockRedisSend = vi.fn();
-vi.stubGlobal("getRedisClient", () => ({ send: mockRedisSend }));
-vi.stubGlobal("buildRedisKey", (...args: string[]) => `irmin:${args.join(":")}`);
-vi.stubGlobal("getSetting", vi.fn());
-vi.stubGlobal("findOAuthAppByClientId", vi.fn());
-vi.stubGlobal("findOAuthTokenByHash", vi.fn());
-vi.stubGlobal("findOAuthTokenByHashIncludingRevoked", vi.fn());
-vi.stubGlobal("insertOAuthToken", vi.fn());
-vi.stubGlobal("revokeOAuthToken", vi.fn());
-vi.stubGlobal("revokeAllOAuthTokensForUserAndClient", vi.fn());
+const mockGetSetting = vi.fn();
+const mockFindOAuthAppByClientId = vi.fn();
+const mockFindOAuthTokenByHash = vi.fn();
+const mockFindOAuthTokenByHashIncludingRevoked = vi.fn();
+const mockInsertOAuthToken = vi.fn();
+const mockRevokeOAuthToken = vi.fn();
+const mockRevokeAllOAuthTokensForUserAndClient = vi.fn();
 
 // Spy on Bun.password methods (Bun global is non-configurable in Bun runtime)
 vi.spyOn(Bun.password, "hash" as any).mockResolvedValue("hashed");
@@ -20,16 +18,18 @@ const mockBunPasswordVerify = vi.spyOn(Bun.password, "verify" as any).mockResolv
 
 let service: typeof import("../../server/utils/oauth-provider.service");
 
-const mockGetSetting = globalThis.getSetting as ReturnType<typeof vi.fn>;
-const mockFindOAuthAppByClientId = globalThis.findOAuthAppByClientId as ReturnType<typeof vi.fn>;
-const mockFindOAuthTokenByHash = globalThis.findOAuthTokenByHash as ReturnType<typeof vi.fn>;
-const mockFindOAuthTokenByHashIncludingRevoked = globalThis.findOAuthTokenByHashIncludingRevoked as ReturnType<typeof vi.fn>;
-const mockInsertOAuthToken = globalThis.insertOAuthToken as ReturnType<typeof vi.fn>;
-const mockRevokeOAuthToken = globalThis.revokeOAuthToken as ReturnType<typeof vi.fn>;
-const mockRevokeAllOAuthTokensForUserAndClient = globalThis.revokeAllOAuthTokensForUserAndClient as ReturnType<typeof vi.fn>;
-
 beforeEach(async () => {
   vi.clearAllMocks();
+  // Re-stub globals each test for unstubGlobals compatibility
+  vi.stubGlobal("getRedisClient", () => ({ send: mockRedisSend }));
+  vi.stubGlobal("buildRedisKey", (...args: string[]) => `irmin:${args.join(":")}`);
+  vi.stubGlobal("getSetting", mockGetSetting);
+  vi.stubGlobal("findOAuthAppByClientId", mockFindOAuthAppByClientId);
+  vi.stubGlobal("findOAuthTokenByHash", mockFindOAuthTokenByHash);
+  vi.stubGlobal("findOAuthTokenByHashIncludingRevoked", mockFindOAuthTokenByHashIncludingRevoked);
+  vi.stubGlobal("insertOAuthToken", mockInsertOAuthToken);
+  vi.stubGlobal("revokeOAuthToken", mockRevokeOAuthToken);
+  vi.stubGlobal("revokeAllOAuthTokensForUserAndClient", mockRevokeAllOAuthTokensForUserAndClient);
   service = await import("../../server/utils/oauth-provider.service");
 });
 

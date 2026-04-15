@@ -33,6 +33,22 @@ export default defineEventHandler(async (event) => {
     return { success: false, error: "人机验证失败，请重试" };
   }
 
+  // Rate limit by IP
+  try {
+    await checkRateLimit(event, `web:reset-password:ip:${extractClientIp(event)}`, {
+      duration: 60_000,
+      max: 10,
+      delayAfter: 5,
+      timeWait: 2_000,
+      fastFail: true,
+    });
+  } catch (err) {
+    if (err instanceof YggdrasilError && err.httpStatus === 429) {
+      return { success: false, error: "请求过于频繁，请稍后再试" };
+    }
+    throw err;
+  }
+
   // Validate password
   if (!password || password.length < 8) {
     return { success: false, error: "密码长度不能少于8个字符" };

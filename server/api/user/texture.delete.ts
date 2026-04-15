@@ -7,6 +7,22 @@ const bodySchema = z.object({
 export default defineEventHandler(async (event) => {
   const user = requireAuth(event);
 
+  // Rate limit by user
+  try {
+    await checkRateLimit(event, `web:texture-delete:uid:${user.userId}`, {
+      duration: 60_000,
+      max: 20,
+      delayAfter: 10,
+      timeWait: 1_000,
+      fastFail: true,
+    });
+  } catch (err) {
+    if (err instanceof YggdrasilError && err.httpStatus === 429) {
+      return { success: false, error: "请求过于频繁，请稍后再试" };
+    }
+    throw err;
+  }
+
   const parsed = bodySchema.safeParse(await readBody(event));
   if (!parsed.success) {
     return { success: false, error: "参数格式错误" };

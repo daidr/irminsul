@@ -14,16 +14,15 @@ vi.mock("../../server/utils/user.repository", () => ({
   getUserCollection: () => mockCollection,
 }));
 
-// Mock crypto.randomUUID
-vi.stubGlobal("crypto", {
-  ...globalThis.crypto,
-  randomUUID: () => "test-uuid-1234",
-});
-
 let banRepo: typeof import("../../server/utils/ban.repository");
 
 beforeEach(async () => {
   vi.clearAllMocks();
+  // Mock crypto.randomUUID — re-stubbed each test for unstubGlobals compatibility
+  vi.stubGlobal("crypto", {
+    ...globalThis.crypto,
+    randomUUID: () => "test-uuid-1234",
+  });
   banRepo = await import("../../server/utils/ban.repository");
 });
 

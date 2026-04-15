@@ -27,7 +27,7 @@ export interface OAuthAuthorizationCodeData {
   userId: string;
   scopes: OAuthScope[];
   redirectUri: string;
-  codeChallenge: string;
+  codeChallenge: string | null;
   codeChallengeMethod: "S256";
   createdAt: number;
 }

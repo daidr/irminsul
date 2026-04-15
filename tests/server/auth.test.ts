@@ -15,23 +15,10 @@ const mockCreateSession = vi.fn();
 const mockExtractClientIp = vi.fn();
 const mockEmitUserHook = vi.fn();
 
-// Stub Nitro auto-imports as globals
-vi.stubGlobal("verifyAltchaPayload", mockVerifyAltchaPayload);
-vi.stubGlobal("findUserByEmail", mockFindUserByEmail);
-vi.stubGlobal("emailExists", mockEmailExists);
-vi.stubGlobal("gameIdExists", mockGameIdExists);
-vi.stubGlobal("hashPassword", mockHashPassword);
-vi.stubGlobal("verifyPassword", mockVerifyPassword);
-vi.stubGlobal("insertUser", mockInsertUser);
-vi.stubGlobal("updatePasswordHash", mockUpdatePasswordHash);
-vi.stubGlobal("updateLastLogin", mockUpdateLastLogin);
-vi.stubGlobal("createSession", mockCreateSession);
-vi.stubGlobal("extractClientIp", mockExtractClientIp);
-vi.stubGlobal("emitUserHook", mockEmitUserHook);
+const mockDestroySession = vi.fn();
 
 // Stub rate limiting (added by security fix)
 const mockCheckRateLimit = vi.fn();
-vi.stubGlobal("checkRateLimit", mockCheckRateLimit);
 
 // Stub YggdrasilError (used by rate limit catch block)
 class MockYggdrasilError extends Error {
@@ -39,15 +26,12 @@ class MockYggdrasilError extends Error {
     super(errorMessage);
   }
 }
-vi.stubGlobal("YggdrasilError", MockYggdrasilError);
 
-// Stub Nitro's defineEventHandler to just return the handler fn
-vi.stubGlobal("defineEventHandler", (handler: Function) => handler);
-
-// Stub readBody / getHeader / setCookie
-vi.stubGlobal("readBody", vi.fn());
-vi.stubGlobal("getHeader", vi.fn());
-vi.stubGlobal("setCookie", vi.fn());
+// Stubs applied per-test via beforeEach below (for unstubGlobals compatibility).
+// Keep readBody/getHeader/setCookie as module-level vi.fn() refs so createFakeEvent can use them.
+const mockReadBody = vi.fn();
+const mockGetHeader = vi.fn();
+const mockSetCookie = vi.fn();
 
 // Fix zod v4 named export `z` not available in Bun vitest environment
 vi.mock("zod", async (importOriginal) => {
@@ -64,18 +48,34 @@ vi.mock("evlog", async (importOriginal) => {
 // Helper: create a fake H3 event
 function createFakeEvent(body: Record<string, unknown>, contextUser?: unknown) {
   const event = { context: { user: contextUser }, headers: new Map() };
-  const { readBody: rb, getHeader: gh } = globalThis as unknown as {
-    readBody: ReturnType<typeof vi.fn>;
-    getHeader: ReturnType<typeof vi.fn>;
-  };
-  rb.mockResolvedValue(body);
-  gh.mockReturnValue("test-ua");
+  mockReadBody.mockResolvedValue(body);
+  mockGetHeader.mockReturnValue("test-ua");
   return event;
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
   mockExtractClientIp.mockReturnValue("127.0.0.1");
+  // Re-stub globals each test for unstubGlobals compatibility
+  vi.stubGlobal("verifyAltchaPayload", mockVerifyAltchaPayload);
+  vi.stubGlobal("findUserByEmail", mockFindUserByEmail);
+  vi.stubGlobal("emailExists", mockEmailExists);
+  vi.stubGlobal("gameIdExists", mockGameIdExists);
+  vi.stubGlobal("hashPassword", mockHashPassword);
+  vi.stubGlobal("verifyPassword", mockVerifyPassword);
+  vi.stubGlobal("insertUser", mockInsertUser);
+  vi.stubGlobal("updatePasswordHash", mockUpdatePasswordHash);
+  vi.stubGlobal("updateLastLogin", mockUpdateLastLogin);
+  vi.stubGlobal("createSession", mockCreateSession);
+  vi.stubGlobal("extractClientIp", mockExtractClientIp);
+  vi.stubGlobal("emitUserHook", mockEmitUserHook);
+  vi.stubGlobal("destroySession", mockDestroySession);
+  vi.stubGlobal("checkRateLimit", mockCheckRateLimit);
+  vi.stubGlobal("YggdrasilError", MockYggdrasilError);
+  vi.stubGlobal("defineEventHandler", (handler: Function) => handler);
+  vi.stubGlobal("readBody", mockReadBody);
+  vi.stubGlobal("getHeader", mockGetHeader);
+  vi.stubGlobal("setCookie", mockSetCookie);
 });
 
 describe("auth API", () => {
@@ -155,6 +155,11 @@ describe("auth API", () => {
       expect(mockFindUserByEmail).toHaveBeenCalledWith("test@example.com");
       expect(mockVerifyPassword).toHaveBeenCalledOnce();
       expect(mockCreateSession).toHaveBeenCalledOnce();
+      expect(mockDestroySession).toHaveBeenCalledWith(event);
+      // destroySession must happen BEFORE createSession
+      expect(mockDestroySession.mock.invocationCallOrder[0]).toBeLessThan(
+        mockCreateSession.mock.invocationCallOrder[0],
+      );
       expect(mockEmitUserHook).toHaveBeenCalledWith(
         "user:login",
         expect.objectContaining({ uuid: "user-uuid", method: "password" }),

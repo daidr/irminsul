@@ -15,6 +15,8 @@ export async function yggdrasilAuthenticate(event: H3Event, params: {
 }) {
   const user = await findUserByEmail(params.username);
   if (!user || hasActiveBan(user.bans)) {
+    // Run a dummy verify so timing does not leak user existence / ban state
+    await dummyPasswordVerify(params.password);
     throw new YggdrasilError(
       403,
       "ForbiddenOperationException",

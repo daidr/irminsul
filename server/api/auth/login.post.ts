@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
 
   // Rate limit (after Altcha so legitimate users don't waste PoW)
   try {
-    await checkRateLimit(event, `web:login:${extractClientIp(event)}`, {
+    await checkRateLimit(event, `web:login:ip:${extractClientIp(event)}`, {
       duration: 60_000,
       max: 10,
       delayAfter: 5,
@@ -57,6 +57,8 @@ export default defineEventHandler(async (event) => {
   // Find user
   const user = await findUserByEmail(email);
   if (!user) {
+    // Run a dummy verify so timing does not leak user existence
+    await dummyPasswordVerify(password);
     return { success: false, error: "邮箱或密码错误" };
   }
 
@@ -93,6 +95,8 @@ export default defineEventHandler(async (event) => {
     loginAt: Date.now(),
   };
 
+  // Rotate session ID on successful login (防会话固定)
+  await destroySession(event);
   await createSession(event, sessionData);
 
   emitUserHook("user:login", {

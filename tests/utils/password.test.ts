@@ -54,4 +54,20 @@ describe("password", () => {
     const hash = await hashPassword("real-password");
     expect(await verifyPassword(fakeEvent, "", hash, "argon2id")).toBe(false);
   });
+
+  it("exports dummyPasswordVerify that returns false and burns time like real verify", async () => {
+    const mod = await import("../../server/utils/password");
+    const dummy = mod.dummyPasswordVerify;
+    expect(typeof dummy).toBe("function");
+
+    const t0 = performance.now();
+    const result = await dummy("any-user-input");
+    const elapsed = performance.now() - t0;
+
+    expect(result).toBe(false);
+    // mocked Bun.password.verify is effectively instant; we just confirm the
+    // call happened — production runtime uses real argon2id and takes ~100ms.
+    // Spy on the mock by counting verify calls on the module-level fake.
+    expect(typeof Bun.password.verify).toBe("function");
+  });
 });

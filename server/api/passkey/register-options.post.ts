@@ -1,6 +1,22 @@
 export default defineEventHandler(async (event) => {
   const user = requireAuth(event);
 
+  // Rate limit by user (already authenticated)
+  try {
+    await checkRateLimit(event, `web:passkey:register-options:uid:${user.userId}`, {
+      duration: 60_000,
+      max: 10,
+      delayAfter: 5,
+      timeWait: 2_000,
+      fastFail: true,
+    });
+  } catch (err) {
+    if (err instanceof YggdrasilError && err.httpStatus === 429) {
+      return { success: false, error: "请求过于频繁，请稍后再试" };
+    }
+    throw err;
+  }
+
   const userDoc = await findUserByUuid(user.userId);
   if (!userDoc) {
     return { success: false, error: "用户不存在" };

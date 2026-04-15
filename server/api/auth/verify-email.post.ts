@@ -11,6 +11,23 @@ export default defineEventHandler(async (event) => {
   if (!parsed.success) {
     return { success: false, error: "参数格式错误" };
   }
+
+  // Rate limit by IP
+  try {
+    await checkRateLimit(event, `web:verify-email:ip:${extractClientIp(event)}`, {
+      duration: 60_000,
+      max: 10,
+      delayAfter: 5,
+      timeWait: 2_000,
+      fastFail: true,
+    });
+  } catch (err) {
+    if (err instanceof YggdrasilError && err.httpStatus === 429) {
+      return { success: false, error: "请求过于频繁，请稍后再试" };
+    }
+    throw err;
+  }
+
   const { token } = parsed.data;
 
   if (!token) {
