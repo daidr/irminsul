@@ -9,6 +9,24 @@ export default defineEventHandler(async (event) => {
 
   try {
     const body = await readBody(event);
+
+    // Rate limit by client_id (or IP fallback for anonymous)
+    const clientIdForRL = (body?.client_id as string | undefined) || extractClientIp(event);
+    try {
+      await checkRateLimit(event, `oauth:token:${clientIdForRL}`, {
+        duration: 60_000,
+        max: 60,
+        delayAfter: 30,
+        timeWait: 1_000,
+        fastFail: true,
+      });
+    } catch (err) {
+      if (err instanceof YggdrasilError && err.httpStatus === 429) {
+        throw new OAuthError("invalid_request", "Too many requests", 429);
+      }
+      throw err;
+    }
+
     const grantType = body?.grant_type;
 
     if (grantType === "authorization_code") {

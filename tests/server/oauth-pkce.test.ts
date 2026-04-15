@@ -41,6 +41,16 @@ beforeEach(() => {
   });
   vi.stubGlobal("defineEventHandler", (fn: Function) => fn);
   vi.stubGlobal("readBody", mockReadBody);
+  vi.stubGlobal("checkRateLimit", vi.fn().mockResolvedValue(undefined));
+  vi.stubGlobal("extractClientIp", vi.fn(() => "127.0.0.1"));
+  vi.stubGlobal(
+    "YggdrasilError",
+    class MockYggdrasilError extends Error {
+      constructor(public httpStatus: number, public error: string, public errorMessage: string) {
+        super(errorMessage);
+      }
+    },
+  );
 });
 
 describe("OAuth authorize.post PKCE enforcement", () => {
@@ -140,5 +150,44 @@ describe("OAuth authorize.post PKCE enforcement", () => {
       statusCode: 400,
     });
     expect(mockStoreAuthorizationCode).not.toHaveBeenCalled();
+  });
+});
+
+describe("OAuth token.post rate-limit", () => {
+  let tokenHandler: Function;
+  beforeEach(async () => {
+    tokenHandler = (await import("../../server/api/oauth-provider/token.post")).default;
+  });
+
+  it("calls checkRateLimit with oauth:token: scope keyed by client_id", async () => {
+    const event = { context: {} };
+    (globalThis as any).readBody.mockResolvedValue({
+      grant_type: "authorization_code",
+      client_id: "test-client",
+      code: "test-code",
+      redirect_uri: "https://app.example.com/cb",
+    });
+
+    // Stub checkRateLimit to record the call but not throw
+    const mockRL = vi.fn();
+    vi.stubGlobal("checkRateLimit", mockRL);
+    vi.stubGlobal("setResponseHeader", vi.fn());
+    vi.stubGlobal("setResponseStatus", vi.fn());
+    vi.stubGlobal("extractClientIp", vi.fn(() => "1.2.3.4"));
+
+    // Stub authenticateClient so handler can proceed past rate limit (it'll fail later, that's OK)
+    vi.stubGlobal("authenticateClient", vi.fn().mockRejectedValue(new Error("not relevant")));
+
+    try {
+      await tokenHandler(event);
+    } catch {
+      // expected — we just want to verify the rate-limit call happened
+    }
+
+    expect(mockRL).toHaveBeenCalledWith(
+      event,
+      expect.stringContaining("oauth:token:test-client"),
+      expect.objectContaining({ max: 60, fastFail: true }),
+    );
   });
 });

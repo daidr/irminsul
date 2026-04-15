@@ -33,6 +33,22 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "OAuth is not enabled" });
   }
 
+  // Rate limit by user (already authenticated via requireAuth)
+  try {
+    await checkRateLimit(event, `oauth:authorize:uid:${user.userId}`, {
+      duration: 60_000,
+      max: 20,
+      delayAfter: 10,
+      timeWait: 1_000,
+      fastFail: true,
+    });
+  } catch (err) {
+    if (err instanceof YggdrasilError && err.httpStatus === 429) {
+      throw createError({ statusCode: 429, statusMessage: "Too many requests" });
+    }
+    throw err;
+  }
+
   // 2. Validate body
   const parsed = bodySchema.safeParse(await readBody(event));
   if (!parsed.success) {
