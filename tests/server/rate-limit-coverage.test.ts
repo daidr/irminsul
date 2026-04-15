@@ -209,6 +209,50 @@ describe("rate-limit coverage: web auth helper endpoints", () => {
       );
     });
   });
+
+  describe("/api/passkey/auth-verify", () => {
+    let handler: Function;
+    beforeEach(async () => {
+      vi.stubGlobal("findUserByPasskeyCredentialId", vi.fn().mockResolvedValue(null));
+      vi.stubGlobal("base64URLToUint8Array", vi.fn(() => new Uint8Array()));
+      handler = (await import("../../server/api/passkey/auth-verify.post")).default;
+    });
+
+    it("calls checkRateLimit with web:passkey:auth-verify:ip: scope", async () => {
+      const event = createFakeEvent({
+        credential: { id: "cred-id", response: {} },
+        challengeId: "ch-id",
+      });
+      await handler(event);
+      expect(mockCheckRateLimit).toHaveBeenCalledWith(
+        event,
+        expect.stringContaining("web:passkey:auth-verify:ip:"),
+        expect.objectContaining({ max: 10, fastFail: true }),
+      );
+    });
+  });
+
+  describe("/api/passkey/rename", () => {
+    let handler: Function;
+    beforeEach(async () => {
+      vi.stubGlobal("renamePasskey", vi.fn().mockResolvedValue(false));
+      handler = (await import("../../server/api/passkey/rename.post")).default;
+    });
+
+    it("calls checkRateLimit with web:passkey:rename:uid: scope", async () => {
+      mockRequireAuth.mockReturnValue({ userId: "user-uuid", email: "u@x.c", gameId: "P1" });
+      const event = createFakeEvent(
+        { credentialId: "cred-id", newLabel: "New Name" },
+        { userId: "user-uuid" },
+      );
+      await handler(event);
+      expect(mockCheckRateLimit).toHaveBeenCalledWith(
+        event,
+        "web:passkey:rename:uid:user-uuid",
+        expect.objectContaining({ max: 20, fastFail: true }),
+      );
+    });
+  });
 });
 
 describe("rate-limit translation contract", () => {

@@ -15,6 +15,22 @@ export default defineEventHandler(async (event) => {
     return { success: false, error: "参数格式错误" };
   }
 
+  // Rate limit by IP (this is the login path; user not yet authenticated)
+  try {
+    await checkRateLimit(event, `web:passkey:auth-verify:ip:${extractClientIp(event)}`, {
+      duration: 60_000,
+      max: 10,
+      delayAfter: 5,
+      timeWait: 2_000,
+      fastFail: true,
+    });
+  } catch (err) {
+    if (err instanceof YggdrasilError && err.httpStatus === 429) {
+      return { success: false, error: "请求过于频繁，请稍后再试" };
+    }
+    throw err;
+  }
+
   if (!parsed.data.credential || !parsed.data.challengeId) {
     return { success: false, error: "缺少验证数据" };
   }
