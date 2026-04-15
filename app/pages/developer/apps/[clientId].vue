@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { HugeiconsIcon } from "@hugeicons/vue";
-import { ArrowLeft01Icon, Copy01Icon, Delete02Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
+import {
+  ArrowLeft01Icon,
+  Copy01Icon,
+  Delete02Icon,
+  PlusSignIcon,
+} from "@hugeicons/core-free-icons";
 
 useHead({ title: "应用详情" });
 
@@ -206,12 +211,7 @@ function copyToClipboard(text: string) {
       <fieldset class="fieldset">
         <legend class="fieldset-legend text-sm font-semibold">Client ID</legend>
         <div class="flex items-center gap-2">
-          <input
-            type="text"
-            class="input input-bordered w-full"
-            :value="app.clientId"
-            readonly
-          />
+          <input type="text" class="input input-bordered w-full" :value="app.clientId" readonly />
           <button type="button" class="btn btn-ghost btn-sm" @click="copyToClipboard(app.clientId)">
             <HugeiconsIcon :icon="Copy01Icon" :size="16" />
           </button>
@@ -223,7 +223,10 @@ function copyToClipboard(text: string) {
         <span class="text-sm text-base-content/60">状态：</span>
         <span v-if="app.approved" class="badge badge-success badge-sm">已审批</span>
         <span v-else class="badge badge-warning badge-sm">待审批</span>
-        <span class="badge badge-sm" :class="app.type === 'confidential' ? 'badge-info' : 'badge-ghost'">
+        <span
+          class="badge badge-sm"
+          :class="app.type === 'confidential' ? 'badge-info' : 'badge-ghost'"
+        >
           {{ app.type === "confidential" ? "机密" : "公开" }}
         </span>
       </div>
@@ -288,7 +291,9 @@ function copyToClipboard(text: string) {
               :disabled="opt.required"
               @change="toggleScope(opt.value)"
             />
-            <span class="text-sm" :class="{ 'text-base-content/50': opt.required }">{{ opt.label }}</span>
+            <span class="text-sm" :class="{ 'text-base-content/50': opt.required }">{{
+              opt.label
+            }}</span>
             <span v-if="opt.required" class="badge badge-ghost badge-xs">必选</span>
           </label>
         </div>
@@ -325,20 +330,14 @@ function copyToClipboard(text: string) {
             <p class="text-sm font-medium">删除应用</p>
             <p class="text-xs text-base-content/60">此操作不可逆，所有授权和令牌将被清除</p>
           </div>
-          <button
-            type="button"
-            class="btn btn-error btn-sm"
-            @click="deleteDialogRef?.showModal()"
-          >
+          <button type="button" class="btn btn-error btn-sm" @click="deleteDialogRef?.showModal()">
             删除
           </button>
         </div>
       </div>
     </form>
 
-    <div v-else class="text-center text-base-content/40 py-12">
-      应用不存在
-    </div>
+    <div v-else class="text-center text-base-content/40 py-12">应用不存在</div>
   </div>
 
   <!-- Reset Secret Modal -->
@@ -379,7 +378,9 @@ function copyToClipboard(text: string) {
             <button class="btn btn-sm btn-ghost absolute right-2 top-2">&#10005;</button>
           </form>
           <h3 class="text-lg font-bold">确认删除</h3>
-          <p class="py-4 text-sm">确定要删除这个应用吗？所有相关的授权和令牌都将被清除，此操作不可逆。</p>
+          <p class="py-4 text-sm">
+            确定要删除这个应用吗？所有相关的授权和令牌都将被清除，此操作不可逆。
+          </p>
           <div class="modal-action">
             <form method="dialog">
               <button class="btn btn-ghost">取消</button>

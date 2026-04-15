@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { useTemplateRef } from 'vue';
+import { useTemplateRef } from "vue";
 
 const { toasts, closeToast } = useToast();
-const toastLayer = useTemplateRef<HTMLElement>('toastLayer');
+const toastLayer = useTemplateRef<HTMLElement>("toastLayer");
 
 function promoteToTop() {
   const el = toastLayer.value;
@@ -17,8 +17,12 @@ onMounted(() => {
   // 监听 dialog 的打开，重新将 toast 提升到 top layer 栈顶
   const observer = new MutationObserver((mutations) => {
     for (const m of mutations) {
-      if (m.type === 'attributes' && m.attributeName === 'open' && m.target instanceof HTMLDialogElement) {
-        if (m.target.hasAttribute('open')) {
+      if (
+        m.type === "attributes" &&
+        m.attributeName === "open" &&
+        m.target instanceof HTMLDialogElement
+      ) {
+        if (m.target.hasAttribute("open")) {
           promoteToTop();
         }
       }
@@ -27,7 +31,7 @@ onMounted(() => {
 
   observer.observe(document.body, {
     attributes: true,
-    attributeFilter: ['open'],
+    attributeFilter: ["open"],
     subtree: true,
   });
 
@@ -37,11 +41,19 @@ onMounted(() => {
 
 <template>
   <Teleport to="body">
-    <div popover="manual" ref="toastLayer"
-      class="fixed top-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none m-0 p-0 bg-transparent border-none overflow-visible inset-auto">
+    <div
+      popover="manual"
+      ref="toastLayer"
+      class="fixed top-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none m-0 p-0 bg-transparent border-none overflow-visible inset-auto"
+    >
       <TransitionGroup name="toast">
-        <LazyToastItem v-for="toast in toasts" :key="toast._id" :info="toast" class="pointer-events-auto"
-          @close="closeToast(toast._id)" />
+        <LazyToastItem
+          v-for="toast in toasts"
+          :key="toast._id"
+          :info="toast"
+          class="pointer-events-auto"
+          @close="closeToast(toast._id)"
+        />
       </TransitionGroup>
     </div>
   </Teleport>
@@ -69,7 +81,6 @@ onMounted(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-
   .toast-move,
   .toast-enter-active,
   .toast-leave-active {

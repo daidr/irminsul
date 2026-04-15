@@ -207,7 +207,9 @@ function copyToClipboard(text: string) {
               :disabled="opt.required"
               @change="toggleScope(opt.value)"
             />
-            <span class="text-sm" :class="{ 'text-base-content/50': opt.required }">{{ opt.label }}</span>
+            <span class="text-sm" :class="{ 'text-base-content/50': opt.required }">{{
+              opt.label
+            }}</span>
             <span v-if="opt.required" class="badge badge-ghost badge-xs">必选</span>
           </label>
         </div>
@@ -227,17 +229,27 @@ function copyToClipboard(text: string) {
   <!-- Credential Display Modal -->
   <ClientOnly>
     <Teleport to="body">
-      <dialog ref="credentialDialogRef" class="modal modal-bottom sm:modal-middle" @close="handleCredentialClose">
+      <dialog
+        ref="credentialDialogRef"
+        class="modal modal-bottom sm:modal-middle"
+        @close="handleCredentialClose"
+      >
         <div class="modal-box">
           <h3 class="text-lg font-bold">应用创建成功</h3>
-          <p class="text-sm text-base-content/60 mt-2">请妥善保存以下凭据，Client Secret 仅显示一次。</p>
+          <p class="text-sm text-base-content/60 mt-2">
+            请妥善保存以下凭据，Client Secret 仅显示一次。
+          </p>
 
           <div class="flex flex-col gap-3 mt-4">
             <div>
               <p class="text-xs font-semibold text-base-content/60 mb-1">Client ID</p>
               <div class="flex items-center gap-2 bg-base-200 border border-base-300 p-2">
                 <code class="text-sm flex-1 break-all">{{ createdClientId }}</code>
-                <button type="button" class="btn btn-ghost btn-xs" @click="copyToClipboard(createdClientId)">
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-xs"
+                  @click="copyToClipboard(createdClientId)"
+                >
                   <HugeiconsIcon :icon="Copy01Icon" :size="16" />
                 </button>
               </div>
@@ -247,7 +259,11 @@ function copyToClipboard(text: string) {
               <p class="text-xs font-semibold text-base-content/60 mb-1">Client Secret</p>
               <div class="flex items-center gap-2 bg-base-200 border border-base-300 p-2">
                 <code class="text-sm flex-1 break-all">{{ createdClientSecret }}</code>
-                <button type="button" class="btn btn-ghost btn-xs" @click="copyToClipboard(createdClientSecret)">
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-xs"
+                  @click="copyToClipboard(createdClientSecret)"
+                >
                   <HugeiconsIcon :icon="Copy01Icon" :size="16" />
                 </button>
               </div>

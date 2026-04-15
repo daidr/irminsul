@@ -46,8 +46,7 @@ export async function revokeBan(
   banId: string,
   operatorUuid: string,
 ): Promise<
-  | { success: true; ban: BanRecord; user: BanOpUserContext }
-  | { success: false; error: string }
+  { success: true; ban: BanRecord; user: BanOpUserContext } | { success: false; error: string }
 > {
   const now = new Date();
   const doc = await getUserCollection().findOneAndUpdate(
@@ -179,9 +178,6 @@ export async function removeBan(
 }
 
 export async function getUserBans(userUuid: string): Promise<BanRecord[]> {
-  const user = await getUserCollection().findOne(
-    { uuid: userUuid },
-    { projection: { bans: 1 } },
-  );
+  const user = await getUserCollection().findOne({ uuid: userUuid }, { projection: { bans: 1 } });
   return user?.bans ?? [];
 }

@@ -9,10 +9,7 @@ describe("emitUserHook dispatch logic", () => {
   let callPluginHook: ReturnType<typeof vi.fn>;
   let logPush: ReturnType<typeof vi.fn>;
 
-  async function emitUserHook(
-    hookName: string,
-    payload: Record<string, unknown>,
-  ): Promise<void> {
+  async function emitUserHook(hookName: string, payload: Record<string, unknown>): Promise<void> {
     const handlers = hookRegistry.get(hookName);
     if (!handlers.length) return;
 
@@ -44,7 +41,13 @@ describe("emitUserHook dispatch logic", () => {
     hookRegistry.register("plugin-a", "user:registered", 1);
     hookRegistry.register("plugin-b", "user:registered", 2);
 
-    const payload = { uuid: "u1", email: "a@b.com", gameId: "Player1", timestamp: 1000, ip: "1.2.3.4" };
+    const payload = {
+      uuid: "u1",
+      email: "a@b.com",
+      gameId: "Player1",
+      timestamp: 1000,
+      ip: "1.2.3.4",
+    };
     await emitUserHook("user:registered", payload);
 
     expect(callPluginHook).toHaveBeenCalledTimes(2);
@@ -61,11 +64,16 @@ describe("emitUserHook dispatch logic", () => {
     hookRegistry.register("plugin-a", "user:login", 1);
     hookRegistry.register("plugin-b", "user:login", 2);
 
-    callPluginHook
-      .mockRejectedValueOnce(new Error("timeout"))
-      .mockResolvedValueOnce(undefined);
+    callPluginHook.mockRejectedValueOnce(new Error("timeout")).mockResolvedValueOnce(undefined);
 
-    const payload = { uuid: "u1", email: "a@b.com", gameId: "P", timestamp: 1, ip: null, method: "password" };
+    const payload = {
+      uuid: "u1",
+      email: "a@b.com",
+      gameId: "P",
+      timestamp: 1,
+      ip: null,
+      method: "password",
+    };
     await emitUserHook("user:login", payload);
 
     expect(callPluginHook).toHaveBeenCalledTimes(2);

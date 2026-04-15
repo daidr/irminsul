@@ -13,10 +13,21 @@ const backEquipment = ref<BackEquipment>("cape");
 
 <template>
   <div class="mt-4 border border-base-300 bg-base-100" style="height: 520px">
-    <ClientOnlySkinViewer v-if="skinUrl" :skin="skinUrl" :cape="capeUrl ?? null" :slim="effectiveSkinSlim ?? false"
-      :zoom="38" :enable-rotate="true" :enable-zoom="true" :auto-rotate="!paused && autoRotate"
-      :back-equipment="backEquipment" :animation="animationType" :antialias="true" :paused="paused"
-      class="h-full w-full" />
+    <ClientOnlySkinViewer
+      v-if="skinUrl"
+      :skin="skinUrl"
+      :cape="capeUrl ?? null"
+      :slim="effectiveSkinSlim ?? false"
+      :zoom="38"
+      :enable-rotate="true"
+      :enable-zoom="true"
+      :auto-rotate="!paused && autoRotate"
+      :back-equipment="backEquipment"
+      :animation="animationType"
+      :antialias="true"
+      :paused="paused"
+      class="h-full w-full"
+    />
     <div v-else class="flex h-full flex-col items-center justify-center text-base-content/30">
       <span class="text-sm">暂无皮肤</span>
     </div>
@@ -26,24 +37,40 @@ const backEquipment = ref<BackEquipment>("cape");
     <!-- 动画控制 -->
     <div class="mt-4 flex items-center gap-3 flex-wrap">
       <div class="join">
-        <button class="btn btn-sm join-item" :class="animationType === 'walk' ? 'btn-primary' : ''"
-          @click="animationType = 'walk'">
+        <button
+          class="btn btn-sm join-item"
+          :class="animationType === 'walk' ? 'btn-primary' : ''"
+          @click="animationType = 'walk'"
+        >
           走
         </button>
-        <button class="btn btn-sm join-item" :class="animationType === 'run' ? 'btn-primary' : ''"
-          @click="animationType = 'run'">
+        <button
+          class="btn btn-sm join-item"
+          :class="animationType === 'run' ? 'btn-primary' : ''"
+          @click="animationType = 'run'"
+        >
           跑
         </button>
-        <button class="btn btn-sm join-item" :class="animationType === 'fly' ? 'btn-primary' : ''"
-          @click="animationType = 'fly'">
+        <button
+          class="btn btn-sm join-item"
+          :class="animationType === 'fly' ? 'btn-primary' : ''"
+          @click="animationType = 'fly'"
+        >
           飞行
         </button>
-        <button class="btn btn-sm join-item" :class="animationType === 'idle' ? 'btn-primary' : ''"
-          @click="animationType = 'idle'">
+        <button
+          class="btn btn-sm join-item"
+          :class="animationType === 'idle' ? 'btn-primary' : ''"
+          @click="animationType = 'idle'"
+        >
           待机
         </button>
       </div>
-      <button class="btn btn-sm" :class="autoRotate ? 'btn-primary' : ''" @click="autoRotate = !autoRotate">
+      <button
+        class="btn btn-sm"
+        :class="autoRotate ? 'btn-primary' : ''"
+        @click="autoRotate = !autoRotate"
+      >
         旋转
       </button>
       <button class="btn btn-sm" :class="paused ? 'btn-primary' : ''" @click="paused = !paused">
@@ -54,18 +81,33 @@ const backEquipment = ref<BackEquipment>("cape");
     <!-- 披风显示 -->
     <div class="mt-4 flex items-center justify-center gap-3 text-sm">
       <label class="flex items-center gap-1.5 cursor-pointer">
-        <input type="radio" name="cape-display" class="radio radio-xs radio-primary" :checked="backEquipment === 'none'"
-          @change="backEquipment = 'none'" />
+        <input
+          type="radio"
+          name="cape-display"
+          class="radio radio-xs radio-primary"
+          :checked="backEquipment === 'none'"
+          @change="backEquipment = 'none'"
+        />
         <span>隐藏披风</span>
       </label>
       <label class="flex items-center gap-1.5 cursor-pointer">
-        <input type="radio" name="cape-display" class="radio radio-xs radio-primary" :checked="backEquipment === 'cape'"
-          @change="backEquipment = 'cape'" />
+        <input
+          type="radio"
+          name="cape-display"
+          class="radio radio-xs radio-primary"
+          :checked="backEquipment === 'cape'"
+          @change="backEquipment = 'cape'"
+        />
         <span>披风</span>
       </label>
       <label class="flex items-center gap-1.5 cursor-pointer">
-        <input type="radio" name="cape-display" class="radio radio-xs radio-primary"
-          :checked="backEquipment === 'elytra'" @change="backEquipment = 'elytra'" />
+        <input
+          type="radio"
+          name="cape-display"
+          class="radio radio-xs radio-primary"
+          :checked="backEquipment === 'elytra'"
+          @change="backEquipment = 'elytra'"
+        />
         <span>鞘翅</span>
       </label>
     </div>

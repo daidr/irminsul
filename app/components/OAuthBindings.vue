@@ -26,9 +26,7 @@ const providers = computed<OAuthProvider[]>(
   () => (providersData.value as { providers: OAuthProvider[] })?.providers ?? [],
 );
 
-const bindings = computed<OAuthBindingInfo[]>(
-  () => user.value?.oauthBindings ?? [],
-);
+const bindings = computed<OAuthBindingInfo[]>(() => user.value?.oauthBindings ?? []);
 
 function getBinding(providerId: string): OAuthBindingInfo | undefined {
   return bindings.value.find((b) => b.provider === providerId);
@@ -79,20 +77,16 @@ function cancelConfirm() {
         v-for="provider in providers"
         :key="provider.id"
         class="flex items-center gap-3 p-3 border"
-        :class="getBinding(provider.id)
-          ? 'border-base-300'
-          : 'border-dashed border-base-300 opacity-60'"
+        :class="
+          getBinding(provider.id) ? 'border-base-300' : 'border-dashed border-base-300 opacity-60'
+        "
       >
         <!-- Provider Icon -->
         <div
           class="w-10 h-10 flex items-center justify-center shrink-0"
           :style="{ backgroundColor: provider.brandColor }"
         >
-          <img
-            :src="provider.icon"
-            :alt="provider.name"
-            class="w-5 h-5"
-          >
+          <img :src="provider.icon" :alt="provider.name" class="w-5 h-5" />
         </div>
 
         <!-- Info -->
@@ -122,17 +116,16 @@ function cancelConfirm() {
                 :disabled="unbindLoading === provider.id"
                 @click="handleUnbind(provider.id)"
               >
-                <span v-if="unbindLoading === provider.id" class="loading loading-spinner loading-xs" />
+                <span
+                  v-if="unbindLoading === provider.id"
+                  class="loading loading-spinner loading-xs"
+                />
                 确认
               </button>
               <button class="btn btn-ghost btn-xs" @click="cancelConfirm">取消</button>
             </template>
           </template>
-          <button
-            v-else
-            class="btn btn-primary btn-xs"
-            @click="handleBind(provider.id)"
-          >
+          <button v-else class="btn btn-primary btn-xs" @click="handleBind(provider.id)">
             绑定
           </button>
         </div>
@@ -140,4 +133,3 @@ function cancelConfirm() {
     </div>
   </div>
 </template>
-

@@ -25,8 +25,7 @@ export class PluginBridge {
   private readonly onCrash: PluginBridgeOptions["onCrash"];
   private readonly hookTimeoutMs: number;
 
-  private boundOnMessage = (e: MessageEvent<WorkerToMainMessage>) =>
-    this.handleMessage(e.data);
+  private boundOnMessage = (e: MessageEvent<WorkerToMainMessage>) => this.handleMessage(e.data);
   private boundOnError = (e: ErrorEvent) => {
     if (!this.shuttingDown) this.handleCrash(e.message ?? "Worker error");
   };
@@ -76,19 +75,13 @@ export class PluginBridge {
     });
   }
 
-  async callHook(
-    pluginId: string,
-    hookName: string,
-    ...args: unknown[]
-  ): Promise<unknown> {
+  async callHook(pluginId: string, hookName: string, ...args: unknown[]): Promise<unknown> {
     const callId = String(++this.callIdCounter);
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pendingCalls.delete(callId);
         reject(
-          new Error(
-            `Hook ${hookName} on ${pluginId} timed out after ${this.hookTimeoutMs}ms`,
-          ),
+          new Error(`Hook ${hookName} on ${pluginId} timed out after ${this.hookTimeoutMs}ms`),
         );
       }, this.hookTimeoutMs);
       this.pendingCalls.set(callId, { resolve, reject, timer });

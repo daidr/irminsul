@@ -49,7 +49,13 @@ export async function createPasswordResetToken(
   const key = resetKey(tokenHash);
 
   // Atomically acquire lock — if lock already exists, another token is active
-  const lockResult = await redis.send("SET", [lockKey(userId), tokenHash, "EX", RESET_EXPIRY_SECONDS.toString(), "NX"]);
+  const lockResult = await redis.send("SET", [
+    lockKey(userId),
+    tokenHash,
+    "EX",
+    RESET_EXPIRY_SECONDS.toString(),
+    "NX",
+  ]);
   if (!lockResult) {
     useLogger(event).set({ passwordReset: { skipped: "token_already_active", userId } });
     return null;

@@ -24,29 +24,25 @@ export class PluginWatcher {
     if (!existsSync(this.pluginsDir)) return;
     // 初始化 mtime 快照
     this.snapshotAll();
-    this.watcher = watch(
-      this.pluginsDir,
-      { recursive: true },
-      (_eventType, filename) => {
-        if (!filename) return;
-        const parts = filename.replace(/\\/g, "/").split("/");
-        const pluginId = parts[0];
-        if (!pluginId) return;
+    this.watcher = watch(this.pluginsDir, { recursive: true }, (_eventType, filename) => {
+      if (!filename) return;
+      const parts = filename.replace(/\\/g, "/").split("/");
+      const pluginId = parts[0];
+      if (!pluginId) return;
 
-        const relPath = parts.slice(1).join("/");
-        if (this.shouldIgnore(relPath)) return;
+      const relPath = parts.slice(1).join("/");
+      if (this.shouldIgnore(relPath)) return;
 
-        const existing = this.debounceTimers.get(pluginId);
-        if (existing) clearTimeout(existing);
-        this.debounceTimers.set(
-          pluginId,
-          setTimeout(() => {
-            this.debounceTimers.delete(pluginId);
-            this.handleChange(pluginId);
-          }, this.debounceMs),
-        );
-      },
-    );
+      const existing = this.debounceTimers.get(pluginId);
+      if (existing) clearTimeout(existing);
+      this.debounceTimers.set(
+        pluginId,
+        setTimeout(() => {
+          this.debounceTimers.delete(pluginId);
+          this.handleChange(pluginId);
+        }, this.debounceMs),
+      );
+    });
   }
 
   stop(): void {
@@ -75,10 +71,7 @@ export class PluginWatcher {
 
   private handleChange(pluginId: string): void {
     const pluginDir = join(this.pluginsDir, pluginId);
-    if (
-      !existsSync(pluginDir) ||
-      !statSync(pluginDir).isDirectory()
-    ) {
+    if (!existsSync(pluginDir) || !statSync(pluginDir).isDirectory()) {
       this.mtimeSnapshot.delete(pluginId);
       this.callbacks.onPluginRemoved(pluginId);
       return;

@@ -12,10 +12,7 @@ const bodySchema = z.object({
   action: z.enum(["approve", "deny"]),
 });
 
-function buildRedirectUrl(
-  redirectUri: string,
-  params: Record<string, string | undefined>,
-): string {
+function buildRedirectUrl(redirectUri: string, params: Record<string, string | undefined>): string {
   const url = new URL(redirectUri);
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined) url.searchParams.set(key, value);
@@ -55,7 +52,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: "Invalid request body" });
   }
 
-  const { client_id, redirect_uri, scope, state, code_challenge, code_challenge_method, action } = parsed.data;
+  const { client_id, redirect_uri, scope, state, code_challenge, code_challenge_method, action } =
+    parsed.data;
 
   // 3. Validate app and redirect_uri
   const app = await findOAuthAppByClientId(client_id);
@@ -85,7 +83,10 @@ export default defineEventHandler(async (event) => {
     }
   }
   if (code_challenge_method && code_challenge_method !== "S256") {
-    throw createError({ statusCode: 400, statusMessage: "Only S256 code_challenge_method is supported" });
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Only S256 code_challenge_method is supported",
+    });
   }
 
   // 4. If deny, return error redirect

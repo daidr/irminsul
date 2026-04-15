@@ -17,7 +17,9 @@ export async function findOAuthTokenByHash(tokenHash: string): Promise<OAuthToke
   return getOAuthTokenCollection().findOne({ tokenHash, revokedAt: null });
 }
 
-export async function findOAuthTokenByHashIncludingRevoked(tokenHash: string): Promise<OAuthTokenDocument | null> {
+export async function findOAuthTokenByHashIncludingRevoked(
+  tokenHash: string,
+): Promise<OAuthTokenDocument | null> {
   return getOAuthTokenCollection().findOne({ tokenHash });
 }
 
@@ -32,7 +34,10 @@ export async function revokeOAuthToken(tokenHash: string): Promise<void> {
   );
 }
 
-export async function revokeAllOAuthTokensForUserAndClient(clientId: string, userId: string): Promise<void> {
+export async function revokeAllOAuthTokensForUserAndClient(
+  clientId: string,
+  userId: string,
+): Promise<void> {
   await getOAuthTokenCollection().updateMany(
     { clientId, userId, revokedAt: null },
     { $set: { revokedAt: new Date() } },

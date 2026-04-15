@@ -11,11 +11,7 @@ export default defineNuxtConfig({
     preset: "bun",
     noExternals: false,
     externals: {
-      external: [
-        "mongodb",
-        "@napi-rs/canvas",
-        "jsdom",
-      ],
+      external: ["mongodb", "@napi-rs/canvas", "jsdom"],
       inline: ["mongodb-connection-string-url"],
     },
   },

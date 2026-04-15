@@ -41,7 +41,10 @@ export class PluginManager {
   private hostStatus: HostStatus = "stopped";
   private bridge: PluginBridge;
   private hookRegistry = new HookRegistry();
-  private oauthProviders = new Map<string, { descriptor: OAuthProviderDescriptor; pluginId: string }>();
+  private oauthProviders = new Map<
+    string,
+    { descriptor: OAuthProviderDescriptor; pluginId: string }
+  >();
   private logManager: PluginLogManager;
   private watcher: PluginWatcher | null = null;
   private pluginsDir: string;
@@ -52,14 +55,15 @@ export class PluginManager {
   private withLifecycleLock<T>(fn: () => Promise<T>): Promise<T> {
     const prev = this.lifecycleLock;
     let resolve: () => void;
-    this.lifecycleLock = new Promise<void>((r) => { resolve = r; });
+    this.lifecycleLock = new Promise<void>((r) => {
+      resolve = r;
+    });
     return prev.then(fn).finally(() => resolve!());
   }
 
   constructor(pluginsDir: string) {
     this.pluginsDir = resolve(pluginsDir);
-    const bufferSize =
-      (getSetting("plugin.system.logBufferSize") as number) ?? 200;
+    const bufferSize = (getSetting("plugin.system.logBufferSize") as number) ?? 200;
     this.logManager = new PluginLogManager(this.pluginsDir, bufferSize);
 
     this.bridge = new PluginBridge({
@@ -78,8 +82,7 @@ export class PluginManager {
 
   async scan(): Promise<void> {
     // 1. Collect enabled state from DB
-    const registry =
-      ((getSetting("plugin.system.registry") as PluginRegistryEntry[]) ?? []);
+    const registry = (getSetting("plugin.system.registry") as PluginRegistryEntry[]) ?? [];
     const registryMap = new Map(registry.map((e) => [e.id, e]));
     emitPluginEvent("scan:registry_loaded", {
       count: registry.length,
@@ -90,8 +93,8 @@ export class PluginManager {
     const discovered = new Map<string, PluginState>();
 
     if (existsSync(this.pluginsDir)) {
-      const dirs = readdirSync(this.pluginsDir, { withFileTypes: true }).filter(
-        (d) => d.isDirectory(),
+      const dirs = readdirSync(this.pluginsDir, { withFileTypes: true }).filter((d) =>
+        d.isDirectory(),
       );
       let maxOrder = Math.max(0, ...registry.map((e) => e.order));
 
@@ -215,8 +218,7 @@ export class PluginManager {
     }
 
     // Cleanup expired logs
-    const retentionDays =
-      (getSetting("plugin.system.logRetentionDays") as number) ?? 7;
+    const retentionDays = (getSetting("plugin.system.logRetentionDays") as number) ?? 7;
     this.logManager.cleanupExpiredLogs(retentionDays);
 
     // Discover OAuth providers from loaded plugins
@@ -285,21 +287,13 @@ export class PluginManager {
     });
   }
 
-  async updateConfig(
-    id: string,
-    input: Record<string, unknown>,
-  ): Promise<ValidateResult> {
+  async updateConfig(id: string, input: Record<string, unknown>): Promise<ValidateResult> {
     const plugin = this.plugins.get(id);
     if (!plugin) return { ok: false, errors: { _: "Plugin not found" } };
-    if (!plugin.meta.config)
-      return { ok: false, errors: { _: "Plugin has no config schema" } };
+    if (!plugin.meta.config) return { ok: false, errors: { _: "Plugin has no config schema" } };
 
     // Get old config
-    const oldConfig =
-      ((getSetting(`plugin.custom.${id}.config`) as Record<
-        string,
-        unknown
-      >) ?? {});
+    const oldConfig = (getSetting(`plugin.custom.${id}.config`) as Record<string, unknown>) ?? {};
 
     // Preserve unchanged password fields (frontend sends "****" as placeholder,
     // which is stripped before submission — missing password keys mean "keep old value")
@@ -314,20 +308,13 @@ export class PluginManager {
     const newConfig = result.config;
 
     // Persist
-    await setSetting(
-      `plugin.custom.${id}.config`,
-      newConfig,
-      "irminsul.plugin",
-    );
+    await setSetting(`plugin.custom.${id}.config`, newConfig, "irminsul.plugin");
 
     if (plugin.status !== "enabled") return result;
 
     // Determine changes
     const changes: Record<string, { old: unknown; new: unknown }> = {};
-    const allKeys = new Set([
-      ...Object.keys(oldConfig),
-      ...Object.keys(newConfig),
-    ]);
+    const allKeys = new Set([...Object.keys(oldConfig), ...Object.keys(newConfig)]);
     for (const key of allKeys) {
       if (oldConfig[key] !== newConfig[key]) {
         changes[key] = { old: oldConfig[key], new: newConfig[key] };
@@ -337,13 +324,8 @@ export class PluginManager {
     if (Object.keys(changes).length === 0) return result;
 
     // Check if any changed keys have restart: true
-    const restartKeys = (plugin.meta.config ?? [])
-      .filter((f) => f.restart)
-      .map((f) => f.key);
-    const nonRestartChanges: Record<
-      string,
-      { old: unknown; new: unknown }
-    > = {};
+    const restartKeys = (plugin.meta.config ?? []).filter((f) => f.restart).map((f) => f.key);
+    const nonRestartChanges: Record<string, { old: unknown; new: unknown }> = {};
     let hasRestartKey = false;
 
     for (const [key, change] of Object.entries(changes)) {
@@ -437,10 +419,7 @@ export class PluginManager {
   }
 
   getHostStatus(): { status: HostStatus; dirtyReasons: DirtyReason[] } {
-    const status =
-      this.dirtyReasons.length > 0
-        ? ("dirty" as HostStatus)
-        : this.hostStatus;
+    const status = this.dirtyReasons.length > 0 ? ("dirty" as HostStatus) : this.hostStatus;
     return { status, dirtyReasons: [...this.dirtyReasons] };
   }
 
@@ -451,9 +430,7 @@ export class PluginManager {
 
   private notifyStatusChange(): void {
     const data = this.getHostStatus();
-    const encoded = new TextEncoder().encode(
-      `event: status\ndata: ${JSON.stringify(data)}\n\n`,
-    );
+    const encoded = new TextEncoder().encode(`event: status\ndata: ${JSON.stringify(data)}\n\n`);
     for (const controller of this.statusSubscribers) {
       try {
         controller.enqueue(encoded);
@@ -488,7 +465,9 @@ export class PluginManager {
     return this.oauthProviders.get(id) ?? null;
   }
 
-  getOAuthProviderByPlugin(pluginId: string): { descriptor: OAuthProviderDescriptor; pluginId: string } | null {
+  getOAuthProviderByPlugin(
+    pluginId: string,
+  ): { descriptor: OAuthProviderDescriptor; pluginId: string } | null {
     for (const entry of this.oauthProviders.values()) {
       if (entry.pluginId === pluginId) return entry;
     }
@@ -503,14 +482,15 @@ export class PluginManager {
 
   // === User Event Hook Dispatch ===
 
-  async emitUserHook<K extends keyof UserHookPayloadMap>(hookName: K, payload: UserHookPayloadMap[K]): Promise<void> {
+  async emitUserHook<K extends keyof UserHookPayloadMap>(
+    hookName: K,
+    payload: UserHookPayloadMap[K],
+  ): Promise<void> {
     const handlers = this.hookRegistry.get(hookName);
     if (!handlers.length) return;
 
     const results = await Promise.allSettled(
-      handlers.map((handler) =>
-        this.callPluginHook(handler.pluginId, hookName, payload),
-      ),
+      handlers.map((handler) => this.callPluginHook(handler.pluginId, hookName, payload)),
     );
 
     for (let i = 0; i < results.length; i++) {
@@ -563,11 +543,7 @@ export class PluginManager {
     nitroApp.hooks.hook("evlog:drain", async (ctx: any) => {
       for (const handler of this.hookRegistry.get("evlog:drain")) {
         try {
-          await this.bridge.callHook(
-            handler.pluginId,
-            "evlog:drain",
-            ctx.event,
-          );
+          await this.bridge.callHook(handler.pluginId, "evlog:drain", ctx.event);
         } catch (err: unknown) {
           this.logManager.push({
             timestamp: new Date().toISOString(),
@@ -606,7 +582,12 @@ export class PluginManager {
         }
 
         // 校验插件是否注册了全部必需的 OAuth hooks
-        const requiredHooks = ["oauth:authorize", "oauth:exchange-token", "oauth:fetch-profile", "oauth:map-profile"];
+        const requiredHooks = [
+          "oauth:authorize",
+          "oauth:exchange-token",
+          "oauth:fetch-profile",
+          "oauth:map-profile",
+        ];
         const missingHooks = requiredHooks.filter(
           (h) => !this.hookRegistry.get(h).some((r) => r.pluginId === handler.pluginId),
         );
@@ -667,7 +648,9 @@ export class PluginManager {
     this.logManager.destroy();
     this.hookRegistry.clear();
     for (const controller of this.statusSubscribers) {
-      try { controller.close(); } catch { }
+      try {
+        controller.close();
+      } catch {}
     }
     this.statusSubscribers.clear();
     emitPluginEvent("host:shutdown");
@@ -694,10 +677,7 @@ export class PluginManager {
   private async loadPluginIntoHost(plugin: PluginState): Promise<void> {
     plugin.status = "loading";
     const config =
-      ((getSetting(`plugin.custom.${plugin.id}.config`) as Record<
-        string,
-        unknown
-      >) ?? {});
+      (getSetting(`plugin.custom.${plugin.id}.config`) as Record<string, unknown>) ?? {};
     const entryPath = join(plugin.dir, "index.js");
 
     await this.bridge.loadPlugin({
@@ -719,9 +699,7 @@ export class PluginManager {
     this.watcher?.updateSnapshot(plugin.id);
   }
 
-  private handlePluginLog(
-    msg: Extract<WorkerToMainMessage, { type: "log" }>,
-  ): void {
+  private handlePluginLog(msg: Extract<WorkerToMainMessage, { type: "log" }>): void {
     const entry: PluginLogEntry = {
       timestamp: new Date().toISOString(),
       level: (msg.level as PluginLogEntry["level"]) ?? "info",
@@ -878,32 +856,19 @@ export class PluginManager {
     void this.saveRegistry();
   }
 
-  private addDirtyReason(
-    pluginId: string,
-    reason: DirtyReason["reason"],
-  ): void {
+  private addDirtyReason(pluginId: string, reason: DirtyReason["reason"]): void {
     // Avoid duplicates
-    if (
-      this.dirtyReasons.some(
-        (r) => r.pluginId === pluginId && r.reason === reason,
-      )
-    )
-      return;
+    if (this.dirtyReasons.some((r) => r.pluginId === pluginId && r.reason === reason)) return;
     this.dirtyReasons.push({ pluginId, reason });
     this.notifyStatusChange();
   }
 
   private async saveRegistry(): Promise<void> {
-    const registry: PluginRegistryEntry[] = [...this.plugins.values()]
-      .map((p) => ({
-        id: p.id,
-        enabled: p.enabled,
-        order: p.order,
-      }));
-    await setSetting(
-      "plugin.system.registry",
-      registry,
-      "irminsul.plugin",
-    );
+    const registry: PluginRegistryEntry[] = [...this.plugins.values()].map((p) => ({
+      id: p.id,
+      enabled: p.enabled,
+      order: p.order,
+    }));
+    await setSetting("plugin.system.registry", registry, "irminsul.plugin");
   }
 }

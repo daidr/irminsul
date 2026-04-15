@@ -53,9 +53,7 @@ async function fetchPlugins() {
 
 onMounted(fetchPlugins);
 
-const selectedPlugin = computed(
-  () => plugins.value.find((p) => p.id === selectedId.value) ?? null,
-);
+const selectedPlugin = computed(() => plugins.value.find((p) => p.id === selectedId.value) ?? null);
 
 async function handleOrderUpdate(newList: any[]) {
   plugins.value = newList;
@@ -83,7 +81,10 @@ async function handleHostRestarted() {
       class="w-full md:w-[300px] shrink-0 border-x border-base-300 bg-base-200 flex flex-col"
       :class="mobileShowDetail ? 'hidden md:flex' : 'flex'"
     >
-      <AdminPluginHostStatus class="p-3 border-b border-base-300" @restarted="handleHostRestarted" />
+      <AdminPluginHostStatus
+        class="p-3 border-b border-base-300"
+        @restarted="handleHostRestarted"
+      />
       <div class="flex-1 overflow-y-auto">
         <AdminPluginList
           v-if="!loading"
@@ -97,7 +98,10 @@ async function handleHostRestarted() {
         </div>
       </div>
       <div class="p-3 border-t border-base-300">
-        <button class="btn btn-sm btn-ghost w-full justify-start gap-2" @click="settingsRef?.open()">
+        <button
+          class="btn btn-sm btn-ghost w-full justify-start gap-2"
+          @click="settingsRef?.open()"
+        >
           <HugeiconsIcon :icon="Settings02Icon" :size="16" />
           系统设置
         </button>

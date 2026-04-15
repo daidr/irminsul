@@ -63,10 +63,28 @@ export async function findUserForSession(
 > | null> {
   return getUserCollection().findOne(
     { uuid },
-    { projection: { skin: 1, cape: 1, bans: 1, time: 1, isAdmin: 1, isDeveloper: 1, emailVerified: 1, oauthBindings: 1 } },
+    {
+      projection: {
+        skin: 1,
+        cape: 1,
+        bans: 1,
+        time: 1,
+        isAdmin: 1,
+        isDeveloper: 1,
+        emailVerified: 1,
+        oauthBindings: 1,
+      },
+    },
   ) as Promise<Pick<
     UserDocument,
-    "skin" | "cape" | "bans" | "time" | "isAdmin" | "isDeveloper" | "emailVerified" | "oauthBindings"
+    | "skin"
+    | "cape"
+    | "bans"
+    | "time"
+    | "isAdmin"
+    | "isDeveloper"
+    | "emailVerified"
+    | "oauthBindings"
   > | null>;
 }
 
@@ -463,9 +481,6 @@ export async function findUserByOAuthBinding(
 // --- Developer 状态 ---
 
 export async function setDeveloperStatus(uuid: string, isDeveloper: boolean): Promise<boolean> {
-  const result = await getUserCollection().updateOne(
-    { uuid },
-    { $set: { isDeveloper } },
-  );
+  const result = await getUserCollection().updateOne({ uuid }, { $set: { isDeveloper } });
   return result.modifiedCount > 0;
 }

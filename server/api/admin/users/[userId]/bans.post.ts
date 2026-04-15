@@ -41,11 +41,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const result = await addBan(
-    userId,
-    { end: endDate, reason: reason || undefined },
-    admin.userId,
-  );
+  const result = await addBan(userId, { end: endDate, reason: reason || undefined }, admin.userId);
 
   if (result.success) {
     emitUserHook("user:ban-created", {

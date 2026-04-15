@@ -22,9 +22,7 @@ export default defineEventHandler(async (event) => {
     return { success: false, error: "用户不存在" };
   }
 
-  const matchedToken = userDoc.tokens.find(
-    (t) => computeTokenId(t.accessToken) === tokenId,
-  );
+  const matchedToken = userDoc.tokens.find((t) => computeTokenId(t.accessToken) === tokenId);
   if (!matchedToken) {
     return { success: false, error: "无权操作" };
   }

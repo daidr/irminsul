@@ -21,7 +21,9 @@ export async function findOAuthAppsByOwner(ownerId: string): Promise<OAuthAppDoc
   return getOAuthAppCollection().find({ ownerId }).toArray();
 }
 
-export async function findAllOAuthApps(filter?: { approved?: boolean }): Promise<OAuthAppDocument[]> {
+export async function findAllOAuthApps(filter?: {
+  approved?: boolean;
+}): Promise<OAuthAppDocument[]> {
   const query: Record<string, unknown> = {};
   if (filter?.approved !== undefined) query.approved = filter.approved;
   return getOAuthAppCollection().find(query).toArray();
@@ -31,7 +33,12 @@ export async function insertOAuthApp(doc: Omit<OAuthAppDocument, "_id">): Promis
   await getOAuthAppCollection().insertOne(doc as OAuthAppDocument);
 }
 
-export async function updateOAuthApp(clientId: string, update: Partial<Pick<OAuthAppDocument, "name" | "description" | "redirectUris" | "scopes" | "clientSecretHash">>): Promise<boolean> {
+export async function updateOAuthApp(
+  clientId: string,
+  update: Partial<
+    Pick<OAuthAppDocument, "name" | "description" | "redirectUris" | "scopes" | "clientSecretHash">
+  >,
+): Promise<boolean> {
   const result = await getOAuthAppCollection().updateOne(
     { clientId },
     { $set: { ...update, updatedAt: new Date() } },

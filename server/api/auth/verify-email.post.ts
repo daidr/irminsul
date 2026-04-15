@@ -46,7 +46,14 @@ export default defineEventHandler(async (event) => {
   }
 
   if (user.email !== result.email) {
-    log.set({ emailVerification: { warning: "email_mismatch", userId: result.userId, tokenEmail: result.email, currentEmail: user.email } });
+    log.set({
+      emailVerification: {
+        warning: "email_mismatch",
+        userId: result.userId,
+        tokenEmail: result.email,
+        currentEmail: user.email,
+      },
+    });
     return { success: false, error: "邮箱地址已变更，请重新发送验证邮件" };
   }
 

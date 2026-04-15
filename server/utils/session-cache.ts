@@ -5,7 +5,9 @@ const SESSION_USER_CACHE_TTL = 30; // seconds
  * Get cached user session data from Redis.
  * Returns null on cache miss.
  */
-export async function getCachedSessionUser(userId: string): Promise<ReturnType<typeof findUserForSession>> {
+export async function getCachedSessionUser(
+  userId: string,
+): Promise<ReturnType<typeof findUserForSession>> {
   const redis = getRedisClient();
   const key = buildRedisKey(SESSION_USER_CACHE_PREFIX, userId);
   const raw = (await redis.send("GET", [key])) as string | null;

@@ -13,11 +13,18 @@ export async function ensureOAuthAuthorizationIndexes() {
   await col.createIndex({ userId: 1 });
 }
 
-export async function findOAuthAuthorization(clientId: string, userId: string): Promise<OAuthAuthorizationDocument | null> {
+export async function findOAuthAuthorization(
+  clientId: string,
+  userId: string,
+): Promise<OAuthAuthorizationDocument | null> {
   return getOAuthAuthorizationCollection().findOne({ clientId, userId });
 }
 
-export async function upsertOAuthAuthorization(clientId: string, userId: string, scopes: OAuthScope[]): Promise<void> {
+export async function upsertOAuthAuthorization(
+  clientId: string,
+  userId: string,
+  scopes: OAuthScope[],
+): Promise<void> {
   const now = new Date();
   await getOAuthAuthorizationCollection().updateOne(
     { clientId, userId },
@@ -26,7 +33,9 @@ export async function upsertOAuthAuthorization(clientId: string, userId: string,
   );
 }
 
-export async function findOAuthAuthorizationsByUser(userId: string): Promise<OAuthAuthorizationDocument[]> {
+export async function findOAuthAuthorizationsByUser(
+  userId: string,
+): Promise<OAuthAuthorizationDocument[]> {
   return getOAuthAuthorizationCollection().find({ userId }).toArray();
 }
 

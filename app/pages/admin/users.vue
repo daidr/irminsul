@@ -92,7 +92,9 @@ async function fetchUsers() {
 onMounted(fetchUsers);
 
 // Ban modal
-const banModalRef = useTemplateRef<{ open: (userId: string, gameId: string) => void }>("banModalRef");
+const banModalRef = useTemplateRef<{ open: (userId: string, gameId: string) => void }>(
+  "banModalRef",
+);
 
 function openBanModal(userId: string) {
   const u = users.value.find((item) => item.id === userId);
@@ -140,10 +142,18 @@ const visiblePages = computed(() => {
       <div class="p-4 border-b border-base-300 flex flex-col sm:flex-row gap-3 shrink-0">
         <h1 class="text-lg font-bold shrink-0">用户管理</h1>
         <div class="flex flex-1 gap-2">
-          <input type="text" class="input input-sm input-bordered flex-1 min-w-0" placeholder="搜索用户名或邮箱..."
-            :value="search" @input="onSearchInput(($event.target as HTMLInputElement).value)">
-          <select class="select select-sm select-bordered w-auto" :value="filter"
-            @change="onFilterChange(($event.target as HTMLSelectElement).value)">
+          <input
+            type="text"
+            class="input input-sm input-bordered flex-1 min-w-0"
+            placeholder="搜索用户名或邮箱..."
+            :value="search"
+            @input="onSearchInput(($event.target as HTMLInputElement).value)"
+          />
+          <select
+            class="select select-sm select-bordered w-auto"
+            :value="filter"
+            @change="onFilterChange(($event.target as HTMLSelectElement).value)"
+          >
             <option value="">全部状态</option>
             <option value="banned">封禁中</option>
             <option value="admin">管理员</option>
@@ -175,12 +185,18 @@ const visiblePages = computed(() => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="u in users" :key="u.id" class="border-b border-base-300/50 hover:bg-base-300/30">
+            <tr
+              v-for="u in users"
+              :key="u.id"
+              class="border-b border-base-300/50 hover:bg-base-300/30"
+            >
               <td class="font-medium">
                 <AdminUserBubble :user-id="u.id" />
               </td>
               <td class="text-base-content/60 text-sm">{{ u.email }}</td>
-              <td class="text-base-content/50 text-sm hidden sm:table-cell">{{ formatTime(u.registerAt) }}</td>
+              <td class="text-base-content/50 text-sm hidden sm:table-cell">
+                {{ formatTime(u.registerAt) }}
+              </td>
               <td>
                 <div class="flex flex-wrap gap-1">
                   <span v-if="u.hasBan" class="badge badge-error badge-sm">封禁中</span>
@@ -194,10 +210,15 @@ const visiblePages = computed(() => {
                   <div tabindex="0" role="button" class="btn btn-ghost btn-xs">
                     <HugeiconsIcon :icon="MoreVerticalIcon" :size="16" />
                   </div>
-                  <ul tabindex="0"
-                    class="dropdown-content z-10 menu menu-sm shadow-lg bg-base-100 border border-base-300 w-36">
+                  <ul
+                    tabindex="0"
+                    class="dropdown-content z-10 menu menu-sm shadow-lg bg-base-100 border border-base-300 w-36"
+                  >
                     <li><a @click="openBanModal(u.id)">封禁信息</a></li>
-                    <li><a @click="toggleDeveloper(u.id, u.isDeveloper)">{{ u.isDeveloper ? '撤销开发者' : '标记为开发者' }}</a>
+                    <li>
+                      <a @click="toggleDeveloper(u.id, u.isDeveloper)">{{
+                        u.isDeveloper ? "撤销开发者" : "标记为开发者"
+                      }}</a>
                     </li>
                   </ul>
                 </div>
@@ -208,16 +229,31 @@ const visiblePages = computed(() => {
       </div>
 
       <!-- Pagination -->
-      <div v-if="!loading && total > 0"
-        class="p-3 border-t border-base-300 flex justify-between items-center text-sm shrink-0">
+      <div
+        v-if="!loading && total > 0"
+        class="p-3 border-t border-base-300 flex justify-between items-center text-sm shrink-0"
+      >
         <span class="text-base-content/50">共 {{ total }} 位用户</span>
         <div class="flex gap-1">
-          <button class="btn btn-ghost btn-xs" :disabled="page <= 1" @click="goToPage(page - 1)">‹</button>
-          <button v-for="p in visiblePages" :key="p" class="btn btn-xs"
-            :class="p === page ? 'btn-primary' : 'btn-ghost'" @click="goToPage(p)">
+          <button class="btn btn-ghost btn-xs" :disabled="page <= 1" @click="goToPage(page - 1)">
+            ‹
+          </button>
+          <button
+            v-for="p in visiblePages"
+            :key="p"
+            class="btn btn-xs"
+            :class="p === page ? 'btn-primary' : 'btn-ghost'"
+            @click="goToPage(p)"
+          >
             {{ p }}
           </button>
-          <button class="btn btn-ghost btn-xs" :disabled="page >= totalPages" @click="goToPage(page + 1)">›</button>
+          <button
+            class="btn btn-ghost btn-xs"
+            :disabled="page >= totalPages"
+            @click="goToPage(page + 1)"
+          >
+            ›
+          </button>
         </div>
       </div>
     </div>

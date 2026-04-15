@@ -16,11 +16,7 @@ describe("HookRegistry", () => {
     registry.register("plugin-a", "evlog:drain", 1);
     registry.register("plugin-c", "evlog:drain", 3);
     const handlers = registry.get("evlog:drain");
-    expect(handlers.map((h) => h.pluginId)).toEqual([
-      "plugin-a",
-      "plugin-b",
-      "plugin-c",
-    ]);
+    expect(handlers.map((h) => h.pluginId)).toEqual(["plugin-a", "plugin-b", "plugin-c"]);
   });
 
   it("returns empty array for unknown hook", () => {
@@ -46,14 +42,8 @@ describe("HookRegistry", () => {
     registry.register("plugin-a", "evlog:drain", 1);
     registry.register("plugin-b", "evlog:drain", 2);
 
-    expect(registry.get("evlog:enricher").map((h) => h.pluginId)).toEqual([
-      "plugin-b",
-      "plugin-a",
-    ]);
-    expect(registry.get("evlog:drain").map((h) => h.pluginId)).toEqual([
-      "plugin-a",
-      "plugin-b",
-    ]);
+    expect(registry.get("evlog:enricher").map((h) => h.pluginId)).toEqual(["plugin-b", "plugin-a"]);
+    expect(registry.get("evlog:drain").map((h) => h.pluginId)).toEqual(["plugin-a", "plugin-b"]);
   });
 
   it("clear removes everything", () => {

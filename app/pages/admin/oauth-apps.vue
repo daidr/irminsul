@@ -142,7 +142,10 @@ function formatDate(dateStr: string): string {
         </div>
 
         <!-- Empty -->
-        <div v-else-if="filteredApps.length === 0" class="flex justify-center p-12 text-base-content/40">
+        <div
+          v-else-if="filteredApps.length === 0"
+          class="flex justify-center p-12 text-base-content/40"
+        >
           暂无应用数据
         </div>
 
@@ -172,7 +175,10 @@ function formatDate(dateStr: string): string {
                 {{ app.clientId.slice(0, 12) }}...
               </td>
               <td class="hidden md:table-cell">
-                <span class="badge badge-sm" :class="app.type === 'confidential' ? 'badge-info' : 'badge-ghost'">
+                <span
+                  class="badge badge-sm"
+                  :class="app.type === 'confidential' ? 'badge-info' : 'badge-ghost'"
+                >
                   {{ app.type === "confidential" ? "机密" : "公开" }}
                 </span>
               </td>
@@ -191,7 +197,10 @@ function formatDate(dateStr: string): string {
                   <div tabindex="0" role="button" class="btn btn-ghost btn-xs">
                     <HugeiconsIcon :icon="MoreVerticalIcon" :size="16" />
                   </div>
-                  <ul tabindex="0" class="dropdown-content z-10 menu menu-sm shadow-lg bg-base-100 border border-base-300 w-36">
+                  <ul
+                    tabindex="0"
+                    class="dropdown-content z-10 menu menu-sm shadow-lg bg-base-100 border border-base-300 w-36"
+                  >
                     <li v-if="!app.approved">
                       <a @click="approveApp(app.clientId)">审批通过</a>
                     </li>
@@ -220,7 +229,9 @@ function formatDate(dateStr: string): string {
             <button class="btn btn-sm btn-ghost absolute right-2 top-2">&#10005;</button>
           </form>
           <h3 class="text-lg font-bold">确认删除</h3>
-          <p class="py-4 text-sm">确定要删除这个应用吗？所有关联的授权和令牌将被清除，此操作不可逆。</p>
+          <p class="py-4 text-sm">
+            确定要删除这个应用吗？所有关联的授权和令牌将被清除，此操作不可逆。
+          </p>
           <div class="modal-action">
             <form method="dialog">
               <button class="btn btn-ghost">取消</button>

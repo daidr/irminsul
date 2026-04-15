@@ -12,9 +12,7 @@ export default defineEventHandler(async (event) => {
       // Send current status immediately
       const current = manager.getHostStatus();
       controller.enqueue(
-        new TextEncoder().encode(
-          `event: status\ndata: ${JSON.stringify(current)}\n\n`,
-        ),
+        new TextEncoder().encode(`event: status\ndata: ${JSON.stringify(current)}\n\n`),
       );
 
       const unsubscribe = manager.subscribeHostStatus(controller);

@@ -82,7 +82,9 @@ export async function handleOAuthCallback(event: H3Event, params: CallbackParams
     )) as { providerId: string; displayName: string } | null;
 
     if (!mappedProfile?.providerId) {
-      log.set({ oauth: { error: "invalid_mapped_profile", step: "map_profile", providerId, rawProfile } });
+      log.set({
+        oauth: { error: "invalid_mapped_profile", step: "map_profile", providerId, rawProfile },
+      });
       return sendRedirect(event, errorRedirect);
     }
 

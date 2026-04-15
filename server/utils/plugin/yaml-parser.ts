@@ -1,9 +1,7 @@
 import type { PluginMeta, PluginConfigField } from "./types";
 import { isKnownHook } from "./types";
 
-export type ParseResult =
-  | { ok: true; meta: PluginMeta }
-  | { ok: false; errors: string[] };
+export type ParseResult = { ok: true; meta: PluginMeta } | { ok: false; errors: string[] };
 
 const VALID_CONFIG_TYPES = [
   "text",
@@ -44,8 +42,7 @@ export function validatePluginMeta(parsed: unknown): ParseResult {
   else if (!SEMVER_REGEX.test(obj.version as string))
     errors.push("'version' must be a valid semver (e.g., 1.0.0)");
 
-  if (!Array.isArray(obj.hooks))
-    errors.push("'hooks' is required and must be an array");
+  if (!Array.isArray(obj.hooks)) errors.push("'hooks' is required and must be an array");
   else if (obj.hooks.length === 0) errors.push("'hooks' must not be empty");
   else {
     for (const hook of obj.hooks) {
@@ -75,14 +72,8 @@ export function validatePluginMeta(parsed: unknown): ParseResult {
           fieldErrors.push(`config[${i}]: 'key' is required`);
         if (!f.label || typeof f.label !== "string")
           fieldErrors.push(`config[${i}]: 'label' is required`);
-        if (
-          !f.type ||
-          typeof f.type !== "string" ||
-          !VALID_CONFIG_TYPES.includes(f.type as string)
-        )
-          fieldErrors.push(
-            `config[${i}]: 'type' must be one of: ${VALID_CONFIG_TYPES.join(", ")}`,
-          );
+        if (!f.type || typeof f.type !== "string" || !VALID_CONFIG_TYPES.includes(f.type as string))
+          fieldErrors.push(`config[${i}]: 'type' must be one of: ${VALID_CONFIG_TYPES.join(", ")}`);
 
         if (fieldErrors.length > 0) {
           errors.push(...fieldErrors);
@@ -98,8 +89,7 @@ export function validatePluginMeta(parsed: unknown): ParseResult {
   const meta: PluginMeta = {
     name: obj.name as string,
     version: obj.version as string,
-    description:
-      typeof obj.description === "string" ? obj.description : undefined,
+    description: typeof obj.description === "string" ? obj.description : undefined,
     author: typeof obj.author === "string" ? obj.author : undefined,
     hooks: obj.hooks as string[],
     config: configFields.length > 0 ? configFields : undefined,

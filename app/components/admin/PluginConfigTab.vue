@@ -98,9 +98,7 @@ function validateRequired(): boolean {
     if (!isVisible(field) || !isRequired(field)) continue;
     const val = formData.value[field.key];
     const empty =
-      val === undefined ||
-      val === null ||
-      (typeof val === "string" && val.trim() === "");
+      val === undefined || val === null || (typeof val === "string" && val.trim() === "");
     if (empty) {
       errs[field.key] = `${field.label} 不能为空`;
     }
@@ -160,15 +158,33 @@ async function save() {
         </h4>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <template v-for="field in fields" :key="field.key">
-            <div v-if="isVisible(field)"
-              :class="field.type === 'textarea' || field.type === 'oauth-callback-url' ? 'md:col-span-2' : ''">
+            <div
+              v-if="isVisible(field)"
+              :class="
+                field.type === 'textarea' || field.type === 'oauth-callback-url'
+                  ? 'md:col-span-2'
+                  : ''
+              "
+            >
               <!-- 布尔值：复选框 -->
-              <label v-if="field.type === 'boolean'" class="flex cursor-pointer items-center gap-2 text-sm">
-                <input v-model="formData[field.key]" type="checkbox" class="checkbox checkbox-sm"
-                  :disabled="isDisabled(field)" />
+              <label
+                v-if="field.type === 'boolean'"
+                class="flex cursor-pointer items-center gap-2 text-sm"
+              >
+                <input
+                  v-model="formData[field.key]"
+                  type="checkbox"
+                  class="checkbox checkbox-sm"
+                  :disabled="isDisabled(field)"
+                />
                 {{ field.label }}
-                <HugeiconsIcon v-if="field.restart" :icon="RefreshIcon" :size="12" class="text-warning"
-                  title="修改此项需要重启 Plugin Host" />
+                <HugeiconsIcon
+                  v-if="field.restart"
+                  :icon="RefreshIcon"
+                  :size="12"
+                  class="text-warning"
+                  title="修改此项需要重启 Plugin Host"
+                />
               </label>
 
               <!-- 下拉选择 -->
@@ -176,16 +192,30 @@ async function save() {
                 <legend class="fieldset-legend text-xs">
                   {{ field.label }}
                   <span v-if="isRequired(field)" class="text-error">*</span>
-                  <HugeiconsIcon v-if="field.restart" :icon="RefreshIcon" :size="12" class="text-warning"
-                    title="修改此项需要重启 Plugin Host" />
+                  <HugeiconsIcon
+                    v-if="field.restart"
+                    :icon="RefreshIcon"
+                    :size="12"
+                    class="text-warning"
+                    title="修改此项需要重启 Plugin Host"
+                  />
                 </legend>
-                <select v-model="formData[field.key]" class="select select-bordered w-full"
-                  :disabled="isDisabled(field)">
-                  <option v-for="opt in getOptions(field)" :key="String(opt.value)" :value="opt.value">
+                <select
+                  v-model="formData[field.key]"
+                  class="select select-bordered w-full"
+                  :disabled="isDisabled(field)"
+                >
+                  <option
+                    v-for="opt in getOptions(field)"
+                    :key="String(opt.value)"
+                    :value="opt.value"
+                  >
                     {{ opt.label }}
                   </option>
                 </select>
-                <p v-if="errors[field.key]" class="text-xs text-error mt-1">{{ errors[field.key] }}</p>
+                <p v-if="errors[field.key]" class="text-xs text-error mt-1">
+                  {{ errors[field.key] }}
+                </p>
               </fieldset>
 
               <!-- 多行文本 -->
@@ -194,9 +224,16 @@ async function save() {
                   {{ field.label }}
                   <span v-if="isRequired(field)" class="text-error">*</span>
                 </legend>
-                <textarea v-model="formData[field.key]" class="textarea textarea-bordered w-full"
-                  :placeholder="field.description ?? ''" :disabled="isDisabled(field)" rows="3" />
-                <p v-if="errors[field.key]" class="text-xs text-error mt-1">{{ errors[field.key] }}</p>
+                <textarea
+                  v-model="formData[field.key]"
+                  class="textarea textarea-bordered w-full"
+                  :placeholder="field.description ?? ''"
+                  :disabled="isDisabled(field)"
+                  rows="3"
+                />
+                <p v-if="errors[field.key]" class="text-xs text-error mt-1">
+                  {{ errors[field.key] }}
+                </p>
               </fieldset>
 
               <!-- 数字 -->
@@ -204,25 +241,51 @@ async function save() {
                 <legend class="fieldset-legend text-xs">
                   {{ field.label }}
                   <span v-if="isRequired(field)" class="text-error">*</span>
-                  <HugeiconsIcon v-if="field.restart" :icon="RefreshIcon" :size="12" class="text-warning"
-                    title="修改此项需要重启 Plugin Host" />
+                  <HugeiconsIcon
+                    v-if="field.restart"
+                    :icon="RefreshIcon"
+                    :size="12"
+                    class="text-warning"
+                    title="修改此项需要重启 Plugin Host"
+                  />
                 </legend>
-                <input v-model.number="formData[field.key]" type="number" class="input input-bordered w-full"
-                  :placeholder="field.description ?? ''" :disabled="isDisabled(field)" autocomplete="one-time-code" />
-                <p v-if="errors[field.key]" class="text-xs text-error mt-1">{{ errors[field.key] }}</p>
+                <input
+                  v-model.number="formData[field.key]"
+                  type="number"
+                  class="input input-bordered w-full"
+                  :placeholder="field.description ?? ''"
+                  :disabled="isDisabled(field)"
+                  autocomplete="one-time-code"
+                />
+                <p v-if="errors[field.key]" class="text-xs text-error mt-1">
+                  {{ errors[field.key] }}
+                </p>
               </fieldset>
 
               <!-- OAuth Callback URL (只读提示) -->
-              <div v-else-if="field.type === 'oauth-callback-url'" class="alert alert-info alert-outline text-sm">
+              <div
+                v-else-if="field.type === 'oauth-callback-url'"
+                class="alert alert-info alert-outline text-sm"
+              >
                 <HugeiconsIcon :icon="InformationCircleIcon" :size="16" class="shrink-0" />
                 <div class="flex flex-col gap-1">
                   <span class="font-medium">{{ field.label }}</span>
-                  <span v-if="field.description" class="opacity-70 text-xs">{{ field.description }}</span>
-                  <code v-if="oauthCallbackUrl"
-                    class="select-all break-all px-2 py-1 text-xs badge badge-soft badge-secondary">{{ oauthCallbackUrl }}</code>
+                  <span v-if="field.description" class="opacity-70 text-xs">{{
+                    field.description
+                  }}</span>
+                  <code
+                    v-if="oauthCallbackUrl"
+                    class="select-all break-all px-2 py-1 text-xs badge badge-soft badge-secondary"
+                    >{{ oauthCallbackUrl }}</code
+                  >
                   <span v-else class="text-xs opacity-60">启用插件后将在此显示 Callback URL</span>
-                  <a v-if="field.url" :href="field.url" target="_blank" rel="noopener noreferrer"
-                    class="link link-primary text-xs inline-flex items-center gap-1 w-fit">
+                  <a
+                    v-if="field.url"
+                    :href="field.url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="link link-primary text-xs inline-flex items-center gap-1 w-fit"
+                  >
                     <HugeiconsIcon :icon="LinkSquare01Icon" :size="14" />
                     前往配置
                   </a>
@@ -234,14 +297,27 @@ async function save() {
                 <legend class="fieldset-legend text-xs">
                   {{ field.label }}
                   <span v-if="isRequired(field)" class="text-error">*</span>
-                  <HugeiconsIcon v-if="field.restart" :icon="RefreshIcon" :size="12" class="text-warning"
-                    title="修改此项需要重启 Plugin Host" />
+                  <HugeiconsIcon
+                    v-if="field.restart"
+                    :icon="RefreshIcon"
+                    :size="12"
+                    class="text-warning"
+                    title="修改此项需要重启 Plugin Host"
+                  />
                 </legend>
-                <input v-model="formData[field.key]" :type="field.type === 'password' ? 'password' : 'text'"
-                  class="input input-bordered w-full" :placeholder="field.description ?? ''"
-                  :disabled="isDisabled(field)" autocomplete="one-time-code" :data-1p-ignore="true"
-                  :data-lpignore="true" />
-                <p v-if="errors[field.key]" class="text-xs text-error mt-1">{{ errors[field.key] }}</p>
+                <input
+                  v-model="formData[field.key]"
+                  :type="field.type === 'password' ? 'password' : 'text'"
+                  class="input input-bordered w-full"
+                  :placeholder="field.description ?? ''"
+                  :disabled="isDisabled(field)"
+                  autocomplete="one-time-code"
+                  :data-1p-ignore="true"
+                  :data-lpignore="true"
+                />
+                <p v-if="errors[field.key]" class="text-xs text-error mt-1">
+                  {{ errors[field.key] }}
+                </p>
               </fieldset>
             </div>
           </template>

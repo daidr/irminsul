@@ -29,7 +29,11 @@ const mockGetRedisClient = vi.fn(() => ({
 const mockBuildRedisKey = vi.fn((...parts: string[]) => parts.join(":"));
 
 class MockYggdrasilError extends Error {
-  constructor(public httpStatus: number, public error: string, public errorMessage: string) {
+  constructor(
+    public httpStatus: number,
+    public error: string,
+    public errorMessage: string,
+  ) {
     super(errorMessage);
   }
 }
@@ -193,14 +197,21 @@ describe("rate-limit coverage: web auth helper endpoints", () => {
     });
 
     it("calls checkRateLimit with web:change-password:uid: scope", async () => {
-      mockRequireAuth.mockReturnValue({ userId: "user-uuid", email: "u@example.com", gameId: "P1" });
+      mockRequireAuth.mockReturnValue({
+        userId: "user-uuid",
+        email: "u@example.com",
+        gameId: "P1",
+      });
       mockVerifyAltchaPayload.mockResolvedValue({ verified: true, expired: false });
-      const event = createFakeEvent({
-        oldPassword: "old",
-        newPassword: "newpassword123",
-        confirmPassword: "newpassword123",
-        altchaPayload: "valid",
-      }, { userId: "user-uuid" });
+      const event = createFakeEvent(
+        {
+          oldPassword: "old",
+          newPassword: "newpassword123",
+          confirmPassword: "newpassword123",
+          altchaPayload: "valid",
+        },
+        { userId: "user-uuid" },
+      );
       await handler(event);
       expect(mockCheckRateLimit).toHaveBeenCalledWith(
         event,
@@ -220,11 +231,14 @@ describe("rate-limit coverage: web auth helper endpoints", () => {
       mockRequireAuth.mockReturnValue({ userId: "user-uuid", email: "u@x.c", gameId: "P1" });
       // mock processTextureUpload — texture upload calls it after rate-limit
       vi.stubGlobal("processTextureUpload", vi.fn().mockResolvedValue({ hash: "abc" }));
-      const event = createFakeEvent({
-        type: "skin",
-        data: "AAAA", // tiny base64, passes size check
-        model: 0,
-      }, { userId: "user-uuid" });
+      const event = createFakeEvent(
+        {
+          type: "skin",
+          data: "AAAA", // tiny base64, passes size check
+          model: 0,
+        },
+        { userId: "user-uuid" },
+      );
       await handler(event);
       expect(mockCheckRateLimit).toHaveBeenCalledWith(
         event,
@@ -238,7 +252,10 @@ describe("rate-limit coverage: web auth helper endpoints", () => {
     let handler: Function;
     beforeEach(async () => {
       vi.stubGlobal("findUserByPasskeyCredentialId", vi.fn().mockResolvedValue(null));
-      vi.stubGlobal("base64URLToUint8Array", vi.fn(() => new Uint8Array()));
+      vi.stubGlobal(
+        "base64URLToUint8Array",
+        vi.fn(() => new Uint8Array()),
+      );
       handler = (await import("../../server/api/passkey/auth-verify.post")).default;
     });
 

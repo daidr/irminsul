@@ -17,10 +17,7 @@ export const CLIENT_CREDENTIALS_ALLOWED_SCOPES: OAuthScope[] = ["profile:read"];
 
 export type OAuthClientType = "confidential" | "public";
 
-export type OAuthGrantType =
-  | "authorization_code"
-  | "client_credentials"
-  | "refresh_token";
+export type OAuthGrantType = "authorization_code" | "client_credentials" | "refresh_token";
 
 export interface OAuthAuthorizationCodeData {
   clientId: string;

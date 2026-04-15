@@ -52,9 +52,7 @@ const hasActiveBan = computed(() => bans.value.some(isActive));
   </p>
 
   <!-- Empty State -->
-  <div v-if="bans.length === 0" class="mt-5 py-8 text-center text-sm opacity-50">
-    暂无封禁记录
-  </div>
+  <div v-if="bans.length === 0" class="mt-5 py-8 text-center text-sm opacity-50">暂无封禁记录</div>
 
   <!-- Ban List -->
   <div v-else class="mt-5 flex flex-col gap-3 max-h-[50dvh] overflow-auto">

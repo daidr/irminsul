@@ -9,7 +9,13 @@ defineProps<{
 }>();
 
 // ---- 共享 modal ----
-type ModalType = "change-password" | "session-manage" | "ban-history" | "passkey" | "oauth-bindings" | "admin-panel";
+type ModalType =
+  | "change-password"
+  | "session-manage"
+  | "ban-history"
+  | "passkey"
+  | "oauth-bindings"
+  | "admin-panel";
 // renderedModal 控制 v-if 渲染的内容，关闭时保留，避免动画期间闪白
 // activeModal 跟踪逻辑上的开关状态
 const activeModal = ref<ModalType | null>(null);
@@ -50,14 +56,22 @@ function onDialogClose() {
 }
 
 function requestClose() {
-  if (activeModal.value === "admin-panel" && adminPanelRef.value && !adminPanelRef.value.canClose()) {
+  if (
+    activeModal.value === "admin-panel" &&
+    adminPanelRef.value &&
+    !adminPanelRef.value.canClose()
+  ) {
     return;
   }
   closeModal();
 }
 
 function onDialogCancel(e: Event) {
-  if (activeModal.value === "admin-panel" && adminPanelRef.value && !adminPanelRef.value.canClose()) {
+  if (
+    activeModal.value === "admin-panel" &&
+    adminPanelRef.value &&
+    !adminPanelRef.value.canClose()
+  ) {
     e.preventDefault();
     return;
   }

@@ -53,9 +53,7 @@ let currentPluginId: string | null = null;
 
 // --- Console Interception ---
 function formatArgs(args: unknown[]): string {
-  return args
-    .map((a) => (typeof a === "string" ? a : JSON.stringify(a)))
-    .join(" ");
+  return args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" ");
 }
 
 function send(msg: WorkerToMainMessage): void {
@@ -66,13 +64,37 @@ const originalConsole = globalThis.console;
 globalThis.console = {
   ...originalConsole,
   log: (...args: unknown[]) =>
-    send({ type: "log", pluginId: currentPluginId, level: "info", logType: "console", message: formatArgs(args) }),
+    send({
+      type: "log",
+      pluginId: currentPluginId,
+      level: "info",
+      logType: "console",
+      message: formatArgs(args),
+    }),
   warn: (...args: unknown[]) =>
-    send({ type: "log", pluginId: currentPluginId, level: "warn", logType: "console", message: formatArgs(args) }),
+    send({
+      type: "log",
+      pluginId: currentPluginId,
+      level: "warn",
+      logType: "console",
+      message: formatArgs(args),
+    }),
   error: (...args: unknown[]) =>
-    send({ type: "log", pluginId: currentPluginId, level: "error", logType: "console", message: formatArgs(args) }),
+    send({
+      type: "log",
+      pluginId: currentPluginId,
+      level: "error",
+      logType: "console",
+      message: formatArgs(args),
+    }),
   debug: (...args: unknown[]) =>
-    send({ type: "log", pluginId: currentPluginId, level: "debug", logType: "console", message: formatArgs(args) }),
+    send({
+      type: "log",
+      pluginId: currentPluginId,
+      level: "debug",
+      logType: "console",
+      message: formatArgs(args),
+    }),
 } as Console;
 
 // --- ctx Factory ---
@@ -238,7 +260,10 @@ self.onmessage = async (event: MessageEvent<MainToWorkerMessage>) => {
 
     case "plugin:load": {
       const { pluginId, pluginDir, entryPath, config, meta, allowedHooks } = msg as Required<
-        Pick<MainToWorkerMessage, "pluginId" | "pluginDir" | "entryPath" | "config" | "meta" | "allowedHooks">
+        Pick<
+          MainToWorkerMessage,
+          "pluginId" | "pluginDir" | "entryPath" | "config" | "meta" | "allowedHooks"
+        >
       >;
       const plugin: LoadedPlugin = {
         id: pluginId,
@@ -327,7 +352,8 @@ self.onmessage = async (event: MessageEvent<MainToWorkerMessage>) => {
         try {
           currentPluginId = pluginId!;
           await handler({ changes, config });
-        } catch {} finally {
+        } catch {
+        } finally {
           currentPluginId = null;
         }
       }
@@ -348,7 +374,8 @@ self.onmessage = async (event: MessageEvent<MainToWorkerMessage>) => {
                 setTimeout(() => reject(new Error("shutdown timeout")), 5000),
               ),
             ]);
-          } catch {} finally {
+          } catch {
+          } finally {
             currentPluginId = null;
           }
         }

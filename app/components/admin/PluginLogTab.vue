@@ -53,7 +53,8 @@ async function loadHistory(before?: string) {
     const data = await $fetch<any>(`/api/admin/plugins/${props.pluginId}/logs/history?${params}`);
     logs.value.unshift(...data.logs);
     hasMore.value = data.hasMore;
-  } catch {} finally {
+  } catch {
+  } finally {
     loadingHistory.value = false;
   }
 }
@@ -81,20 +82,28 @@ function resetAndReload() {
   connectSSE();
 }
 
-watch(() => props.active, (active) => {
-  if (active) resetAndReload();
-  else disconnectSSE();
-});
+watch(
+  () => props.active,
+  (active) => {
+    if (active) resetAndReload();
+    else disconnectSSE();
+  },
+);
 
 watch([levelFilter, typeFilter], () => {
   if (props.active) resetAndReload();
 });
 
-watch(() => props.pluginId, () => {
+watch(
+  () => props.pluginId,
+  () => {
+    if (props.active) resetAndReload();
+  },
+);
+
+onMounted(() => {
   if (props.active) resetAndReload();
 });
-
-onMounted(() => { if (props.active) resetAndReload(); });
 onBeforeUnmount(disconnectSSE);
 
 const clearing = ref(false);
@@ -104,7 +113,8 @@ async function clearLogs() {
   try {
     await $fetch(`/api/admin/plugins/${props.pluginId}/logs`, { method: "DELETE" });
     logs.value = [];
-  } catch {} finally {
+  } catch {
+  } finally {
     clearing.value = false;
   }
 }
@@ -116,16 +126,27 @@ function downloadLogs() {
 
 function formatTime(ts: string): string {
   const d = new Date(ts);
-  return d.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 3 });
+  return d.toLocaleTimeString("en-US", {
+    hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    fractionalSecondDigits: 3,
+  });
 }
 
 const levelBadge = (level: string) => {
   switch (level) {
-    case "info": return "badge-info";
-    case "warn": return "badge-warning";
-    case "error": return "badge-error";
-    case "debug": return "badge-neutral";
-    default: return "badge-neutral";
+    case "info":
+      return "badge-info";
+    case "warn":
+      return "badge-warning";
+    case "error":
+      return "badge-error";
+    case "debug":
+      return "badge-neutral";
+    default:
+      return "badge-neutral";
   }
 };
 </script>
@@ -166,19 +187,32 @@ const levelBadge = (level: string) => {
       <div v-if="loadingHistory" class="flex justify-center py-2">
         <span class="loading loading-spinner loading-xs" />
       </div>
-      <div v-if="logs.length === 0 && !loadingHistory" class="flex items-center justify-center h-full text-base-content/30">
+      <div
+        v-if="logs.length === 0 && !loadingHistory"
+        class="flex items-center justify-center h-full text-base-content/30"
+      >
         暂无日志
       </div>
-      <div v-for="(entry, i) in logs" :key="i" class="px-2 py-0.5 border-b border-base-200 hover:bg-base-200/50">
+      <div
+        v-for="(entry, i) in logs"
+        :key="i"
+        class="px-2 py-0.5 border-b border-base-200 hover:bg-base-200/50"
+      >
         <div class="flex gap-2">
-          <span class="text-base-content/40 shrink-0" :title="entry.timestamp">{{ formatTime(entry.timestamp) }}</span>
-          <span class="badge badge-xs shrink-0" :class="levelBadge(entry.level)">{{ entry.level }}</span>
+          <span class="text-base-content/40 shrink-0" :title="entry.timestamp">{{
+            formatTime(entry.timestamp)
+          }}</span>
+          <span class="badge badge-xs shrink-0" :class="levelBadge(entry.level)">{{
+            entry.level
+          }}</span>
           <span class="text-base-content/30 shrink-0">{{ entry.type }}</span>
           <span class="flex-1 break-all">{{ entry.message }}</span>
         </div>
         <details v-if="entry.data && Object.keys(entry.data).length > 0" class="ml-20 mt-0.5">
           <summary class="text-base-content/30 cursor-pointer text-[10px]">data</summary>
-          <pre class="text-[10px] text-base-content/50 whitespace-pre-wrap break-all mt-0.5">{{ JSON.stringify(entry.data, null, 2) }}</pre>
+          <pre class="text-[10px] text-base-content/50 whitespace-pre-wrap break-all mt-0.5">{{
+            JSON.stringify(entry.data, null, 2)
+          }}</pre>
         </details>
       </div>
     </div>

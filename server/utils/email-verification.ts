@@ -43,7 +43,13 @@ export async function createEmailVerificationToken(
   const key = verifyKey(tokenHash);
 
   // Atomically acquire lock
-  const lockResult = await redis.send("SET", [lockKey(userId), tokenHash, "EX", VERIFY_EXPIRY_SECONDS.toString(), "NX"]);
+  const lockResult = await redis.send("SET", [
+    lockKey(userId),
+    tokenHash,
+    "EX",
+    VERIFY_EXPIRY_SECONDS.toString(),
+    "NX",
+  ]);
   if (!lockResult) {
     useLogger(event).set({ emailVerification: { skipped: "token_already_active", userId } });
     return null;

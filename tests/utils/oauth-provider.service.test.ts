@@ -222,7 +222,9 @@ describe("authenticateClient", () => {
   });
 
   it("throws when public client sends a secret", async () => {
-    mockFindOAuthAppByClientId.mockResolvedValue(makeApp({ type: "public", clientSecretHash: null }));
+    mockFindOAuthAppByClientId.mockResolvedValue(
+      makeApp({ type: "public", clientSecretHash: null }),
+    );
     await expect(service.authenticateClient("c1", "secret")).rejects.toMatchObject({
       errorCode: "invalid_client",
       errorDescription: "Public clients must not send client_secret",
@@ -339,10 +341,12 @@ describe("validateBearerToken", () => {
       clientId: "c1",
       userId: "u1",
     });
-    await expect(service.validateBearerToken("Bearer tok", ["profile:read"])).rejects.toMatchObject({
-      errorCode: "invalid_token",
-      errorDescription: "Token expired",
-    });
+    await expect(service.validateBearerToken("Bearer tok", ["profile:read"])).rejects.toMatchObject(
+      {
+        errorCode: "invalid_token",
+        errorDescription: "Token expired",
+      },
+    );
   });
 
   it("throws for insufficient scope", async () => {
@@ -408,7 +412,9 @@ describe("refreshAccessToken", () => {
   });
 
   it("throws when token does not belong to client", async () => {
-    mockFindOAuthTokenByHashIncludingRevoked.mockResolvedValue(makeRefreshTokenDoc({ clientId: "other" }));
+    mockFindOAuthTokenByHashIncludingRevoked.mockResolvedValue(
+      makeRefreshTokenDoc({ clientId: "other" }),
+    );
     await expect(service.refreshAccessToken("refresh-raw", "c1")).rejects.toMatchObject({
       errorCode: "invalid_grant",
       errorDescription: "Token does not belong to this client",

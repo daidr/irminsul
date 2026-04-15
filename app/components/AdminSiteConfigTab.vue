@@ -55,7 +55,9 @@ const oauthDirty = computed(() => oauth.enabled !== oauthSnapshot.value.enabled)
 
 const announcementDirty = computed(() => announcement.value !== announcementSnapshot.value);
 
-const anyDirty = computed(() => smtpDirty.value || authDirty.value || oauthDirty.value || announcementDirty.value);
+const anyDirty = computed(
+  () => smtpDirty.value || authDirty.value || oauthDirty.value || announcementDirty.value,
+);
 
 defineExpose({ anyDirty });
 
@@ -317,14 +319,12 @@ async function saveAnnouncement() {
         OAuth 授权服务
       </h4>
       <label class="mt-3 flex cursor-pointer items-center gap-2 text-sm">
-        <input
-          v-model="oauth.enabled"
-          type="checkbox"
-          class="checkbox checkbox-sm"
-        />
+        <input v-model="oauth.enabled" type="checkbox" class="checkbox checkbox-sm" />
         启用 OAuth 授权服务
       </label>
-      <p class="ml-6 mt-1 text-xs opacity-50">开启后，经审批的第三方应用可通过 OAuth 协议获取玩家数据</p>
+      <p class="ml-6 mt-1 text-xs opacity-50">
+        开启后，经审批的第三方应用可通过 OAuth 协议获取玩家数据
+      </p>
       <div class="mt-3 flex justify-end">
         <button
           class="btn btn-primary btn-sm"

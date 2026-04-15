@@ -39,11 +39,7 @@ function handleLogin(providerId: string) {
           :style="{ backgroundColor: provider.brandColor }"
           @click="handleLogin(provider.id)"
         >
-          <img
-            :src="provider.icon"
-            :alt="provider.name"
-            class="w-5 h-5"
-          >
+          <img :src="provider.icon" :alt="provider.name" class="w-5 h-5" />
         </button>
       </div>
     </div>

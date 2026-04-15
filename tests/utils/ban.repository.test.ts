@@ -140,7 +140,9 @@ describe("editBan", () => {
       uuid: "user-uuid",
       email: "user@test.com",
       gameId: "Player1",
-      bans: [{ id: "ban-id", start: banStart, end: oldEnd, reason: "old reason", operatorId: "op" }],
+      bans: [
+        { id: "ban-id", start: banStart, end: oldEnd, reason: "old reason", operatorId: "op" },
+      ],
     });
     const newEnd = new Date("2027-01-01T00:00:00Z");
     const result = await banRepo.editBan("user-uuid", "ban-id", { end: newEnd, reason: "updated" });
@@ -311,10 +313,7 @@ describe("getUserBans", () => {
     mockFindOne.mockResolvedValue({ bans });
     const result = await banRepo.getUserBans("user-uuid");
     expect(result).toEqual(bans);
-    expect(mockFindOne).toHaveBeenCalledWith(
-      { uuid: "user-uuid" },
-      { projection: { bans: 1 } },
-    );
+    expect(mockFindOne).toHaveBeenCalledWith({ uuid: "user-uuid" }, { projection: { bans: 1 } });
   });
 
   it("returns empty array when user not found", async () => {

@@ -31,7 +31,14 @@ describe("emitUserHook global helper", () => {
   it("calls manager.emitUserHook when host is dirty", () => {
     mockGetHostStatus.mockReturnValue({ status: "dirty", dirtyReasons: [] });
 
-    emitUserHook("user:login", { uuid: "u1", email: "a@b.com", gameId: "P", timestamp: 1, ip: null, method: "password" });
+    emitUserHook("user:login", {
+      uuid: "u1",
+      email: "a@b.com",
+      gameId: "P",
+      timestamp: 1,
+      ip: null,
+      method: "password",
+    });
 
     expect(mockEmitUserHook).toHaveBeenCalledTimes(1);
   });
@@ -39,7 +46,13 @@ describe("emitUserHook global helper", () => {
   it("skips when host is crashed", () => {
     mockGetHostStatus.mockReturnValue({ status: "crashed", dirtyReasons: [] });
 
-    emitUserHook("user:registered", { uuid: "u1", email: "a@b.com", gameId: "P", timestamp: 1, ip: null });
+    emitUserHook("user:registered", {
+      uuid: "u1",
+      email: "a@b.com",
+      gameId: "P",
+      timestamp: 1,
+      ip: null,
+    });
 
     expect(mockEmitUserHook).not.toHaveBeenCalled();
   });
@@ -47,7 +60,13 @@ describe("emitUserHook global helper", () => {
   it("skips when host is stopped", () => {
     mockGetHostStatus.mockReturnValue({ status: "stopped", dirtyReasons: [] });
 
-    emitUserHook("user:registered", { uuid: "u1", email: "a@b.com", gameId: "P", timestamp: 1, ip: null });
+    emitUserHook("user:registered", {
+      uuid: "u1",
+      email: "a@b.com",
+      gameId: "P",
+      timestamp: 1,
+      ip: null,
+    });
 
     expect(mockEmitUserHook).not.toHaveBeenCalled();
   });
@@ -57,7 +76,13 @@ describe("emitUserHook global helper", () => {
     (getPluginManager as ReturnType<typeof vi.fn>).mockReturnValueOnce(null);
 
     expect(() => {
-      emitUserHook("user:registered", { uuid: "u1", email: "a@b.com", gameId: "P", timestamp: 1, ip: null });
+      emitUserHook("user:registered", {
+        uuid: "u1",
+        email: "a@b.com",
+        gameId: "P",
+        timestamp: 1,
+        ip: null,
+      });
     }).not.toThrow();
   });
 });

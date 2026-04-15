@@ -42,11 +42,18 @@ beforeEach(() => {
   vi.stubGlobal("defineEventHandler", (fn: Function) => fn);
   vi.stubGlobal("readBody", mockReadBody);
   vi.stubGlobal("checkRateLimit", vi.fn().mockResolvedValue(undefined));
-  vi.stubGlobal("extractClientIp", vi.fn(() => "127.0.0.1"));
+  vi.stubGlobal(
+    "extractClientIp",
+    vi.fn(() => "127.0.0.1"),
+  );
   vi.stubGlobal(
     "YggdrasilError",
     class MockYggdrasilError extends Error {
-      constructor(public httpStatus: number, public error: string, public errorMessage: string) {
+      constructor(
+        public httpStatus: number,
+        public error: string,
+        public errorMessage: string,
+      ) {
         super(errorMessage);
       }
     },
@@ -173,7 +180,10 @@ describe("OAuth token.post rate-limit", () => {
     vi.stubGlobal("checkRateLimit", mockRL);
     vi.stubGlobal("setResponseHeader", vi.fn());
     vi.stubGlobal("setResponseStatus", vi.fn());
-    vi.stubGlobal("extractClientIp", vi.fn(() => "1.2.3.4"));
+    vi.stubGlobal(
+      "extractClientIp",
+      vi.fn(() => "1.2.3.4"),
+    );
 
     // Stub authenticateClient so handler can proceed past rate limit (it'll fail later, that's OK)
     vi.stubGlobal("authenticateClient", vi.fn().mockRejectedValue(new Error("not relevant")));

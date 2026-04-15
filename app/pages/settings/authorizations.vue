@@ -96,7 +96,10 @@ function formatDate(dateStr: string): string {
       </div>
 
       <!-- Empty -->
-      <div v-else-if="authorizations.length === 0" class="flex flex-col items-center justify-center p-12 gap-3 text-base-content/40">
+      <div
+        v-else-if="authorizations.length === 0"
+        class="flex flex-col items-center justify-center p-12 gap-3 text-base-content/40"
+      >
         <HugeiconsIcon :icon="ShieldKeyIcon" :size="36" />
         <p>还没有授权过任何应用</p>
       </div>
@@ -114,23 +117,18 @@ function formatDate(dateStr: string): string {
 
           <div class="flex-1 min-w-0">
             <p class="font-medium">{{ auth.appName ?? "未知应用" }}</p>
-            <p v-if="auth.appDescription" class="text-sm text-base-content/60 truncate mt-0.5">{{ auth.appDescription }}</p>
+            <p v-if="auth.appDescription" class="text-sm text-base-content/60 truncate mt-0.5">
+              {{ auth.appDescription }}
+            </p>
             <div class="flex flex-wrap gap-1 mt-2">
-              <span
-                v-for="s in auth.scopes"
-                :key="s"
-                class="badge badge-ghost badge-sm"
-              >
+              <span v-for="s in auth.scopes" :key="s" class="badge badge-ghost badge-sm">
                 {{ SCOPE_DESCRIPTIONS[s] ?? s }}
               </span>
             </div>
             <p class="text-xs text-base-content/40 mt-2">授权于 {{ formatDate(auth.grantedAt) }}</p>
           </div>
 
-          <button
-            class="btn btn-outline btn-error btn-sm shrink-0"
-            @click="openRevokeDialog(auth)"
-          >
+          <button class="btn btn-outline btn-error btn-sm shrink-0" @click="openRevokeDialog(auth)">
             撤销
           </button>
         </div>

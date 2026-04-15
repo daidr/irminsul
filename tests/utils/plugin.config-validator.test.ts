@@ -35,7 +35,12 @@ describe("validatePluginConfig", () => {
 
   it("rejects when required_when condition met and field missing", () => {
     const schema: PluginConfigField[] = [
-      { key: "provider", label: "Provider", type: "select", options: [{ label: "A", value: "axiom" }] },
+      {
+        key: "provider",
+        label: "Provider",
+        type: "select",
+        options: [{ label: "A", value: "axiom" }],
+      },
       { key: "dataset", label: "Dataset", type: "text", required_when: { provider: "axiom" } },
     ];
     const result = validatePluginConfig(schema, { provider: "axiom" });
@@ -45,7 +50,12 @@ describe("validatePluginConfig", () => {
 
   it("allows missing field when required_when condition not met", () => {
     const schema: PluginConfigField[] = [
-      { key: "provider", label: "Provider", type: "select", options: [{ label: "C", value: "custom" }] },
+      {
+        key: "provider",
+        label: "Provider",
+        type: "select",
+        options: [{ label: "C", value: "custom" }],
+      },
       { key: "dataset", label: "Dataset", type: "text", required_when: { provider: "axiom" } },
     ];
     const result = validatePluginConfig(schema, { provider: "custom" });
@@ -54,7 +64,12 @@ describe("validatePluginConfig", () => {
 
   it("rejects validation.pattern mismatch", () => {
     const schema: PluginConfigField[] = [
-      { key: "url", label: "URL", type: "text", validation: { pattern: "^https?://", message: "Must be HTTP(S)" } },
+      {
+        key: "url",
+        label: "URL",
+        type: "text",
+        validation: { pattern: "^https?://", message: "Must be HTTP(S)" },
+      },
     ];
     const result = validatePluginConfig(schema, { url: "ftp://example.com" });
     expect(result.ok).toBe(false);
@@ -87,26 +102,20 @@ describe("validatePluginConfig", () => {
   });
 
   it("rejects type mismatch (string for number)", () => {
-    const schema: PluginConfigField[] = [
-      { key: "port", label: "Port", type: "number" },
-    ];
+    const schema: PluginConfigField[] = [{ key: "port", label: "Port", type: "number" }];
     const result = validatePluginConfig(schema, { port: "not-a-number" });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.errors.port).toBeDefined();
   });
 
   it("rejects type mismatch (number for boolean)", () => {
-    const schema: PluginConfigField[] = [
-      { key: "enabled", label: "Enabled", type: "boolean" },
-    ];
+    const schema: PluginConfigField[] = [{ key: "enabled", label: "Enabled", type: "boolean" }];
     const result = validatePluginConfig(schema, { enabled: 42 });
     expect(result.ok).toBe(false);
   });
 
   it("strips unknown keys from output", () => {
-    const schema: PluginConfigField[] = [
-      { key: "host", label: "Host", type: "text" },
-    ];
+    const schema: PluginConfigField[] = [{ key: "host", label: "Host", type: "text" }];
     const result = validatePluginConfig(schema, { host: "test", unknownKey: "value" });
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -128,9 +137,7 @@ describe("validatePluginConfig", () => {
   });
 
   it("accepts empty optional fields", () => {
-    const schema: PluginConfigField[] = [
-      { key: "note", label: "Note", type: "textarea" },
-    ];
+    const schema: PluginConfigField[] = [{ key: "note", label: "Note", type: "textarea" }];
     const result = validatePluginConfig(schema, {});
     expect(result.ok).toBe(true);
   });

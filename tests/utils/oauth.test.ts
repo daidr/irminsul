@@ -20,8 +20,12 @@ vi.mock("node:crypto", () => ({
 // since importOriginal fails on ~~ alias resolution
 vi.mock("../../server/utils/user.repository", () => {
   const col = {
-    get updateOne() { return mockUpdateOne; },
-    get findOne() { return mockFindOne; },
+    get updateOne() {
+      return mockUpdateOne;
+    },
+    get findOne() {
+      return mockFindOne;
+    },
   };
   const getUserCollection = () => col;
   return {
@@ -34,10 +38,7 @@ vi.mock("../../server/utils/user.repository", () => {
       return result.modifiedCount > 0;
     },
     async removeOAuthBinding(uuid: string, provider: string) {
-      const result = await col.updateOne(
-        { uuid },
-        { $pull: { oauthBindings: { provider } } },
-      );
+      const result = await col.updateOne({ uuid }, { $pull: { oauthBindings: { provider } } });
       return result.modifiedCount > 0;
     },
     async findUserByOAuthBinding(provider: string, providerId: string) {
@@ -69,7 +70,12 @@ beforeEach(async () => {
 describe("OAuth Repository Methods", () => {
   it("addOAuthBinding adds a binding to user document", async () => {
     mockUpdateOne.mockResolvedValue({ modifiedCount: 1 });
-    const binding = { provider: "github", providerId: "12345", displayName: "octocat", boundAt: new Date() };
+    const binding = {
+      provider: "github",
+      providerId: "12345",
+      displayName: "octocat",
+      boundAt: new Date(),
+    };
     const result = await userRepo.addOAuthBinding("user-uuid", binding as any);
 
     expect(result).toBe(true);
@@ -81,7 +87,12 @@ describe("OAuth Repository Methods", () => {
 
   it("addOAuthBinding rejects duplicate provider for same user", async () => {
     mockUpdateOne.mockResolvedValue({ modifiedCount: 0 });
-    const binding = { provider: "github", providerId: "99999", displayName: "dup", boundAt: new Date() };
+    const binding = {
+      provider: "github",
+      providerId: "99999",
+      displayName: "dup",
+      boundAt: new Date(),
+    };
     const result = await userRepo.addOAuthBinding("user-uuid", binding as any);
 
     expect(result).toBe(false);
@@ -120,14 +131,22 @@ describe("OAuth Repository Methods", () => {
 describe("OAuth Utils", () => {
   it("createOAuthState stores state in Redis with TTL", async () => {
     mockRedisSend.mockResolvedValue("OK");
-    const state = await oauth.createOAuthState({ action: "bind", userId: "user-uuid", providerId: "github" });
+    const state = await oauth.createOAuthState({
+      action: "bind",
+      userId: "user-uuid",
+      providerId: "github",
+    });
 
     expect(state).toBe("aaaaaaaabbbbccccddddeeeeeeeeeeee");
     expect(mockRedisSend).toHaveBeenCalledOnce();
     const [cmd, args] = mockRedisSend.mock.calls[0];
     expect(cmd).toBe("SET");
     expect(args[0]).toBe(`irmin:oauth:state:${state}`);
-    expect(JSON.parse(args[1])).toEqual({ action: "bind", userId: "user-uuid", providerId: "github" });
+    expect(JSON.parse(args[1])).toEqual({
+      action: "bind",
+      userId: "user-uuid",
+      providerId: "github",
+    });
     expect(args[2]).toBe("EX");
     expect(args[3]).toBe("300");
   });

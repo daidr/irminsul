@@ -27,7 +27,7 @@ export function initEvlogDrain(nitroApp: NitroApp) {
   }
 
   const samplingInfo = Number(config.evlogSamplingInfo) || 100;
-  const samplingDebug = import.meta.dev ? 100 : (Number(config.evlogSamplingDebug) || 0);
+  const samplingDebug = import.meta.dev ? 100 : Number(config.evlogSamplingDebug) || 0;
 
   initLogger({
     env: { service: "irminsul" },

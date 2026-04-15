@@ -66,9 +66,7 @@ async function handleSubmit() {
     <h3 class="text-xl font-bold">修改密码</h3>
   </div>
 
-  <p class="mt-2 text-[13px] leading-relaxed opacity-60">
-    修改密码后你可能需要重新登录你的游戏
-  </p>
+  <p class="mt-2 text-[13px] leading-relaxed opacity-60">修改密码后你可能需要重新登录你的游戏</p>
 
   <!-- Success message -->
   <div v-if="successMsg" role="alert" class="alert alert-success alert-soft mt-6">

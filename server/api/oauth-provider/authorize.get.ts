@@ -52,7 +52,12 @@ export default defineEventHandler(async (event) => {
   if (responseType !== "code") {
     return sendRedirect(
       event,
-      buildOAuthRedirectError(redirectUri, "unsupported_response_type", "Only response_type=code is supported", state),
+      buildOAuthRedirectError(
+        redirectUri,
+        "unsupported_response_type",
+        "Only response_type=code is supported",
+        state,
+      ),
     );
   }
 
@@ -75,7 +80,12 @@ export default defineEventHandler(async (event) => {
     if (!app.scopes.includes(s)) {
       return sendRedirect(
         event,
-        buildOAuthRedirectError(redirectUri, "invalid_scope", `Scope not allowed for this client: ${s}`, state),
+        buildOAuthRedirectError(
+          redirectUri,
+          "invalid_scope",
+          `Scope not allowed for this client: ${s}`,
+          state,
+        ),
       );
     }
   }
@@ -85,7 +95,12 @@ export default defineEventHandler(async (event) => {
     if (!codeChallenge || codeChallengeMethod !== "S256") {
       return sendRedirect(
         event,
-        buildOAuthRedirectError(redirectUri, "invalid_request", "Public clients must use PKCE with S256", state),
+        buildOAuthRedirectError(
+          redirectUri,
+          "invalid_request",
+          "Public clients must use PKCE with S256",
+          state,
+        ),
       );
     }
   }
@@ -93,7 +108,12 @@ export default defineEventHandler(async (event) => {
   if (codeChallengeMethod && codeChallengeMethod !== "S256") {
     return sendRedirect(
       event,
-      buildOAuthRedirectError(redirectUri, "invalid_request", "Only S256 code_challenge_method is supported", state),
+      buildOAuthRedirectError(
+        redirectUri,
+        "invalid_request",
+        "Only S256 code_challenge_method is supported",
+        state,
+      ),
     );
   }
 
@@ -101,7 +121,10 @@ export default defineEventHandler(async (event) => {
   const user = event.context.user;
   if (!user) {
     const currentUrl = getRequestURL(event);
-    return sendRedirect(event, `/login?redirect=${encodeURIComponent(currentUrl.pathname + currentUrl.search)}`);
+    return sendRedirect(
+      event,
+      `/login?redirect=${encodeURIComponent(currentUrl.pathname + currentUrl.search)}`,
+    );
   }
 
   // 7. If user already authorized same scopes, silent authorization
@@ -134,6 +157,7 @@ export default defineEventHandler(async (event) => {
   authorizeUrl.searchParams.set("scope", scope);
   if (state) authorizeUrl.searchParams.set("state", state);
   if (codeChallenge) authorizeUrl.searchParams.set("code_challenge", codeChallenge);
-  if (codeChallengeMethod) authorizeUrl.searchParams.set("code_challenge_method", codeChallengeMethod);
+  if (codeChallengeMethod)
+    authorizeUrl.searchParams.set("code_challenge_method", codeChallengeMethod);
   return sendRedirect(event, authorizeUrl.pathname + authorizeUrl.search);
 });

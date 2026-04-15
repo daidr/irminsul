@@ -20,11 +20,7 @@ export default defineNitroPlugin(async (nitroApp) => {
   initDb(nitroApp);
 
   // Phase 2: Async init (all depend on DB, can run in parallel)
-  await Promise.all([
-    initIndexes(),
-    initSettings(),
-    initKeys(),
-  ]);
+  await Promise.all([initIndexes(), initSettings(), initKeys()]);
   initSecrets();
 
   // Phase 3: Plugin system (depends on settings)

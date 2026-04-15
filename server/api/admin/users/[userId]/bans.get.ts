@@ -9,9 +9,7 @@ export default defineEventHandler(async (event) => {
   const bans = await getUserBans(userId);
 
   // Sort by start descending, limit 200
-  const sorted = bans
-    .sort((a, b) => b.start.getTime() - a.start.getTime())
-    .slice(0, 200);
+  const sorted = bans.sort((a, b) => b.start.getTime() - a.start.getTime()).slice(0, 200);
 
   return {
     success: true,

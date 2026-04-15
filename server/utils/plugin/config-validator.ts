@@ -24,9 +24,7 @@ export function validatePluginConfig(
 
     // Treat blank strings as empty for required checks
     const isEmpty =
-      value === undefined ||
-      value === null ||
-      (typeof value === "string" && value.trim() === "");
+      value === undefined || value === null || (typeof value === "string" && value.trim() === "");
 
     // Check required
     if (field.required && isEmpty) {
@@ -35,11 +33,7 @@ export function validatePluginConfig(
     }
 
     // Check required_when
-    if (
-      field.required_when &&
-      isEmpty &&
-      evaluateCondition(field.required_when, input)
-    ) {
+    if (field.required_when && isEmpty && evaluateCondition(field.required_when, input)) {
       errors[field.key] = `${field.label} is required`;
       continue;
     }
@@ -104,10 +98,7 @@ function checkType(field: PluginConfigField, value: unknown): string | null {
   return null;
 }
 
-function checkValidation(
-  field: PluginConfigField,
-  value: unknown,
-): string | null {
+function checkValidation(field: PluginConfigField, value: unknown): string | null {
   const validation = field.validation!;
 
   // Pattern check (for string values)
@@ -119,26 +110,17 @@ function checkValidation(
       return `${field.label} has an invalid validation pattern`;
     }
     if (!regex.test(value)) {
-      return (
-        validation.message ??
-        `${field.label} does not match the required pattern`
-      );
+      return validation.message ?? `${field.label} does not match the required pattern`;
     }
   }
 
   // Min/max range check (for number values)
   if (typeof value === "number") {
     if (validation.min !== undefined && value < validation.min) {
-      return (
-        validation.message ??
-        `${field.label} must be at least ${validation.min}`
-      );
+      return validation.message ?? `${field.label} must be at least ${validation.min}`;
     }
     if (validation.max !== undefined && value > validation.max) {
-      return (
-        validation.message ??
-        `${field.label} must be at most ${validation.max}`
-      );
+      return validation.message ?? `${field.label} must be at most ${validation.max}`;
     }
   }
 

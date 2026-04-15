@@ -57,7 +57,9 @@ async function handleSubmit() {
     });
     if (result.success) {
       await refreshNuxtData("current-user");
-      await navigateTo(redirectTarget.value, { external: redirectTarget.value.startsWith("/api/") });
+      await navigateTo(redirectTarget.value, {
+        external: redirectTarget.value.startsWith("/api/"),
+      });
     } else {
       toast.error(result.error || "登录失败");
       altchaRef.value?.reset();
@@ -84,7 +86,9 @@ async function handlePasskeyResult(
     });
     if (result.success) {
       await refreshNuxtData("current-user");
-      await navigateTo(redirectTarget.value, { external: redirectTarget.value.startsWith("/api/") });
+      await navigateTo(redirectTarget.value, {
+        external: redirectTarget.value.startsWith("/api/"),
+      });
     } else {
       toast.error(result.error || "通行密钥验证失败");
     }

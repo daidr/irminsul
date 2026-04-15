@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { startRegistration } from "@simplewebauthn/browser";
 import { HugeiconsIcon } from "@hugeicons/vue";
-import { CheckmarkCircle02Icon, Cancel01Icon, PencilEdit01Icon, Delete02Icon, AddCircleHalfDotIcon } from "@hugeicons/core-free-icons";
+import {
+  CheckmarkCircle02Icon,
+  Cancel01Icon,
+  PencilEdit01Icon,
+  Delete02Icon,
+  AddCircleHalfDotIcon,
+} from "@hugeicons/core-free-icons";
 
 interface PasskeyItem {
   credentialId: string;
@@ -136,9 +142,7 @@ onMounted(() => {
   </div>
 
   <!-- Description -->
-  <p class="mt-5 text-[13px] leading-relaxed opacity-50">
-    管理你的通行密钥，用于快速安全登录。
-  </p>
+  <p class="mt-5 text-[13px] leading-relaxed opacity-50">管理你的通行密钥，用于快速安全登录。</p>
 
   <!-- Loading -->
   <div v-if="loading" class="mt-5 flex justify-center py-8">
@@ -197,10 +201,7 @@ onMounted(() => {
         </div>
 
         <!-- Actions (hide during rename) -->
-        <div
-          v-if="renamingId !== pk.credentialId"
-          class="flex items-center gap-1 shrink-0 ml-2"
-        >
+        <div v-if="renamingId !== pk.credentialId" class="flex items-center gap-1 shrink-0 ml-2">
           <button class="btn btn-ghost btn-xs" @click="startRename(pk)">
             <HugeiconsIcon :icon="PencilEdit01Icon" :size="14" class="opacity-60" />
           </button>

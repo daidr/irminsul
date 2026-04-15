@@ -24,7 +24,12 @@ function getSmtpTransporter(event: H3Event): Transporter | null {
   });
 }
 
-export async function sendEmail(event: H3Event, to: string, subject: string, html: string): Promise<boolean> {
+export async function sendEmail(
+  event: H3Event,
+  to: string,
+  subject: string,
+  html: string,
+): Promise<boolean> {
   const transporter = getSmtpTransporter(event);
   if (!transporter) return false;
 
@@ -41,7 +46,11 @@ export async function sendEmail(event: H3Event, to: string, subject: string, htm
   }
 }
 
-export async function sendPasswordResetEmail(event: H3Event, to: string, resetLink: string): Promise<boolean> {
+export async function sendPasswordResetEmail(
+  event: H3Event,
+  to: string,
+  resetLink: string,
+): Promise<boolean> {
   const subject = "Irminsul - 密码重置";
   const html = `
 <!DOCTYPE html>
@@ -69,7 +78,11 @@ export async function sendPasswordResetEmail(event: H3Event, to: string, resetLi
   return sendEmail(event, to, subject, html);
 }
 
-export async function sendEmailVerificationEmail(event: H3Event, to: string, verifyLink: string): Promise<boolean> {
+export async function sendEmailVerificationEmail(
+  event: H3Event,
+  to: string,
+  verifyLink: string,
+): Promise<boolean> {
   const subject = "Irminsul - 邮箱验证";
   const html = `
 <!DOCTYPE html>

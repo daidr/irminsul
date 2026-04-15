@@ -44,19 +44,28 @@ const PROGRESS_COLORS: Record<string, string> = {
 
 const iconName = computed(() => {
   if (props.info.icon) return props.info.icon;
-  return props.info.type && DEFAULT_ICONS[props.info.type] ? DEFAULT_ICONS[props.info.type]! : DEFAULT_ICONS.info!;
+  return props.info.type && DEFAULT_ICONS[props.info.type]
+    ? DEFAULT_ICONS[props.info.type]!
+    : DEFAULT_ICONS.info!;
 });
 
 const typeColor = computed(() =>
-  props.info.type && TYPE_COLORS[props.info.type] ? TYPE_COLORS[props.info.type]! : TYPE_COLORS.info!,
+  props.info.type && TYPE_COLORS[props.info.type]
+    ? TYPE_COLORS[props.info.type]!
+    : TYPE_COLORS.info!,
 );
 
 const progressColor = computed(() =>
-  props.info.type && PROGRESS_COLORS[props.info.type] ? PROGRESS_COLORS[props.info.type]! : PROGRESS_COLORS.info!,
+  props.info.type && PROGRESS_COLORS[props.info.type]
+    ? PROGRESS_COLORS[props.info.type]!
+    : PROGRESS_COLORS.info!,
 );
 
 const hasDuration = computed(
-  () => props.info.duration !== false && typeof props.info.duration === "number" && props.info.duration > 0,
+  () =>
+    props.info.duration !== false &&
+    typeof props.info.duration === "number" &&
+    props.info.duration > 0,
 );
 
 const paused = ref(false);
@@ -105,24 +114,35 @@ function onMouseLeave() {
 <template>
   <div
     class="toast-item relative flex items-center gap-2 bg-base-100 border border-base-300 shadow-lg pl-2 py-1 pr-1 min-w-[10px] whitespace-nowrap overflow-hidden select-none"
-    @mouseenter="onMouseEnter" @mouseleave="onMouseLeave">
-    <HugeiconsIcon :icon="iconName" :size="16" class="shrink-0"
-      :class="[typeColor, info.type === 'loading' ? 'animate-spin' : '']" />
+    @mouseenter="onMouseEnter"
+    @mouseleave="onMouseLeave"
+  >
+    <HugeiconsIcon
+      :icon="iconName"
+      :size="16"
+      class="shrink-0"
+      :class="[typeColor, info.type === 'loading' ? 'animate-spin' : '']"
+    />
 
     <span class="flex-1 text-sm text-base-content leading-snug">{{ info.content }}</span>
 
-    <button v-if="!info.hideClose"
+    <button
+      v-if="!info.hideClose"
       class="shrink-0 p-1 text-base-content/30 hover:text-base-content/60 transition-colors cursor-pointer"
-      @click="emit('close')">
+      @click="emit('close')"
+    >
       <HugeiconsIcon :icon="Cancel01Icon" :size="14" />
     </button>
 
-    <div v-if="hasDuration" class="toast-progress absolute bottom-0 left-0 h-[2px]"
+    <div
+      v-if="hasDuration"
+      class="toast-progress absolute bottom-0 left-0 h-[2px]"
       :class="progressColor"
       :style="{
         animationDuration: `${info.duration}ms`,
         animationPlayState: paused ? 'paused' : 'running',
-      }" />
+      }"
+    />
   </div>
 </template>
 

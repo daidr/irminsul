@@ -126,11 +126,18 @@ beforeEach(() => {
   vi.stubGlobal("revokeAllOAuthTokensForUserAndClient", mockRevokeAllOAuthTokensForUserAndClient);
   // Rate-limit related stubs (no-op passthrough for these tests)
   vi.stubGlobal("checkRateLimit", vi.fn().mockResolvedValue(undefined));
-  vi.stubGlobal("extractClientIp", vi.fn(() => "127.0.0.1"));
+  vi.stubGlobal(
+    "extractClientIp",
+    vi.fn(() => "127.0.0.1"),
+  );
   vi.stubGlobal(
     "YggdrasilError",
     class MockYggdrasilError extends Error {
-      constructor(public httpStatus: number, public error: string, public errorMessage: string) {
+      constructor(
+        public httpStatus: number,
+        public error: string,
+        public errorMessage: string,
+      ) {
         super(errorMessage);
       }
     },

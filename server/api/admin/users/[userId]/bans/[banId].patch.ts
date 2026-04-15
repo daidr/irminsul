@@ -64,7 +64,5 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  return result.success
-    ? { success: true }
-    : { success: false, error: result.error };
+  return result.success ? { success: true } : { success: false, error: result.error };
 });

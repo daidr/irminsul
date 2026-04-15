@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { HugeiconsIcon } from "@hugeicons/vue";
-import { BackgroundIcon, Delete02Icon, ImageUploadIcon, UserFullViewIcon } from "@hugeicons/core-free-icons";
+import {
+  BackgroundIcon,
+  Delete02Icon,
+  ImageUploadIcon,
+  UserFullViewIcon,
+} from "@hugeicons/core-free-icons";
 
 const profileStore = useProfileStore();
 const { skinHash, capeHash, skinSlim, hasCustomSkin } = storeToRefs(profileStore);
@@ -289,12 +294,18 @@ function cancelSwitchTab() {
         <!-- 皮肤/披风切换 -->
         <div class="basis-full md:basis-auto"></div>
         <div class="join">
-          <button class="btn btn-xs join-item" :class="activeTab === 'skin' ? 'btn-primary' : ''"
-            @click="switchTab('skin')">
+          <button
+            class="btn btn-xs join-item"
+            :class="activeTab === 'skin' ? 'btn-primary' : ''"
+            @click="switchTab('skin')"
+          >
             皮肤
           </button>
-          <button class="btn btn-xs join-item" :class="activeTab === 'cape' ? 'btn-primary' : ''"
-            @click="switchTab('cape')">
+          <button
+            class="btn btn-xs join-item"
+            :class="activeTab === 'cape' ? 'btn-primary' : ''"
+            @click="switchTab('cape')"
+          >
             披风
           </button>
         </div>
@@ -312,9 +323,16 @@ function cancelSwitchTab() {
           </button>
         </template>
         <template v-else>
-          <div v-if="canReset" class="tooltip tooltip-bottom" :data-tip="activeTab === 'skin' ? '恢复默认皮肤' : '移除自定义披风'">
-            <button class="btn btn-xs bg-error/10 border-error/30 text-error hover:bg-error/20" :disabled="deleting"
-              @click="deleteTexture">
+          <div
+            v-if="canReset"
+            class="tooltip tooltip-bottom"
+            :data-tip="activeTab === 'skin' ? '恢复默认皮肤' : '移除自定义披风'"
+          >
+            <button
+              class="btn btn-xs bg-error/10 border-error/30 text-error hover:bg-error/20"
+              :disabled="deleting"
+              @click="deleteTexture"
+            >
               <span v-if="deleting" class="loading loading-spinner loading-xs" />
               <HugeiconsIcon v-else :icon="Delete02Icon" :size="16" />
               {{ activeTab === "skin" ? "重置皮肤" : "重置披风" }}
@@ -327,11 +345,20 @@ function cancelSwitchTab() {
     <!-- 拖拽上传区 -->
     <div
       class="mt-5 flex flex-col items-center justify-center gap-3 border bg-base-100 transition-colors cursor-pointer"
-      :class="isDragging ? 'border-primary bg-primary/5' : 'border-base-300'" style="height: 140px"
-      @drop.prevent="onDrop" @dragover="onDragOver" @dragleave="onDragLeave" @click="browseFile">
+      :class="isDragging ? 'border-primary bg-primary/5' : 'border-base-300'"
+      style="height: 140px"
+      @drop.prevent="onDrop"
+      @dragover="onDragOver"
+      @dragleave="onDragLeave"
+      @click="browseFile"
+    >
       <template v-if="previewUrl">
-        <img :src="previewUrl" :alt="activeTab === 'skin' ? '皮肤预览' : '披风预览'" class="h-16 w-16 object-contain"
-          style="image-rendering: pixelated" />
+        <img
+          :src="previewUrl"
+          :alt="activeTab === 'skin' ? '皮肤预览' : '披风预览'"
+          class="h-16 w-16 object-contain"
+          style="image-rendering: pixelated"
+        />
         <span class="text-xs text-base-content/50">{{ selectedFile?.name }}</span>
       </template>
       <template v-else>
@@ -349,7 +376,13 @@ function cancelSwitchTab() {
       </template>
     </div>
 
-    <input ref="fileInputRef" type="file" accept="image/png" class="hidden" @change="onFileChange" />
+    <input
+      ref="fileInputRef"
+      type="file"
+      accept="image/png"
+      class="hidden"
+      @change="onFileChange"
+    />
 
     <!-- 皮肤模型选择（皮肤 tab 且有皮肤/选了文件时显示） -->
     <div v-if="activeTab === 'skin' && (hasCustomSkin || hasFile)" class="mt-4">
@@ -358,12 +391,18 @@ function cancelSwitchTab() {
         <span class="text-sm">皮肤模型</span>
       </div>
       <div class="join w-full">
-        <button class="btn btn-sm join-item flex-1" :class="selectedModelType === 0 ? 'btn-primary' : ''"
-          @click="setModelType(0)">
+        <button
+          class="btn btn-sm join-item flex-1"
+          :class="selectedModelType === 0 ? 'btn-primary' : ''"
+          @click="setModelType(0)"
+        >
           默认 (Steve)
         </button>
-        <button class="btn btn-sm join-item flex-1" :class="selectedModelType === 1 ? 'btn-primary' : ''"
-          @click="setModelType(1)">
+        <button
+          class="btn btn-sm join-item flex-1"
+          :class="selectedModelType === 1 ? 'btn-primary' : ''"
+          @click="setModelType(1)"
+        >
           纤细 (Alex)
         </button>
       </div>

@@ -52,7 +52,9 @@ export default defineEventHandler(async (event) => {
   }
 
   if (!verified.verified || !verified.registrationInfo) {
-    log.set({ passkey: { registrationFailure: true, userId: userDoc.uuid, verified: verified.verified } });
+    log.set({
+      passkey: { registrationFailure: true, userId: userDoc.uuid, verified: verified.verified },
+    });
     return { success: false, error: "验证失败，请重试" };
   }
 

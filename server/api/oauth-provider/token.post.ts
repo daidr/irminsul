@@ -118,11 +118,17 @@ async function handleClientCredentials(
   // Authenticate client (must be confidential)
   const app = await authenticateClient(client_id, client_secret);
   if (app.type !== "confidential") {
-    throw new OAuthError("unauthorized_client", "Only confidential clients can use client_credentials grant", 400);
+    throw new OAuthError(
+      "unauthorized_client",
+      "Only confidential clients can use client_credentials grant",
+      400,
+    );
   }
 
   // Validate scope
-  const requestedScopes = scope ? (scope.split(" ") as OAuthScope[]) : CLIENT_CREDENTIALS_ALLOWED_SCOPES;
+  const requestedScopes = scope
+    ? (scope.split(" ") as OAuthScope[])
+    : CLIENT_CREDENTIALS_ALLOWED_SCOPES;
   for (const s of requestedScopes) {
     if (!VALID_SCOPES.includes(s)) {
       throw new OAuthError("invalid_scope", `Unknown scope: ${s}`, 400);

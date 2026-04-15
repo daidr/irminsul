@@ -66,10 +66,15 @@ onMounted(fetchApps);
         </div>
 
         <!-- Empty -->
-        <div v-else-if="apps.length === 0" class="flex flex-col items-center justify-center p-12 gap-3 text-base-content/40">
+        <div
+          v-else-if="apps.length === 0"
+          class="flex flex-col items-center justify-center p-12 gap-3 text-base-content/40"
+        >
           <HugeiconsIcon :icon="PuzzleIcon" :size="36" />
           <p>还没有创建任何应用</p>
-          <NuxtLink to="/developer/apps/new" class="btn btn-primary btn-sm">创建第一个应用</NuxtLink>
+          <NuxtLink to="/developer/apps/new" class="btn btn-primary btn-sm"
+            >创建第一个应用</NuxtLink
+          >
         </div>
 
         <!-- App list -->
@@ -87,16 +92,25 @@ onMounted(fetchApps);
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
                 <span class="font-medium truncate">{{ app.name }}</span>
-                <span class="badge badge-sm" :class="app.type === 'confidential' ? 'badge-info' : 'badge-ghost'">
+                <span
+                  class="badge badge-sm"
+                  :class="app.type === 'confidential' ? 'badge-info' : 'badge-ghost'"
+                >
                   {{ app.type === "confidential" ? "机密" : "公开" }}
                 </span>
                 <span v-if="app.approved" class="badge badge-success badge-sm">已审批</span>
                 <span v-else class="badge badge-warning badge-sm">待审批</span>
               </div>
-              <p v-if="app.description" class="text-sm text-base-content/60 truncate mt-0.5">{{ app.description }}</p>
+              <p v-if="app.description" class="text-sm text-base-content/60 truncate mt-0.5">
+                {{ app.description }}
+              </p>
             </div>
 
-            <HugeiconsIcon :icon="ArrowRight01Icon" :size="16" class="text-base-content/40 shrink-0" />
+            <HugeiconsIcon
+              :icon="ArrowRight01Icon"
+              :size="16"
+              class="text-base-content/40 shrink-0"
+            />
           </NuxtLink>
         </div>
       </div>

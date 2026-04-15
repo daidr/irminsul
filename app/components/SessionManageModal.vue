@@ -168,12 +168,18 @@ onMounted(() => {
 
   <!-- Tab Bar -->
   <div class="join w-full mt-5">
-    <button class="btn btn-sm join-item flex-1" :class="activeTab === 'game' ? 'btn-primary' : ''"
-      @click="switchTab('game')">
+    <button
+      class="btn btn-sm join-item flex-1"
+      :class="activeTab === 'game' ? 'btn-primary' : ''"
+      @click="switchTab('game')"
+    >
       游戏会话
     </button>
-    <button class="btn btn-sm join-item flex-1" :class="activeTab === 'web' ? 'btn-primary' : ''"
-      @click="switchTab('web')">
+    <button
+      class="btn btn-sm join-item flex-1"
+      :class="activeTab === 'web' ? 'btn-primary' : ''"
+      @click="switchTab('web')"
+    >
       网页会话
     </button>
   </div>
@@ -197,13 +203,19 @@ onMounted(() => {
       暂无游戏会话
     </div>
     <div v-else class="mt-5 flex flex-col gap-3 max-h-[40dvh] overflow-auto">
-      <div v-for="s in gameSessions" :key="s.tokenId"
+      <div
+        v-for="s in gameSessions"
+        :key="s.tokenId"
         class="flex items-center justify-between border border-base-300 bg-base-200/50 px-4 py-3"
-        :class="{ 'opacity-50': s.status === 0 }">
+        :class="{ 'opacity-50': s.status === 0 }"
+      >
         <div class="flex flex-col gap-1">
           <div class="flex items-center gap-2">
             <span class="text-sm font-semibold">{{ s.label }}</span>
-            <span v-if="s.status === 0" class="bg-base-300 px-2 py-0.5 text-[10px] font-semibold opacity-70">
+            <span
+              v-if="s.status === 0"
+              class="bg-base-300 px-2 py-0.5 text-[10px] font-semibold opacity-70"
+            >
               暂时失效
             </span>
           </div>
@@ -212,8 +224,11 @@ onMounted(() => {
             {{ formatTime(s.lastUsedAt) }}
           </span>
         </div>
-        <button class="btn btn-ghost btn-xs border border-error/30 text-error hover:bg-error/10"
-          :disabled="actionLoading === s.tokenId" @click="handleInvalidateGame(s.tokenId)">
+        <button
+          class="btn btn-ghost btn-xs border border-error/30 text-error hover:bg-error/10"
+          :disabled="actionLoading === s.tokenId"
+          @click="handleInvalidateGame(s.tokenId)"
+        >
           <span v-if="actionLoading === s.tokenId" class="loading loading-spinner loading-xs" />
           <template v-else>注销</template>
         </button>
@@ -221,9 +236,12 @@ onMounted(() => {
     </div>
 
     <!-- Invalidate All -->
-    <button v-if="gameSessions.length > 0"
+    <button
+      v-if="gameSessions.length > 0"
       class="btn btn-ghost mt-5 w-full border border-error/30 font-semibold text-error hover:bg-error/10"
-      :disabled="actionLoading === 'all-game'" @click="handleInvalidateAllGame">
+      :disabled="actionLoading === 'all-game'"
+      @click="handleInvalidateAllGame"
+    >
       <span v-if="actionLoading === 'all-game'" class="loading loading-spinner loading-sm" />
       全部注销
     </button>
@@ -235,14 +253,27 @@ onMounted(() => {
       暂无活跃的网页会话
     </div>
     <div v-else class="mt-5 flex flex-col gap-3 max-h-[40dvh] overflow-auto">
-      <div v-for="s in webSessions" :key="s.sessionId" class="flex items-center justify-between border px-4 py-3"
-        :class="s.isCurrent ? 'border-success/50 bg-base-200/50' : 'border-base-300 bg-base-200/50'
-          ">
+      <div
+        v-for="s in webSessions"
+        :key="s.sessionId"
+        class="flex items-center justify-between border px-4 py-3"
+        :class="s.isCurrent ? 'border-success/50 bg-base-200/50' : 'border-base-300 bg-base-200/50'"
+      >
         <div class="flex items-center gap-3">
-          <HugeiconsIcon v-if="parseWebUA(s.ua).icon === 'monitor'" :icon="ComputerIcon" :size="20" class="shrink-0"
-            :class="s.isCurrent ? 'text-success' : 'opacity-40'" />
-          <HugeiconsIcon v-else :icon="SmartPhone02Icon" :size="20" class="shrink-0"
-            :class="s.isCurrent ? 'text-success' : 'opacity-40'" />
+          <HugeiconsIcon
+            v-if="parseWebUA(s.ua).icon === 'monitor'"
+            :icon="ComputerIcon"
+            :size="20"
+            class="shrink-0"
+            :class="s.isCurrent ? 'text-success' : 'opacity-40'"
+          />
+          <HugeiconsIcon
+            v-else
+            :icon="SmartPhone02Icon"
+            :size="20"
+            class="shrink-0"
+            :class="s.isCurrent ? 'text-success' : 'opacity-40'"
+          />
           <div class="flex flex-col gap-1">
             <div class="flex items-center gap-2">
               <span class="text-sm font-semibold">
@@ -257,8 +288,12 @@ onMounted(() => {
             </span>
           </div>
         </div>
-        <button v-if="!s.isCurrent" class="btn btn-ghost btn-xs border border-error/30 text-error hover:bg-error/10"
-          :disabled="actionLoading === s.sessionId" @click="handleDeleteWeb(s.sessionId)">
+        <button
+          v-if="!s.isCurrent"
+          class="btn btn-ghost btn-xs border border-error/30 text-error hover:bg-error/10"
+          :disabled="actionLoading === s.sessionId"
+          @click="handleDeleteWeb(s.sessionId)"
+        >
           <span v-if="actionLoading === s.sessionId" class="loading loading-spinner loading-xs" />
           <template v-else>登出</template>
         </button>
@@ -266,9 +301,12 @@ onMounted(() => {
     </div>
 
     <!-- Delete Other Sessions -->
-    <button v-if="webSessions.length > 1"
+    <button
+      v-if="webSessions.length > 1"
       class="btn btn-ghost mt-5 w-full border border-error/30 font-semibold text-error hover:bg-error/10"
-      :disabled="actionLoading === 'all-web'" @click="handleDeleteOtherWeb">
+      :disabled="actionLoading === 'all-web'"
+      @click="handleDeleteOtherWeb"
+    >
       <span v-if="actionLoading === 'all-web'" class="loading loading-spinner loading-sm" />
       登出所有其他会话
     </button>

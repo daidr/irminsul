@@ -25,12 +25,18 @@ defineExpose({ canClose });
 
   <!-- Tab 栏 -->
   <div class="join w-full mt-5">
-    <button class="btn btn-sm join-item flex-1" :class="activeTab === 'site-config' ? 'btn-primary' : ''"
-      @click="activeTab = 'site-config'">
+    <button
+      class="btn btn-sm join-item flex-1"
+      :class="activeTab === 'site-config' ? 'btn-primary' : ''"
+      @click="activeTab = 'site-config'"
+    >
       站点配置
     </button>
-    <button class="btn btn-sm join-item flex-1" :class="activeTab === 'user-manage' ? 'btn-primary' : ''"
-      @click="activeTab = 'user-manage'">
+    <button
+      class="btn btn-sm join-item flex-1"
+      :class="activeTab === 'user-manage' ? 'btn-primary' : ''"
+      @click="activeTab = 'user-manage'"
+    >
       用户管理
     </button>
   </div>

@@ -91,7 +91,9 @@ async function handleAction(action: "approve" | "deny") {
           </div>
           <div class="text-center">
             <p class="text-lg font-semibold">{{ appInfo.name }}</p>
-            <p v-if="appInfo.description" class="text-sm text-base-content/60 mt-1">{{ appInfo.description }}</p>
+            <p v-if="appInfo.description" class="text-sm text-base-content/60 mt-1">
+              {{ appInfo.description }}
+            </p>
           </div>
         </div>
 
@@ -110,7 +112,11 @@ async function handleAction(action: "approve" | "deny") {
               :key="s"
               class="flex items-start gap-2 bg-base-200 border border-base-300 p-2.5 text-sm"
             >
-              <HugeiconsIcon :icon="ShieldKeyIcon" :size="16" class="text-primary shrink-0 mt-0.5" />
+              <HugeiconsIcon
+                :icon="ShieldKeyIcon"
+                :size="16"
+                class="text-primary shrink-0 mt-0.5"
+              />
               <div>
                 <span class="font-medium">{{ s }}</span>
                 <p v-if="SCOPE_DESCRIPTIONS[s]" class="text-base-content/60 text-xs mt-0.5">
@@ -142,9 +148,7 @@ async function handleAction(action: "approve" | "deny") {
       </template>
 
       <!-- Error state -->
-      <div v-else class="text-center text-base-content/40 py-12">
-        无法加载应用信息
-      </div>
+      <div v-else class="text-center text-base-content/40 py-12">无法加载应用信息</div>
     </div>
   </div>
 </template>

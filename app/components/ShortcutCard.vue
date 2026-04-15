@@ -1,6 +1,18 @@
 <script setup lang="ts">
 import { HugeiconsIcon } from "@hugeicons/vue";
-import { ParagraphBulletsPoint01Icon, SquareLockPasswordIcon, GameController03Icon, Key01Icon, CalendarRemove01Icon, LinkCircle02Icon, DashboardSquareSettingIcon, Plug01Icon, SourceCodeIcon, AuthorizedIcon, ApiIcon } from "@hugeicons/core-free-icons";
+import {
+  ParagraphBulletsPoint01Icon,
+  SquareLockPasswordIcon,
+  GameController03Icon,
+  Key01Icon,
+  CalendarRemove01Icon,
+  LinkCircle02Icon,
+  DashboardSquareSettingIcon,
+  Plug01Icon,
+  SourceCodeIcon,
+  AuthorizedIcon,
+  ApiIcon,
+} from "@hugeicons/core-free-icons";
 
 defineProps<{
   isAdmin?: boolean;
@@ -36,12 +48,42 @@ function handleClick(item: (typeof shortcuts)[number]) {
       <h2>快捷入口</h2>
     </div>
     <div class="mt-4 grid grid-cols-2 gap-3">
-      <button v-for="item in shortcuts" :key="item.label" class="btn border border-base-300" @click="handleClick(item)">
-        <HugeiconsIcon v-if="item.icon === 'lock'" :icon="SquareLockPasswordIcon" :size="18" class="shrink-0" />
-        <HugeiconsIcon v-else-if="item.icon === 'game'" :icon="GameController03Icon" :size="18" class="shrink-0" />
-        <HugeiconsIcon v-else-if="item.icon === 'passkeys'" :icon="Key01Icon" :size="18" class="shrink-0" />
-        <HugeiconsIcon v-else-if="item.icon === 'ban'" :icon="CalendarRemove01Icon" :size="18" class="shrink-0" />
-        <HugeiconsIcon v-else-if="item.icon === 'oauth'" :icon="LinkCircle02Icon" :size="18" class="shrink-0" />
+      <button
+        v-for="item in shortcuts"
+        :key="item.label"
+        class="btn border border-base-300"
+        @click="handleClick(item)"
+      >
+        <HugeiconsIcon
+          v-if="item.icon === 'lock'"
+          :icon="SquareLockPasswordIcon"
+          :size="18"
+          class="shrink-0"
+        />
+        <HugeiconsIcon
+          v-else-if="item.icon === 'game'"
+          :icon="GameController03Icon"
+          :size="18"
+          class="shrink-0"
+        />
+        <HugeiconsIcon
+          v-else-if="item.icon === 'passkeys'"
+          :icon="Key01Icon"
+          :size="18"
+          class="shrink-0"
+        />
+        <HugeiconsIcon
+          v-else-if="item.icon === 'ban'"
+          :icon="CalendarRemove01Icon"
+          :size="18"
+          class="shrink-0"
+        />
+        <HugeiconsIcon
+          v-else-if="item.icon === 'oauth'"
+          :icon="LinkCircle02Icon"
+          :size="18"
+          class="shrink-0"
+        />
         <span class="text-[13px] font-medium">{{ item.label }}</span>
       </button>
       <!-- Admin panel (admin only) -->
@@ -60,7 +102,11 @@ function handleClick(item: (typeof shortcuts)[number]) {
         <span class="text-[13px] font-medium">应用授权</span>
       </NuxtLink>
       <!-- Developer apps (developer or admin) -->
-      <NuxtLink v-if="isDeveloper || isAdmin" to="/developer/apps" class="btn border border-base-300">
+      <NuxtLink
+        v-if="isDeveloper || isAdmin"
+        to="/developer/apps"
+        class="btn border border-base-300"
+      >
         <HugeiconsIcon :icon="SourceCodeIcon" :size="18" class="shrink-0" />
         <span class="text-[13px] font-medium">开发者</span>
       </NuxtLink>

@@ -13,7 +13,10 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const action = query.action as string;
   if (action !== "bind" && action !== "login") {
-    throw createError({ statusCode: 400, statusMessage: "Invalid action, must be 'bind' or 'login'" });
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Invalid action, must be 'bind' or 'login'",
+    });
   }
 
   let userId: string | undefined;
@@ -38,15 +41,17 @@ export default defineEventHandler(async (event) => {
 
   const redirectUri = buildCallbackUrl(providerId);
 
-  const result = (await manager.callPluginHook(
-    provider.pluginId,
-    "oauth:authorize",
-    { redirectUri, state },
-  )) as { url?: string } | null;
+  const result = (await manager.callPluginHook(provider.pluginId, "oauth:authorize", {
+    redirectUri,
+    state,
+  })) as { url?: string } | null;
 
   const authorizeUrl = result?.url;
   if (!authorizeUrl || typeof authorizeUrl !== "string" || !authorizeUrl.startsWith("https://")) {
-    throw createError({ statusCode: 500, statusMessage: "OAuth plugin returned invalid authorize URL" });
+    throw createError({
+      statusCode: 500,
+      statusMessage: "OAuth plugin returned invalid authorize URL",
+    });
   }
 
   return sendRedirect(event, authorizeUrl);

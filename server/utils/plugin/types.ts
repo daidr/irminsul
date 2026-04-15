@@ -160,11 +160,7 @@ export interface PluginLogEntry {
 
 // ===== Known Hook Names =====
 
-export const LIFECYCLE_HOOKS = [
-  "app:started",
-  "app:shutdown",
-  "config:changed",
-] as const;
+export const LIFECYCLE_HOOKS = ["app:started", "app:shutdown", "config:changed"] as const;
 
 export const KNOWN_FUNCTIONAL_HOOKS = [
   "evlog:enricher",

@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // 模拟 Bun RedisClient：记录每次 send 调用并按脚本返回计数
-interface RedisCall { cmd: string; args: string[] }
+interface RedisCall {
+  cmd: string;
+  args: string[];
+}
 const calls: RedisCall[] = [];
 let counter = 0;
 

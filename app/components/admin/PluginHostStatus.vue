@@ -41,36 +41,50 @@ async function restartHost() {
   try {
     await $fetch("/api/admin/plugins/host/restart", { method: "POST" });
     emit("restarted");
-  } catch { } finally {
+  } catch {
+  } finally {
     restarting.value = false;
   }
 }
 
 const statusColor = computed(() => {
   switch (status.value) {
-    case "running": return "badge-success";
-    case "dirty": return "badge-warning";
-    case "crashed": return "badge-error";
-    default: return "badge-neutral";
+    case "running":
+      return "badge-success";
+    case "dirty":
+      return "badge-warning";
+    case "crashed":
+      return "badge-error";
+    default:
+      return "badge-neutral";
   }
 });
 
 const statusLabel = computed(() => {
   switch (status.value) {
-    case "running": return "运行中";
-    case "dirty": return "待重启";
-    case "crashed": return "已崩溃";
-    default: return "已停止";
+    case "running":
+      return "运行中";
+    case "dirty":
+      return "待重启";
+    case "crashed":
+      return "已崩溃";
+    default:
+      return "已停止";
   }
 });
 
 const reasonLabel = (reason: string) => {
   switch (reason) {
-    case "disabled": return "已禁用";
-    case "file_changed": return "文件已变更";
-    case "config_restart": return "配置需重启";
-    case "deleted": return "已删除";
-    default: return reason;
+    case "disabled":
+      return "已禁用";
+    case "file_changed":
+      return "文件已变更";
+    case "config_restart":
+      return "配置需重启";
+    case "deleted":
+      return "已删除";
+    default:
+      return reason;
   }
 };
 </script>
@@ -83,8 +97,13 @@ const reasonLabel = (reason: string) => {
         <span v-if="status === null" class="loading loading-spinner loading-xs" />
         <span v-else class="badge badge-sm" :class="statusColor">{{ statusLabel }}</span>
       </div>
-      <button v-if="status" class="btn btn-xs" :class="status === 'dirty' || status === 'crashed' ? 'btn-warning' : 'btn-ghost'" :disabled="restarting"
-        @click="restartHost">
+      <button
+        v-if="status"
+        class="btn btn-xs"
+        :class="status === 'dirty' || status === 'crashed' ? 'btn-warning' : 'btn-ghost'"
+        :disabled="restarting"
+        @click="restartHost"
+      >
         <span v-if="restarting" class="loading loading-spinner loading-xs" />
         <HugeiconsIcon v-else :icon="RefreshIcon" :size="14" />
         重启

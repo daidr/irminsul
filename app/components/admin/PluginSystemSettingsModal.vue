@@ -17,7 +17,8 @@ async function load() {
     watcher.value = data.watcher;
     logBufferSize.value = data.logBufferSize;
     logRetentionDays.value = data.logRetentionDays;
-  } catch {} finally {
+  } catch {
+  } finally {
     loading.value = false;
   }
 }
@@ -73,12 +74,24 @@ defineExpose({ open });
 
           <fieldset class="fieldset">
             <legend class="fieldset-legend text-xs">内存日志缓冲条数</legend>
-            <input v-model.number="logBufferSize" type="number" class="input input-bordered w-full" min="10" max="10000" />
+            <input
+              v-model.number="logBufferSize"
+              type="number"
+              class="input input-bordered w-full"
+              min="10"
+              max="10000"
+            />
           </fieldset>
 
           <fieldset class="fieldset">
             <legend class="fieldset-legend text-xs">日志文件保留天数</legend>
-            <input v-model.number="logRetentionDays" type="number" class="input input-bordered w-full" min="1" max="365" />
+            <input
+              v-model.number="logRetentionDays"
+              type="number"
+              class="input input-bordered w-full"
+              min="1"
+              max="365"
+            />
           </fieldset>
 
           <div class="flex justify-end">

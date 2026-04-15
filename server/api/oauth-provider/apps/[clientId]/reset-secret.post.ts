@@ -15,7 +15,10 @@ export default defineEventHandler(async (event) => {
   }
 
   if (app.type !== "confidential") {
-    throw createError({ statusCode: 400, statusMessage: "Only confidential apps have client secrets" });
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Only confidential apps have client secrets",
+    });
   }
 
   const newSecret = generateClientSecret();

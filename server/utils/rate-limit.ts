@@ -77,7 +77,9 @@ export async function checkRateLimit(
 
   if (count > options.delayAfter) {
     if (options.fastFail) {
-      useLogger(event).set({ rateLimit: { exceeded: true, key: keyIdentifier, count, fastFail: true } });
+      useLogger(event).set({
+        rateLimit: { exceeded: true, key: keyIdentifier, count, fastFail: true },
+      });
       throw new YggdrasilError(
         429,
         "TooManyRequestsException",

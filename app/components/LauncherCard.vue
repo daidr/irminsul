@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { HugeiconsIcon } from "@hugeicons/vue";
-import { CursorMagicSelection03Icon, DragDropIcon, CheckmarkSquare04Icon } from "@hugeicons/core-free-icons";
+import {
+  CursorMagicSelection03Icon,
+  DragDropIcon,
+  CheckmarkSquare04Icon,
+} from "@hugeicons/core-free-icons";
 
 const props = defineProps<{
   apiUrl: string;

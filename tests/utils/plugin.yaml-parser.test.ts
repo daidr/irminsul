@@ -50,10 +50,7 @@ describe("validatePluginMeta", () => {
       hooks: ["evlog:drain"],
     });
     expect(result.ok).toBe(false);
-    if (!result.ok)
-      expect(result.errors).toContainEqual(
-        expect.stringContaining("name"),
-      );
+    if (!result.ok) expect(result.errors).toContainEqual(expect.stringContaining("name"));
   });
 
   it("rejects missing version", () => {
@@ -62,10 +59,7 @@ describe("validatePluginMeta", () => {
       hooks: ["evlog:drain"],
     });
     expect(result.ok).toBe(false);
-    if (!result.ok)
-      expect(result.errors).toContainEqual(
-        expect.stringContaining("version"),
-      );
+    if (!result.ok) expect(result.errors).toContainEqual(expect.stringContaining("version"));
   });
 
   it("rejects invalid semver version", () => {
@@ -75,10 +69,7 @@ describe("validatePluginMeta", () => {
       hooks: ["evlog:drain"],
     });
     expect(result.ok).toBe(false);
-    if (!result.ok)
-      expect(result.errors).toContainEqual(
-        expect.stringContaining("version"),
-      );
+    if (!result.ok) expect(result.errors).toContainEqual(expect.stringContaining("version"));
   });
 
   it("rejects empty hooks array", () => {
@@ -88,10 +79,7 @@ describe("validatePluginMeta", () => {
       hooks: [],
     });
     expect(result.ok).toBe(false);
-    if (!result.ok)
-      expect(result.errors).toContainEqual(
-        expect.stringContaining("hooks"),
-      );
+    if (!result.ok) expect(result.errors).toContainEqual(expect.stringContaining("hooks"));
   });
 
   it("rejects missing hooks", () => {
@@ -106,10 +94,7 @@ describe("validatePluginMeta", () => {
       hooks: ["unknown:hook"],
     });
     expect(result.ok).toBe(false);
-    if (!result.ok)
-      expect(result.errors).toContainEqual(
-        expect.stringContaining("unknown:hook"),
-      );
+    if (!result.ok) expect(result.errors).toContainEqual(expect.stringContaining("unknown:hook"));
   });
 
   it("rejects config field with missing key", () => {
@@ -120,10 +105,7 @@ describe("validatePluginMeta", () => {
       config: [{ label: "Test", type: "text" }],
     });
     expect(result.ok).toBe(false);
-    if (!result.ok)
-      expect(result.errors).toContainEqual(
-        expect.stringContaining("key"),
-      );
+    if (!result.ok) expect(result.errors).toContainEqual(expect.stringContaining("key"));
   });
 
   it("rejects config field with missing label", () => {
@@ -134,10 +116,7 @@ describe("validatePluginMeta", () => {
       config: [{ key: "test", type: "text" }],
     });
     expect(result.ok).toBe(false);
-    if (!result.ok)
-      expect(result.errors).toContainEqual(
-        expect.stringContaining("label"),
-      );
+    if (!result.ok) expect(result.errors).toContainEqual(expect.stringContaining("label"));
   });
 
   it("rejects config field with unknown type", () => {
@@ -148,10 +127,7 @@ describe("validatePluginMeta", () => {
       config: [{ key: "test", label: "Test", type: "unknown" }],
     });
     expect(result.ok).toBe(false);
-    if (!result.ok)
-      expect(result.errors).toContainEqual(
-        expect.stringContaining("type"),
-      );
+    if (!result.ok) expect(result.errors).toContainEqual(expect.stringContaining("type"));
   });
 
   it("rejects non-object input", () => {
@@ -165,9 +141,7 @@ describe("validatePluginMeta", () => {
       name: "test",
       version: "1.0.0",
       hooks: ["evlog:drain"],
-      config: [
-        { key: "apiKey", label: "API Key", type: "password", restart: true },
-      ],
+      config: [{ key: "apiKey", label: "API Key", type: "password", restart: true }],
     });
     expect(result.ok).toBe(true);
     if (result.ok) {

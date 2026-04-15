@@ -61,12 +61,15 @@ export async function tryRemoveUnusedTexture(event: H3Event, hash: string): Prom
 /**
  * 处理材质上传（解析 PNG → 校验尺寸 → 算哈希 → 存文件 → 更新 DB → 清理旧文件）
  */
-export async function processTextureUpload(event: H3Event, params: {
-  uuid: string;
-  textureType: "skin" | "cape";
-  model?: number; // 0 = Steve, 1 = Alex
-  fileBuffer: Buffer;
-}): Promise<{ hash: string }> {
+export async function processTextureUpload(
+  event: H3Event,
+  params: {
+    uuid: string;
+    textureType: "skin" | "cape";
+    model?: number; // 0 = Steve, 1 = Alex
+    fileBuffer: Buffer;
+  },
+): Promise<{ hash: string }> {
   const { uuid, textureType, model, fileBuffer } = params;
 
   // 读取并解析 PNG
@@ -123,10 +126,13 @@ export async function processTextureUpload(event: H3Event, params: {
 /**
  * 处理材质删除（置 null → 清理旧文件）
  */
-export async function processTextureDelete(event: H3Event, params: {
-  uuid: string;
-  textureType: "skin" | "cape";
-}): Promise<void> {
+export async function processTextureDelete(
+  event: H3Event,
+  params: {
+    uuid: string;
+    textureType: "skin" | "cape";
+  },
+): Promise<void> {
   const { uuid, textureType } = params;
 
   // 获取当前用户数据（记录旧哈希）

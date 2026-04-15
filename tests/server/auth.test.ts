@@ -22,7 +22,11 @@ const mockCheckRateLimit = vi.fn();
 
 // Stub YggdrasilError (used by rate limit catch block)
 class MockYggdrasilError extends Error {
-  constructor(public httpStatus: number, public error: string, public errorMessage: string) {
+  constructor(
+    public httpStatus: number,
+    public error: string,
+    public errorMessage: string,
+  ) {
     super(errorMessage);
   }
 }
