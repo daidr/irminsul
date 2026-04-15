@@ -29,6 +29,9 @@ vi.stubGlobal("createSession", mockCreateSession);
 vi.stubGlobal("extractClientIp", mockExtractClientIp);
 vi.stubGlobal("emitUserHook", mockEmitUserHook);
 
+const mockDestroySession = vi.fn();
+vi.stubGlobal("destroySession", mockDestroySession);
+
 // Stub rate limiting (added by security fix)
 const mockCheckRateLimit = vi.fn();
 vi.stubGlobal("checkRateLimit", mockCheckRateLimit);
@@ -155,6 +158,11 @@ describe("auth API", () => {
       expect(mockFindUserByEmail).toHaveBeenCalledWith("test@example.com");
       expect(mockVerifyPassword).toHaveBeenCalledOnce();
       expect(mockCreateSession).toHaveBeenCalledOnce();
+      expect(mockDestroySession).toHaveBeenCalledWith(event);
+      // destroySession must happen BEFORE createSession
+      expect(mockDestroySession.mock.invocationCallOrder[0]).toBeLessThan(
+        mockCreateSession.mock.invocationCallOrder[0],
+      );
       expect(mockEmitUserHook).toHaveBeenCalledWith(
         "user:login",
         expect.objectContaining({ uuid: "user-uuid", method: "password" }),

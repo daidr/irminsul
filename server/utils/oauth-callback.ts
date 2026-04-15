@@ -150,6 +150,7 @@ export async function handleOAuthCallback(event: H3Event, params: CallbackParams
       loginAt: Date.now(),
     };
 
+    await destroySession(event);
     await createSession(event, sessionData);
 
     emitUserHook("user:login", {

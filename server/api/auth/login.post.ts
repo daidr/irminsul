@@ -95,6 +95,8 @@ export default defineEventHandler(async (event) => {
     loginAt: Date.now(),
   };
 
+  // Rotate session ID on successful login (防会话固定)
+  await destroySession(event);
   await createSession(event, sessionData);
 
   emitUserHook("user:login", {

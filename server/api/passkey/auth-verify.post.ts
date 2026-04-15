@@ -84,6 +84,7 @@ export default defineEventHandler(async (event) => {
     loginAt: Date.now(),
   };
 
+  await destroySession(event);
   await createSession(event, sessionData);
 
   emitUserHook("user:login", {
