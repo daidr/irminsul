@@ -13,5 +13,9 @@
   "[typescript]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
-  "typescript.experimental.useTsgo": false
+  "typescript.experimental.useTsgo": false,
+  "oxc.enable.oxlint": true,
+  "[vue]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  }
 }

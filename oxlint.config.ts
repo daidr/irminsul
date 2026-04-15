@@ -1,13 +1,14 @@
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["eslint", "typescript", "node", "jsdoc", "import", "unicorn", "vue"],
-  "categories": {},
-  "rules": {
+import { withNuxt } from "./.nuxt/oxlint.mjs";
+
+export default withNuxt({
+  plugins: ["eslint", "typescript", "node", "jsdoc", "import", "unicorn", "vue"],
+  categories: {},
+  rules: {
     "no-unused-expressions": [
       "error",
       {
-        "allowTaggedTemplates": true
-      }
+        allowTaggedTemplates: true,
+      },
     ],
     "import/consistent-type-specifier-style": ["error", "prefer-top-level"],
     "import/first": "error",
@@ -28,48 +29,48 @@
     "unicorn/prefer-number-properties": "error",
     "unicorn/prefer-string-starts-ends-with": "error",
     "unicorn/prefer-type-error": "error",
-    "unicorn/throw-new-error": "error"
+    "unicorn/throw-new-error": "error",
   },
-  "settings": {
+  settings: {
     "jsx-a11y": {
-      "polymorphicPropName": null,
-      "components": {},
-      "attributes": {}
+      polymorphicPropName: undefined,
+      components: {},
+      attributes: {},
     },
-    "next": {
-      "rootDir": []
+    next: {
+      rootDir: [],
     },
-    "react": {
-      "formComponents": [],
-      "linkComponents": [],
-      "version": null,
-      "componentWrapperFunctions": []
+    react: {
+      formComponents: [],
+      linkComponents: [],
+      version: undefined,
+      componentWrapperFunctions: [],
     },
-    "jsdoc": {
-      "ignorePrivate": false,
-      "ignoreInternal": false,
-      "ignoreReplacesDocs": true,
-      "overrideReplacesDocs": true,
-      "augmentsExtendsReplacesDocs": false,
-      "implementsReplacesDocs": false,
-      "exemptDestructuredRootsFromChecks": false,
-      "tagNamePreference": {}
+    jsdoc: {
+      ignorePrivate: false,
+      ignoreInternal: false,
+      ignoreReplacesDocs: true,
+      overrideReplacesDocs: true,
+      augmentsExtendsReplacesDocs: false,
+      implementsReplacesDocs: false,
+      exemptDestructuredRootsFromChecks: false,
+      tagNamePreference: {},
     },
-    "vitest": {
-      "typecheck": false
-    }
+    vitest: {
+      typecheck: false,
+    },
   },
-  "env": {
-    "builtin": true
+  env: {
+    builtin: true,
   },
-  "globals": {},
-  "ignorePatterns": [
+  globals: {},
+  ignorePatterns: [
     "dist/**",
     ".output/**",
     ".nuxt/**",
     "out/**",
     "bundle/**",
     "*.min.js",
-    "**/node_modules/**"
-  ]
-}
+    "**/node_modules/**",
+  ],
+});
