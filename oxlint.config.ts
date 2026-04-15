@@ -1,6 +1,4 @@
-import { withNuxt } from "./.nuxt/oxlint.mjs";
-
-export default withNuxt({
+export default {
   plugins: ["eslint", "typescript", "node", "jsdoc", "import", "unicorn", "vue"],
   categories: {},
   rules: {
@@ -72,5 +70,8 @@ export default withNuxt({
     "bundle/**",
     "*.min.js",
     "**/node_modules/**",
+    ".agents/**",
+    ".claude/**",
+    "docs/**",
   ],
-});
+};
