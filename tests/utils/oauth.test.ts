@@ -10,14 +10,6 @@ const mockCollection = {
 
 // Stub Nitro auto-imported globals
 const mockRedisSend = vi.fn();
-vi.stubGlobal("getRedisClient", () => ({ send: mockRedisSend }));
-vi.stubGlobal("buildRedisKey", (...args: string[]) => `irmin:${args.join(":")}`);
-vi.stubGlobal("useRuntimeConfig", () => ({
-  yggdrasilBaseUrl: "https://auth.example.com",
-}));
-vi.stubGlobal("getDb", () => ({
-  collection: () => mockCollection,
-}));
 
 // Mock node:crypto used by oauth.ts
 vi.mock("node:crypto", () => ({
@@ -61,6 +53,15 @@ let oauth: typeof import("../../server/utils/oauth");
 
 beforeEach(async () => {
   vi.clearAllMocks();
+  // Re-stub globals each test for unstubGlobals compatibility
+  vi.stubGlobal("getRedisClient", () => ({ send: mockRedisSend }));
+  vi.stubGlobal("buildRedisKey", (...args: string[]) => `irmin:${args.join(":")}`);
+  vi.stubGlobal("useRuntimeConfig", () => ({
+    yggdrasilBaseUrl: "https://auth.example.com",
+  }));
+  vi.stubGlobal("getDb", () => ({
+    collection: () => mockCollection,
+  }));
   userRepo = await import("../../server/utils/user.repository");
   oauth = await import("../../server/utils/oauth");
 });

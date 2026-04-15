@@ -34,37 +34,11 @@ class MockYggdrasilError extends Error {
   }
 }
 
-vi.stubGlobal("checkRateLimit", mockCheckRateLimit);
-vi.stubGlobal("extractClientIp", mockExtractClientIp);
-vi.stubGlobal("verifyAltchaPayload", mockVerifyAltchaPayload);
-vi.stubGlobal("getSetting", mockGetSetting);
-vi.stubGlobal("findUserByEmail", mockFindUserByEmail);
-vi.stubGlobal("findUserByUuid", mockFindUserByUuid);
-vi.stubGlobal("consumePasswordResetToken", mockConsumePasswordResetToken);
-vi.stubGlobal("consumeEmailVerificationToken", mockConsumeEmailVerificationToken);
-vi.stubGlobal("createEmailVerificationToken", mockCreateEmailVerificationToken);
-vi.stubGlobal("sendEmailVerificationEmail", mockSendEmailVerificationEmail);
-vi.stubGlobal("createPasswordResetToken", mockCreatePasswordResetToken);
-vi.stubGlobal("sendPasswordResetEmail", mockSendPasswordResetEmail);
-vi.stubGlobal("setEmailVerified", mockSetEmailVerified);
-vi.stubGlobal("hashPassword", mockHashPassword);
-vi.stubGlobal("updatePasswordHash", mockUpdatePasswordHash);
-vi.stubGlobal("removeAllTokens", mockRemoveAllTokens);
-vi.stubGlobal("destroyAllSessions", mockDestroyAllSessions);
-vi.stubGlobal("invalidateSessionUserCache", mockInvalidateSessionUserCache);
-vi.stubGlobal("emitUserHook", mockEmitUserHook);
-vi.stubGlobal("verifyPassword", mockVerifyPassword);
-vi.stubGlobal("requireAuth", mockRequireAuth);
-vi.stubGlobal("useRuntimeConfig", mockUseRuntimeConfig);
-vi.stubGlobal("getRedisClient", mockGetRedisClient);
-vi.stubGlobal("buildRedisKey", mockBuildRedisKey);
-vi.stubGlobal("YggdrasilError", MockYggdrasilError);
-
-vi.stubGlobal("defineEventHandler", (handler: Function) => handler);
-vi.stubGlobal("readBody", vi.fn());
-vi.stubGlobal("getHeader", vi.fn(() => "test-ua"));
-vi.stubGlobal("setCookie", vi.fn());
-vi.stubGlobal("deleteCookie", vi.fn());
+// Module-level fn refs for readBody/getHeader/setCookie/deleteCookie
+const mockReadBody = vi.fn();
+const mockGetHeader = vi.fn(() => "test-ua");
+const mockSetCookie = vi.fn();
+const mockDeleteCookie = vi.fn();
 
 vi.mock("zod", async (importOriginal) => {
   const mod = await importOriginal<typeof import("zod")>();
@@ -80,11 +54,42 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockExtractClientIp.mockReturnValue("1.2.3.4");
   mockGetSetting.mockReturnValue("smtp.example.com"); // generic non-empty
+  // Re-stub Nitro auto-imports each test for unstubGlobals compatibility
+  vi.stubGlobal("checkRateLimit", mockCheckRateLimit);
+  vi.stubGlobal("extractClientIp", mockExtractClientIp);
+  vi.stubGlobal("verifyAltchaPayload", mockVerifyAltchaPayload);
+  vi.stubGlobal("getSetting", mockGetSetting);
+  vi.stubGlobal("findUserByEmail", mockFindUserByEmail);
+  vi.stubGlobal("findUserByUuid", mockFindUserByUuid);
+  vi.stubGlobal("consumePasswordResetToken", mockConsumePasswordResetToken);
+  vi.stubGlobal("consumeEmailVerificationToken", mockConsumeEmailVerificationToken);
+  vi.stubGlobal("createEmailVerificationToken", mockCreateEmailVerificationToken);
+  vi.stubGlobal("sendEmailVerificationEmail", mockSendEmailVerificationEmail);
+  vi.stubGlobal("createPasswordResetToken", mockCreatePasswordResetToken);
+  vi.stubGlobal("sendPasswordResetEmail", mockSendPasswordResetEmail);
+  vi.stubGlobal("setEmailVerified", mockSetEmailVerified);
+  vi.stubGlobal("hashPassword", mockHashPassword);
+  vi.stubGlobal("updatePasswordHash", mockUpdatePasswordHash);
+  vi.stubGlobal("removeAllTokens", mockRemoveAllTokens);
+  vi.stubGlobal("destroyAllSessions", mockDestroyAllSessions);
+  vi.stubGlobal("invalidateSessionUserCache", mockInvalidateSessionUserCache);
+  vi.stubGlobal("emitUserHook", mockEmitUserHook);
+  vi.stubGlobal("verifyPassword", mockVerifyPassword);
+  vi.stubGlobal("requireAuth", mockRequireAuth);
+  vi.stubGlobal("useRuntimeConfig", mockUseRuntimeConfig);
+  vi.stubGlobal("getRedisClient", mockGetRedisClient);
+  vi.stubGlobal("buildRedisKey", mockBuildRedisKey);
+  vi.stubGlobal("YggdrasilError", MockYggdrasilError);
+  vi.stubGlobal("defineEventHandler", (handler: Function) => handler);
+  vi.stubGlobal("readBody", mockReadBody);
+  vi.stubGlobal("getHeader", mockGetHeader);
+  vi.stubGlobal("setCookie", mockSetCookie);
+  vi.stubGlobal("deleteCookie", mockDeleteCookie);
 });
 
 function createFakeEvent(body: Record<string, unknown>, contextUser?: unknown) {
   const event = { context: { user: contextUser }, headers: new Map() };
-  ((globalThis as any).readBody as ReturnType<typeof vi.fn>).mockResolvedValue(body);
+  mockReadBody.mockResolvedValue(body);
   return event;
 }
 
@@ -203,5 +208,40 @@ describe("rate-limit coverage: web auth helper endpoints", () => {
         expect.objectContaining({ max: 5, fastFail: true }),
       );
     });
+  });
+});
+
+describe("rate-limit translation contract", () => {
+  // Generic helper: when checkRateLimit throws YggdrasilError(429), every web
+  // endpoint must translate it to the standardized envelope.
+
+  it("forgot-password returns standard envelope on 429", async () => {
+    mockVerifyAltchaPayload.mockResolvedValue({ verified: true, expired: false });
+    mockCheckRateLimit.mockRejectedValue(
+      new MockYggdrasilError(429, "TooManyRequestsException", "rate limited"),
+    );
+    const handler = (await import("../../server/api/auth/forgot-password.post")).default;
+    const event = createFakeEvent({ email: "u@example.com", altchaPayload: "valid" });
+    const result = await handler(event);
+    expect(result).toEqual({ success: false, error: "请求过于频繁，请稍后再试" });
+  });
+
+  it("change-password returns standard envelope on 429", async () => {
+    mockRequireAuth.mockReturnValue({ userId: "user-uuid", email: "u@x.c", gameId: "P1" });
+    mockCheckRateLimit.mockRejectedValue(
+      new MockYggdrasilError(429, "TooManyRequestsException", "rate limited"),
+    );
+    const handler = (await import("../../server/api/user/change-password.post")).default;
+    const event = createFakeEvent({}, { userId: "user-uuid" });
+    const result = await handler(event);
+    expect(result).toEqual({ success: false, error: "请求过于频繁，请稍后再试" });
+  });
+
+  it("forgot-password rethrows non-429 errors", async () => {
+    mockVerifyAltchaPayload.mockResolvedValue({ verified: true, expired: false });
+    mockCheckRateLimit.mockRejectedValue(new Error("redis is on fire"));
+    const handler = (await import("../../server/api/auth/forgot-password.post")).default;
+    const event = createFakeEvent({ email: "u@example.com", altchaPayload: "valid" });
+    await expect(handler(event)).rejects.toThrow("redis is on fire");
   });
 });

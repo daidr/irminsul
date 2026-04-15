@@ -19,15 +19,15 @@ const mockCollection = {
 
 mockFind.mockReturnValue({ toArray: mockToArray });
 
-vi.stubGlobal("getDb", () => ({
-  collection: () => mockCollection,
-}));
-
 let repo: typeof import("../../server/utils/oauth-app.repository");
 
 beforeEach(async () => {
   vi.clearAllMocks();
   mockFind.mockReturnValue({ toArray: mockToArray });
+  // Re-stub getDb each test for unstubGlobals compatibility
+  vi.stubGlobal("getDb", () => ({
+    collection: () => mockCollection,
+  }));
   repo = await import("../../server/utils/oauth-app.repository");
 });
 

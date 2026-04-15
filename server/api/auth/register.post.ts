@@ -78,7 +78,7 @@ export default defineEventHandler(async (event) => {
 
   // Rate limit (after Altcha so legitimate users don't waste PoW)
   try {
-    await checkRateLimit(event, `web:register:${extractClientIp(event)}`, {
+    await checkRateLimit(event, `web:register:ip:${extractClientIp(event)}`, {
       duration: 60_000,
       max: 5,
       delayAfter: 2,

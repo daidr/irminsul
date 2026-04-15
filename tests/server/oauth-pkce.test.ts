@@ -7,21 +7,7 @@ const mockStoreAuthorizationCode = vi.fn();
 const mockUpsertOAuthAuthorization = vi.fn();
 const mockGenerateOpaqueToken = vi.fn(() => "fake-code");
 
-vi.stubGlobal("findOAuthAppByClientId", mockFindOAuthAppByClientId);
-vi.stubGlobal("getSetting", mockGetSetting);
-vi.stubGlobal("storeAuthorizationCode", mockStoreAuthorizationCode);
-vi.stubGlobal("upsertOAuthAuthorization", mockUpsertOAuthAuthorization);
-vi.stubGlobal("generateOpaqueToken", mockGenerateOpaqueToken);
-vi.stubGlobal("requireAuth", (_event: any) => ({ userId: "user-uuid", email: "a@b.c" }));
-vi.stubGlobal("createError", (opts: any) => {
-  const err = new Error(opts.statusMessage) as any;
-  err.statusCode = opts.statusCode;
-  err.statusMessage = opts.statusMessage;
-  throw err;
-});
-
-vi.stubGlobal("defineEventHandler", (fn: Function) => fn);
-vi.stubGlobal("readBody", vi.fn());
+const mockReadBody = vi.fn();
 
 vi.mock("zod", async (importOriginal) => {
   const mod = await importOriginal<typeof import("zod")>();
@@ -40,6 +26,21 @@ beforeEach(() => {
   });
   mockStoreAuthorizationCode.mockResolvedValue(undefined);
   mockUpsertOAuthAuthorization.mockResolvedValue(undefined);
+  // Re-stub globals each test for unstubGlobals compatibility
+  vi.stubGlobal("findOAuthAppByClientId", mockFindOAuthAppByClientId);
+  vi.stubGlobal("getSetting", mockGetSetting);
+  vi.stubGlobal("storeAuthorizationCode", mockStoreAuthorizationCode);
+  vi.stubGlobal("upsertOAuthAuthorization", mockUpsertOAuthAuthorization);
+  vi.stubGlobal("generateOpaqueToken", mockGenerateOpaqueToken);
+  vi.stubGlobal("requireAuth", (_event: any) => ({ userId: "user-uuid", email: "a@b.c" }));
+  vi.stubGlobal("createError", (opts: any) => {
+    const err = new Error(opts.statusMessage) as any;
+    err.statusCode = opts.statusCode;
+    err.statusMessage = opts.statusMessage;
+    throw err;
+  });
+  vi.stubGlobal("defineEventHandler", (fn: Function) => fn);
+  vi.stubGlobal("readBody", mockReadBody);
 });
 
 describe("OAuth authorize.post PKCE enforcement", () => {

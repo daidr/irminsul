@@ -18,9 +18,6 @@ const mockRedis = {
   }),
 };
 
-vi.stubGlobal("getRedisClient", () => mockRedis);
-vi.stubGlobal("buildRedisKey", (...parts: string[]) => parts.join(":"));
-
 vi.mock("evlog", async (importOriginal) => {
   const mod = await importOriginal<typeof import("evlog")>();
   return { ...mod, useLogger: () => ({ set: vi.fn(), error: vi.fn(), emit: vi.fn() }) };
@@ -29,18 +26,18 @@ vi.mock("evlog", async (importOriginal) => {
 let checkRateLimit: typeof import("../../server/utils/rate-limit").checkRateLimit;
 let YggdrasilError: typeof import("../../server/utils/yggdrasil.handler").YggdrasilError;
 
-// Stub YggdrasilError as a Nitro auto-import global, using the real class
-// so that `instanceof YggdrasilError` works against thrown errors.
-{
-  const hMod = await import("../../server/utils/yggdrasil.handler");
-  vi.stubGlobal("YggdrasilError", hMod.YggdrasilError);
-  YggdrasilError = hMod.YggdrasilError;
-}
+// Load the real YggdrasilError class so that `instanceof` works against thrown errors.
+const { YggdrasilError: RealYggdrasilError } = await import("../../server/utils/yggdrasil.handler");
+YggdrasilError = RealYggdrasilError;
 
 beforeEach(async () => {
   calls.length = 0;
   counter = 0;
   mockRedis.send.mockClear();
+  // Re-stub globals each test for unstubGlobals compatibility
+  vi.stubGlobal("getRedisClient", () => mockRedis);
+  vi.stubGlobal("buildRedisKey", (...parts: string[]) => parts.join(":"));
+  vi.stubGlobal("YggdrasilError", RealYggdrasilError);
   const rlMod = await import("../../server/utils/rate-limit");
   checkRateLimit = rlMod.checkRateLimit;
 });

@@ -16,14 +16,14 @@ const mockCollection = {
   deleteMany: mockDeleteMany,
 };
 
-vi.stubGlobal("getDb", () => ({
-  collection: () => mockCollection,
-}));
-
 let repo: typeof import("../../server/utils/oauth-token.repository");
 
 beforeEach(async () => {
   vi.clearAllMocks();
+  // Re-stub getDb each test for unstubGlobals compatibility
+  vi.stubGlobal("getDb", () => ({
+    collection: () => mockCollection,
+  }));
   repo = await import("../../server/utils/oauth-token.repository");
 });
 
