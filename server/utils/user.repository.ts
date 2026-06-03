@@ -215,6 +215,14 @@ export async function isTextureHashInUse(hash: string): Promise<boolean> {
 const TOKEN_LAST_USED_THROTTLE_MS = 5 * 60 * 1000;
 
 /**
+ * 单个用户文档中保留的 Yggdrasil 令牌上限。
+ * 令牌只在登录/校验时被动清理（无 MongoDB TTL 兜底），若不设上限，长期使用会让 tokens
+ * 数组无限膨胀、拖慢所有读取该用户文档的查询。新令牌总会被保留，最多再保留最近的
+ * (MAX-1) 个旧令牌。
+ */
+const MAX_TOKENS_PER_USER = 30;
+
+/**
  * 添加新令牌（同时失效所有现有活跃令牌），更新最后登录时间
  */
 export async function addToken(uuid: string, token: YggdrasilToken): Promise<void> {
@@ -222,22 +230,28 @@ export async function addToken(uuid: string, token: YggdrasilToken): Promise<voi
   const expiryMs = Number(useRuntimeConfig().yggdrasilTokenExpiryMs) || 432000000;
   const cutoff = Date.now() - expiryMs;
 
-  // 失效所有活跃令牌 + 移除过期令牌 + 推入新令牌 + 更新最后登录时间
+  // 失效所有活跃令牌 + 移除过期令牌 + 限制保留数量 + 推入新令牌 + 更新最后登录时间。
+  // tokens 为追加写入，天然按创建时间升序，$slice 负数保留最近的 (MAX-1) 个。
   await col.updateOne({ uuid }, [
     {
       $set: {
         tokens: {
           $concatArrays: [
             {
-              $map: {
-                input: {
-                  $filter: {
-                    input: "$tokens",
-                    cond: { $gte: ["$$this.createdAt", cutoff] },
+              $slice: [
+                {
+                  $map: {
+                    input: {
+                      $filter: {
+                        input: "$tokens",
+                        cond: { $gte: ["$$this.createdAt", cutoff] },
+                      },
+                    },
+                    in: { $mergeObjects: ["$$this", { status: 0 }] },
                   },
                 },
-                in: { $mergeObjects: ["$$this", { status: 0 }] },
-              },
+                -(MAX_TOKENS_PER_USER - 1),
+              ],
             },
             [token],
           ],
