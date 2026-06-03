@@ -1,4 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+// Real web-api helpers (delegate to the stubbed verifyAltchaPayload/
+// checkRateLimit/YggdrasilError globals).
+import { checkWebAltcha, checkWebRateLimit } from "../../server/utils/web-api";
 
 // --- Mocks for auto-imported server utils ---
 
@@ -75,6 +78,8 @@ beforeEach(() => {
   vi.stubGlobal("emitUserHook", mockEmitUserHook);
   vi.stubGlobal("destroySession", mockDestroySession);
   vi.stubGlobal("checkRateLimit", mockCheckRateLimit);
+  vi.stubGlobal("checkWebAltcha", checkWebAltcha);
+  vi.stubGlobal("checkWebRateLimit", checkWebRateLimit);
   vi.stubGlobal("YggdrasilError", MockYggdrasilError);
   vi.stubGlobal("defineEventHandler", (handler: Function) => handler);
   vi.stubGlobal("readBody", mockReadBody);

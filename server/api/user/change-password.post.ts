@@ -13,20 +13,18 @@ export default defineEventHandler(async (event) => {
   const user = requireAuth(event);
 
   // Rate limit by user (prevent old-password guessing)
-  try {
-    await checkRateLimit(event, `web:change-password:uid:${user.userId}`, {
+  const rateLimitFail = await checkWebRateLimit(
+    event,
+    `web:change-password:uid:${user.userId}`,
+    {
       duration: 60_000,
       max: 5,
       delayAfter: 3,
       timeWait: 2_000,
       fastFail: true,
-    });
-  } catch (err) {
-    if (err instanceof YggdrasilError && err.httpStatus === 429) {
-      return { success: false, error: "请求过于频繁，请稍后再试" };
-    }
-    throw err;
-  }
+    },
+  );
+  if (rateLimitFail) return rateLimitFail;
 
   const parsed = bodySchema.safeParse(await readBody(event));
   if (!parsed.success) {
@@ -36,19 +34,8 @@ export default defineEventHandler(async (event) => {
   const { oldPassword, newPassword, confirmPassword, altchaPayload } = parsed.data;
 
   // Verify altcha
-  if (!altchaPayload) {
-    return { success: false, error: "人机验证失败，请重试" };
-  }
-  const altchaValid = await verifyAltchaPayload(altchaPayload);
-  if (!altchaValid) {
-    return { success: false, error: "人机验证失败，请重试" };
-  }
-  if (altchaValid.expired) {
-    return { success: false, error: "人机验证已过期，请重试" };
-  }
-  if (!altchaValid.verified) {
-    return { success: false, error: "人机验证失败，请重试" };
-  }
+  const altchaFail = await checkWebAltcha(altchaPayload);
+  if (altchaFail) return altchaFail;
 
   // Validate inputs
   if (!oldPassword) {

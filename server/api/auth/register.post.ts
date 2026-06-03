@@ -60,37 +60,23 @@ export default defineEventHandler(async (event) => {
     return { success: false, error: "两次输入的密码不一致" };
   }
 
-  if (!altchaPayload) {
-    return { success: false, error: "人机验证失败，请重试" };
-  }
-
   // Verify altcha
-  const altchaValid = await verifyAltchaPayload(altchaPayload);
-  if (!altchaValid) {
-    return { success: false, error: "人机验证失败，请重试" };
-  }
-  if (altchaValid.expired) {
-    return { success: false, error: "人机验证已过期，请重试" };
-  }
-  if (!altchaValid.verified) {
-    return { success: false, error: "人机验证失败，请重试" };
-  }
+  const altchaFail = await checkWebAltcha(altchaPayload);
+  if (altchaFail) return altchaFail;
 
   // Rate limit (after Altcha so legitimate users don't waste PoW)
-  try {
-    await checkRateLimit(event, `web:register:ip:${extractClientIp(event)}`, {
+  const rateLimitFail = await checkWebRateLimit(
+    event,
+    `web:register:ip:${extractClientIp(event)}`,
+    {
       duration: 60_000,
       max: 5,
       delayAfter: 2,
       timeWait: 2_000,
       fastFail: true,
-    });
-  } catch (err) {
-    if (err instanceof YggdrasilError && err.httpStatus === 429) {
-      return { success: false, error: "请求过于频繁，请稍后再试" };
-    }
-    throw err;
-  }
+    },
+  );
+  if (rateLimitFail) return rateLimitFail;
 
   // Check uniqueness
   if (await emailExists(email)) {

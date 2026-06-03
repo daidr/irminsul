@@ -33,37 +33,23 @@ export default defineEventHandler(async (event) => {
 
   const { email, altchaPayload } = parsed.data;
 
-  if (!altchaPayload) {
-    return { success: false, error: "人机验证失败，请重试" };
-  }
-
   // Verify altcha
-  const altchaValid = await verifyAltchaPayload(altchaPayload);
-  if (!altchaValid) {
-    return { success: false, error: "人机验证失败，请重试" };
-  }
-  if (altchaValid.expired) {
-    return { success: false, error: "人机验证已过期，请重试" };
-  }
-  if (!altchaValid.verified) {
-    return { success: false, error: "人机验证失败，请重试" };
-  }
+  const altchaFail = await checkWebAltcha(altchaPayload);
+  if (altchaFail) return altchaFail;
 
   // Rate limit by IP (after altcha so bots burn PoW first)
-  try {
-    await checkRateLimit(event, `web:forgot-password:ip:${extractClientIp(event)}`, {
+  const rateLimitFail = await checkWebRateLimit(
+    event,
+    `web:forgot-password:ip:${extractClientIp(event)}`,
+    {
       duration: 60_000,
       max: 3,
       delayAfter: 2,
       timeWait: 2_000,
       fastFail: true,
-    });
-  } catch (err) {
-    if (err instanceof YggdrasilError && err.httpStatus === 429) {
-      return { success: false, error: "请求过于频繁，请稍后再试" };
-    }
-    throw err;
-  }
+    },
+  );
+  if (rateLimitFail) return rateLimitFail;
 
   // Validate email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

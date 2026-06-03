@@ -1,4 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+// Real helpers under test — they reference the stubbed checkRateLimit/
+// verifyAltchaPayload/YggdrasilError globals, so the 429-translation contract
+// is exercised against the real implementation.
+import { checkWebAltcha, checkWebRateLimit } from "../../server/utils/web-api";
 
 // --- Auto-import stubs (Nitro) ---
 const mockCheckRateLimit = vi.fn();
@@ -60,6 +64,8 @@ beforeEach(() => {
   mockGetSetting.mockReturnValue("smtp.example.com"); // generic non-empty
   // Re-stub Nitro auto-imports each test for unstubGlobals compatibility
   vi.stubGlobal("checkRateLimit", mockCheckRateLimit);
+  vi.stubGlobal("checkWebAltcha", checkWebAltcha);
+  vi.stubGlobal("checkWebRateLimit", checkWebRateLimit);
   vi.stubGlobal("extractClientIp", mockExtractClientIp);
   vi.stubGlobal("verifyAltchaPayload", mockVerifyAltchaPayload);
   vi.stubGlobal("getSetting", mockGetSetting);

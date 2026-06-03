@@ -22,37 +22,19 @@ export default defineEventHandler(async (event) => {
     return { success: false, error: "请填写邮箱和密码" };
   }
 
-  if (!altchaPayload) {
-    return { success: false, error: "人机验证失败，请重试" };
-  }
-
   // Verify altcha
-  const altchaValid = await verifyAltchaPayload(altchaPayload);
-  if (!altchaValid) {
-    return { success: false, error: "人机验证失败，请重试" };
-  }
-  if (altchaValid.expired) {
-    return { success: false, error: "人机验证已过期，请重试" };
-  }
-  if (!altchaValid.verified) {
-    return { success: false, error: "人机验证失败，请重试" };
-  }
+  const altchaFail = await checkWebAltcha(altchaPayload);
+  if (altchaFail) return altchaFail;
 
   // Rate limit (after Altcha so legitimate users don't waste PoW)
-  try {
-    await checkRateLimit(event, `web:login:ip:${extractClientIp(event)}`, {
-      duration: 60_000,
-      max: 10,
-      delayAfter: 5,
-      timeWait: 2_000,
-      fastFail: true,
-    });
-  } catch (err) {
-    if (err instanceof YggdrasilError && err.httpStatus === 429) {
-      return { success: false, error: "请求过于频繁，请稍后再试" };
-    }
-    throw err;
-  }
+  const rateLimitFail = await checkWebRateLimit(event, `web:login:ip:${extractClientIp(event)}`, {
+    duration: 60_000,
+    max: 10,
+    delayAfter: 5,
+    timeWait: 2_000,
+    fastFail: true,
+  });
+  if (rateLimitFail) return rateLimitFail;
 
   // Find user
   const user = await findUserByEmail(email);
