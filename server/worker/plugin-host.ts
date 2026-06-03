@@ -290,7 +290,9 @@ self.onmessage = async (event: MessageEvent<MainToWorkerMessage>) => {
         if (startedHandler) {
           try {
             await startedHandler();
-          } catch {}
+          } catch (err) {
+            console.error(`[${pluginId}] app:started hook failed:`, err);
+          }
         }
 
         send({ type: "plugin:loaded", pluginId, ok: true });
@@ -352,7 +354,8 @@ self.onmessage = async (event: MessageEvent<MainToWorkerMessage>) => {
         try {
           currentPluginId = pluginId!;
           await handler({ changes, config });
-        } catch {
+        } catch (err) {
+          console.error(`[${pluginId}] config:changed hook failed:`, err);
         } finally {
           currentPluginId = null;
         }
@@ -374,7 +377,8 @@ self.onmessage = async (event: MessageEvent<MainToWorkerMessage>) => {
                 setTimeout(() => reject(new Error("shutdown timeout")), 5000),
               ),
             ]);
-          } catch {
+          } catch (err) {
+            console.error(`[${plugin.id}] app:shutdown hook failed:`, err);
           } finally {
             currentPluginId = null;
           }
