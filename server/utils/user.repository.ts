@@ -207,6 +207,14 @@ export async function isTextureHashInUse(hash: string): Promise<boolean> {
 // --- Yggdrasil Token 操作 ---
 
 /**
+ * lastUsedAt/lastUsedIp 的节流写入间隔。
+ * validateAccessToken 在 Yggdrasil 高频路径（join/validate/Bearer 鉴权）被调用，
+ * 若每次命中都写一次，会导致每次进服都重写整个用户大文档。此处限制为最多每 5 分钟写一次，
+ * "最后使用"信息仅用于会话展示，这点延迟可接受。
+ */
+const TOKEN_LAST_USED_THROTTLE_MS = 5 * 60 * 1000;
+
+/**
  * 添加新令牌（同时失效所有现有活跃令牌），更新最后登录时间
  */
 export async function addToken(uuid: string, token: YggdrasilToken): Promise<void> {
@@ -274,8 +282,8 @@ export async function validateAccessToken(
     return null;
   }
 
-  // 更新令牌最后使用信息
-  if (ip) {
+  // 更新令牌最后使用信息（节流写入，避免每次进服都重写整个用户文档）
+  if (ip && Date.now() - (token.lastUsedAt ?? 0) > TOKEN_LAST_USED_THROTTLE_MS) {
     await updateTokenLastUsed(accessToken, ip);
   }
 
