@@ -46,7 +46,7 @@ const activeTab = ref<ViewTab>("model");
       </div>
     </div>
 
-    <SkinPreviewModel v-if="activeTab === 'model'" />
+    <LazySkinPreviewModel v-if="activeTab === 'model'" />
     <ClientOnly>
       <LazySkinPreviewOrtho v-if="activeTab === 'orthographic'" />
       <LazySkinPreviewRaw v-if="activeTab === 'raw'" />

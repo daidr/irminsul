@@ -8,7 +8,13 @@ export default defineNuxtConfig({
     componentIslands: true,
   },
 
-  routeRules: {},
+  // 静态认证页（纯表单，无页面级服务端数据）预渲染，减轻每请求 SSR。
+  // app.vue 已通过 payload.prerenderedAt 在客户端刷新用户态，预渲染是安全的。
+  routeRules: {
+    "/login": { prerender: true },
+    "/register": { prerender: true },
+    "/forgot-password": { prerender: true },
+  },
 
   nitro: {
     preset: "bun",
