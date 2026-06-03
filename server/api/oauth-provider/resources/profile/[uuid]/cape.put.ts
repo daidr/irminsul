@@ -1,36 +1,5 @@
-export default defineEventHandler(async (event) => {
-  // Check if OAuth is enabled
-  const oauthEnabled = getSetting("oauth.enabled");
-  if (!oauthEnabled) {
-    throw createError({ statusCode: 404, statusMessage: "OAuth is not enabled" });
-  }
-
-  // CORS
-  setResponseHeader(event, "Access-Control-Allow-Origin", "*");
-
-  // Validate bearer token
-  let tokenInfo;
-  try {
-    tokenInfo = await requireOAuthBearer(event, ["profile:write"]);
-  } catch (err) {
-    if (err instanceof OAuthError) {
-      setResponseStatus(event, err.statusCode);
-      return { error: err.errorCode, error_description: err.errorDescription };
-    }
-    throw err;
-  }
-
-  // Get uuid from route param
-  const uuid = getRouterParam(event, "uuid");
-  if (!uuid) {
-    throw createError({ statusCode: 400, statusMessage: "Missing uuid parameter" });
-  }
-
-  // Can only modify own textures
-  if (tokenInfo.userId !== uuid) {
-    setResponseStatus(event, 403);
-    return { error: "access_denied", error_description: "Cannot modify another user's textures" };
-  }
+export default defineOAuthResourceHandler(["profile:write"], async (event, { tokenInfo }) => {
+  const uuid = requireProfileOwnership(event, tokenInfo);
 
   // Read multipart form data
   const formData = await readMultipartFormData(event);
