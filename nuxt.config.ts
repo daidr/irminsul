@@ -1,3 +1,5 @@
+import tailwindcss from "@tailwindcss/vite";
+
 export default defineNuxtConfig({
   compatibilityDate: "2026-03-23",
   future: { compatibilityVersion: 4 },
@@ -17,7 +19,7 @@ export default defineNuxtConfig({
   },
 
   vite: {
-    plugins: [],
+    plugins: [tailwindcss()],
     vue: {
       template: {
         compilerOptions: {
@@ -30,7 +32,6 @@ export default defineNuxtConfig({
   css: ["~/assets/css/tailwind.css"],
 
   modules: [
-    "@nuxtjs/tailwindcss",
     "@pinia/nuxt",
     "@nuxt/test-utils/module",
     "@nuxt/a11y",
