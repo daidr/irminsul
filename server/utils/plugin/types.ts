@@ -53,26 +53,8 @@ export interface ConditionalOptions {
 }
 
 // ===== Condition System =====
-
-export type Operator =
-  | { eq: unknown }
-  | { neq: unknown }
-  | { in: unknown[] }
-  | { nin: unknown[] }
-  | { gt: number }
-  | { gte: number }
-  | { lt: number }
-  | { lte: number }
-  | { truthy: boolean }
-  | { regex: string };
-
-export type FieldCondition = Operator | unknown; // bare value = eq shorthand
-
-export type Condition =
-  | { $or: Condition[] }
-  | { $and: Condition[] }
-  | { $not: Condition }
-  | Record<string, FieldCondition>; // implicit AND
+// 类型已统一到 shared/plugin-condition.ts（前后端共用），此处再导出以兼容现有 `./types` 引用。
+export type { Operator, FieldCondition, Condition } from "~~/shared/plugin-condition";
 
 // ===== Plugin Runtime State =====
 
