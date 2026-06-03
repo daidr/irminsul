@@ -25,28 +25,30 @@ const codeChallengeMethod = computed(() => (route.query.code_challenge_method as
 
 const requestedScopes = computed(() => scope.value.split(" ").filter(Boolean));
 
-const appInfo = ref<{
+interface ConsentAppInfo {
   name: string;
   description: string;
   icon: { name: string; hue: number } | null;
-} | null>(null);
-const loadingApp = ref(true);
-const isSubmitting = ref(false);
-
-async function fetchApp() {
-  if (!clientId.value) return;
-  loadingApp.value = true;
-  try {
-    const data = await $fetch<any>(`/api/oauth-provider/consent/${clientId.value}`);
-    appInfo.value = data;
-  } catch {
-    toast.error("无法加载应用信息");
-  } finally {
-    loadingApp.value = false;
-  }
 }
 
-onMounted(fetchApp);
+const isSubmitting = ref(false);
+
+// SSR 获取应用信息（useFetch 会在服务端转发会话 cookie，消除客户端二次请求与首屏闪烁）
+const {
+  data: appInfo,
+  status: appStatus,
+  error: appError,
+} = await useFetch<ConsentAppInfo>(() => `/api/oauth-provider/consent/${clientId.value}`, {
+  key: "oauth-consent",
+  immediate: !!clientId.value,
+  watch: [clientId],
+});
+
+const loadingApp = computed(() => appStatus.value === "pending");
+
+watch(appError, (err) => {
+  if (err && import.meta.client) toast.error("无法加载应用信息");
+});
 
 async function handleAction(action: "approve" | "deny") {
   isSubmitting.value = true;
