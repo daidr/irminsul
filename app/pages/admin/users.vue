@@ -191,7 +191,7 @@ const visiblePages = computed(() => {
               class="border-b border-base-300/50 hover:bg-base-300/30"
             >
               <td class="font-medium">
-                <AdminUserBubble :user-id="u.id" />
+                <AdminUserBubble :user-id="u.id" :game-id="u.gameId" :is-admin="u.isAdmin" />
               </td>
               <td class="text-base-content/60 text-sm">{{ u.email }}</td>
               <td class="text-base-content/50 text-sm hidden sm:table-cell">

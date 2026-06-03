@@ -1,6 +1,9 @@
 <script setup lang="ts">
 const props = defineProps<{
   userId: string;
+  // 父组件若已持有该用户的资料（如用户列表），可直接传入以跳过单独请求，避免列表 N+1。
+  gameId?: string;
+  isAdmin?: boolean;
 }>();
 
 interface UserProfile {
@@ -35,6 +38,12 @@ function updatePopoverPosition() {
 
 async function loadProfile() {
   if (profile.value || !props.userId) return;
+  // 父组件已提供资料时直接使用，省去每行一次请求（userId 即 uuid）
+  if (props.gameId !== undefined) {
+    profile.value = { uuid: props.userId, gameId: props.gameId, isAdmin: props.isAdmin ?? false };
+    loading.value = false;
+    return;
+  }
   loading.value = true;
   try {
     const res = await $fetch<{ success: boolean; user: UserProfile }>(
