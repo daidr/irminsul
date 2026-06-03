@@ -1,4 +1,5 @@
 import { skipHydrate } from "pinia";
+import type { ClientUser } from "~~/shared/client-user";
 
 export const useProfileStore = defineStore("profile", () => {
   // --- Saved state (serialized to client) ---
@@ -26,7 +27,7 @@ export const useProfileStore = defineStore("profile", () => {
   const effectiveSkinSlim = computed(() => previewSlim.value ?? skinSlim.value);
 
   // --- Actions ---
-  function initFromUser(user: any) {
+  function initFromUser(user: ClientUser) {
     skinHash.value = user.skinHash;
     capeHash.value = user.capeHash;
     skinSlim.value = user.skinSlim ?? false;

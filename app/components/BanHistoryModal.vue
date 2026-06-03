@@ -1,15 +1,7 @@
 <script setup lang="ts">
 import { HugeiconsIcon } from "@hugeicons/vue";
 import { CalendarRemove01Icon } from "@hugeicons/core-free-icons";
-
-interface ClientBanRecord {
-  id?: string;
-  start: number;
-  end?: number;
-  reason?: string;
-  operatorId?: string;
-  revokedAt?: number;
-}
+import type { ClientBanRecord } from "~~/shared/client-user";
 
 const { data: user } = useUser();
 
@@ -33,7 +25,7 @@ function isRevoked(ban: ClientBanRecord): boolean {
   return !!ban.revokedAt;
 }
 
-const bans = computed(() => (user.value?.bans as ClientBanRecord[]) ?? []);
+const bans = computed<ClientBanRecord[]>(() => user.value?.bans ?? []);
 
 const hasActiveBan = computed(() => bans.value.some(isActive));
 </script>

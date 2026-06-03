@@ -1,3 +1,5 @@
+import type { ClientUser } from "~~/shared/client-user";
+
 export function useUser() {
-  return useNuxtData<any>("current-user");
+  return useNuxtData<ClientUser>("current-user");
 }
