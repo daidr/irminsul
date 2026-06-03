@@ -5,9 +5,6 @@ import { promisify } from "node:util";
 
 const generateKeyPair = promisify(crypto.generateKeyPair);
 
-const RSA_PRIVATE_KEY_PATH = "./irminsul-data/auto-generate/yggdrasil-private.pem";
-const RSA_PUBLIC_KEY_PATH = "./irminsul-data/auto-generate/yggdrasil-public.pem";
-
 let privateKey: string | null = null;
 let publicKeyPem: string | null = null;
 

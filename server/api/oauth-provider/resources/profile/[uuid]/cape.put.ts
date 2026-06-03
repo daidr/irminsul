@@ -20,8 +20,7 @@ export default defineOAuthResourceHandler(["profile:write"], async (event, { tok
   }
 
   // Limit upload size: 1MB
-  const MAX_TEXTURE_SIZE = 1024 * 1024;
-  if (fileBuffer.length > MAX_TEXTURE_SIZE) {
+  if (fileBuffer.length > MAX_TEXTURE_UPLOAD_SIZE) {
     throw createError({ statusCode: 400, statusMessage: "Texture file too large (max 1MB)" });
   }
 

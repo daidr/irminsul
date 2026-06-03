@@ -34,8 +34,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Validate email format
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
+  if (!EMAIL_REGEX.test(email)) {
     return { success: false, error: "邮箱格式不正确" };
   }
 
@@ -48,10 +47,10 @@ export default defineEventHandler(async (event) => {
   }
 
   // Validate password length
-  if (password.length < 8) {
+  if (password.length < PASSWORD_MIN_LENGTH) {
     return { success: false, error: "密码长度不能少于8个字符" };
   }
-  if (password.length > 128) {
+  if (password.length > PASSWORD_MAX_LENGTH) {
     return { success: false, error: "密码长度不能超过128个字符" };
   }
 

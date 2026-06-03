@@ -36,10 +36,10 @@ export default defineEventHandler(async (event) => {
   if (rateLimitFail) return rateLimitFail;
 
   // Validate password
-  if (!password || password.length < 8) {
+  if (!password || password.length < PASSWORD_MIN_LENGTH) {
     return { success: false, error: "密码长度不能少于8个字符" };
   }
-  if (password.length > 128) {
+  if (password.length > PASSWORD_MAX_LENGTH) {
     return { success: false, error: "密码长度不能超过128个字符" };
   }
   if (password !== confirmPassword) {

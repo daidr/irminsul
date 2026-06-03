@@ -5,8 +5,6 @@ import { useLogger } from "evlog";
 //@ts-expect-error pngjs-nozlib 没有类型定义
 import { PNG } from "pngjs-nozlib";
 
-const TEXTURES_DIR = "./irminsul-data/textures";
-
 /**
  * 计算材质哈希（与 GHAuth computeTextureHash 一致）
  * 对解码后的像素数据做 SHA-256，确保不同压缩参数的同一图片哈希一致

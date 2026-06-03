@@ -52,8 +52,7 @@ export default defineEventHandler(async (event) => {
   if (rateLimitFail) return rateLimitFail;
 
   // Validate email format
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!email || !emailRegex.test(email)) {
+  if (!email || !EMAIL_REGEX.test(email)) {
     return { success: false, error: "请输入有效的邮箱地址" };
   }
 

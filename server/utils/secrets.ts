@@ -2,8 +2,6 @@ import { createLogger } from "evlog";
 import fs from "node:fs";
 import crypto from "node:crypto";
 
-const SECRETS_PATH = "./irminsul-data/auto-generate/secrets.yaml";
-
 interface Secrets {
   altcha_hmac_key_signature_secret: string;
   altcha_hmac_signature_secret: string;

@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: "Invalid hash" });
   }
 
-  const filePath = path.join("./irminsul-data/textures", hash) + ".png";
+  const filePath = path.join(TEXTURES_DIR, hash) + ".png";
 
   try {
     const buffer = await fs.readFile(filePath);

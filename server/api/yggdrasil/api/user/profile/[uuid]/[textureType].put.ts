@@ -33,8 +33,7 @@ export default defineYggdrasilHandler(async (event) => {
   }
 
   // 限制上传大小：1MB
-  const MAX_TEXTURE_SIZE = 1024 * 1024;
-  if (file.size > MAX_TEXTURE_SIZE) {
+  if (file.size > MAX_TEXTURE_UPLOAD_SIZE) {
     throw new YggdrasilError(400, "IllegalArgumentException", "Texture file too large (max 1MB).");
   }
 

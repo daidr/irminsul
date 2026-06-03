@@ -67,7 +67,7 @@ export default defineEventHandler(async (event) => {
   let pngBuffer = avatarCache.get(cacheKey);
   if (!pngBuffer) {
     // Load skin texture from disk
-    const filePath = path.join("./irminsul-data/textures", skinHash) + ".png";
+    const filePath = path.join(TEXTURES_DIR, skinHash) + ".png";
     let skinImage;
     try {
       const buffer = await fs.readFile(filePath);

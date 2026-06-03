@@ -227,7 +227,8 @@ const MAX_TOKENS_PER_USER = 30;
  */
 export async function addToken(uuid: string, token: YggdrasilToken): Promise<void> {
   const col = getUserCollection();
-  const expiryMs = Number(useRuntimeConfig().yggdrasilTokenExpiryMs) || 432000000;
+  const expiryMs =
+    Number(useRuntimeConfig().yggdrasilTokenExpiryMs) || DEFAULT_YGGDRASIL_TOKEN_EXPIRY_MS;
   const cutoff = Date.now() - expiryMs;
 
   // 失效所有活跃令牌 + 移除过期令牌 + 限制保留数量 + 推入新令牌 + 更新最后登录时间。
@@ -290,7 +291,8 @@ export async function validateAccessToken(
   if (clientToken !== undefined && token.clientToken !== clientToken) return null;
 
   // 过期检查 — 过期则物理删除
-  const expiryMs = Number(useRuntimeConfig().yggdrasilTokenExpiryMs) || 432000000;
+  const expiryMs =
+    Number(useRuntimeConfig().yggdrasilTokenExpiryMs) || DEFAULT_YGGDRASIL_TOKEN_EXPIRY_MS;
   if (Date.now() - token.createdAt > expiryMs) {
     await removeToken(accessToken);
     return null;
@@ -381,7 +383,8 @@ export async function updateTokenLastUsed(accessToken: string, ip: string): Prom
  * 获取用户的所有未过期令牌（用于会话管理，包含已失效的）
  */
 export async function getAllTokens(uuid: string): Promise<YggdrasilToken[]> {
-  const expiryMs = Number(useRuntimeConfig().yggdrasilTokenExpiryMs) || 432000000;
+  const expiryMs =
+    Number(useRuntimeConfig().yggdrasilTokenExpiryMs) || DEFAULT_YGGDRASIL_TOKEN_EXPIRY_MS;
   const cutoff = Date.now() - expiryMs;
 
   const user = await getUserCollection().findOne({ uuid }, { projection: { tokens: 1 } });

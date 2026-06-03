@@ -6,8 +6,6 @@ import type { DrainContext } from "evlog";
 import type { PipelineDrainFn } from "evlog/pipeline";
 import type { NitroApp } from "nitropack/types";
 
-const LOG_DIR = "./irminsul-data/log";
-
 export function initEvlogDrain(nitroApp: NitroApp) {
   const config = useRuntimeConfig();
 

@@ -41,10 +41,10 @@ export default defineEventHandler(async (event) => {
   if (!oldPassword) {
     return { success: false, error: "请输入旧密码" };
   }
-  if (!newPassword || newPassword.length < 8) {
+  if (!newPassword || newPassword.length < PASSWORD_MIN_LENGTH) {
     return { success: false, error: "新密码长度不能少于8个字符" };
   }
-  if (newPassword.length > 128) {
+  if (newPassword.length > PASSWORD_MAX_LENGTH) {
     return { success: false, error: "新密码长度不能超过128个字符" };
   }
   if (newPassword !== confirmPassword) {

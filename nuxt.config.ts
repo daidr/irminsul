@@ -1,4 +1,5 @@
 import tailwindcss from "@tailwindcss/vite";
+import { DEFAULT_YGGDRASIL_TOKEN_EXPIRY_MS } from "./server/utils/constants";
 
 export default defineNuxtConfig({
   compatibilityDate: "2026-03-23",
@@ -54,7 +55,7 @@ export default defineNuxtConfig({
     yggdrasilBaseUrl: "",
     yggdrasilSkinDomains: "",
     trustProxy: false,
-    yggdrasilTokenExpiryMs: 432000000,
+    yggdrasilTokenExpiryMs: DEFAULT_YGGDRASIL_TOKEN_EXPIRY_MS,
     yggdrasilDefaultSkinHash: "",
     legacyGlobalSalt: "",
     webauthnRpId: "",
