@@ -15,6 +15,14 @@ function addHyphens(hex: string): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
+/**
+ * 渲染后的头像 PNG 缓存。输出完全由 (skinHash, slim, scale) 决定，且 skinHash 内容寻址
+ * （皮肤变更即换 hash），因此可安全缓存。避免每次请求都读盘 + 解码 + Canvas 渲染 + PNG
+ * 重编码（CPU 密集）。头像是高频外链资源（启动器/论坛签名）。
+ */
+const AVATAR_CACHE_LIMIT = 1000;
+const avatarCache = new Map<string, Buffer>();
+
 export default defineEventHandler(async (event) => {
   const identifier = getRouterParam(event, "identifier");
   if (!identifier) {
@@ -44,34 +52,54 @@ export default defineEventHandler(async (event) => {
 
   const slim = user?.skin?.type === 1;
 
-  // Load skin texture from disk
-  const filePath = path.join("./irminsul-data/textures", skinHash) + ".png";
-  let skinImage;
-  try {
-    const buffer = await fs.readFile(filePath);
-    skinImage = await loadImage(buffer);
-  } catch {
-    throw createError({ statusCode: 404, statusMessage: "Skin texture not found" });
-  }
-
-  // Render avatar
-  // Avatar is 8x8 MC pixels. With overlayInflated, output = 9 * mcScale.
-  // scale 1-4 maps to mcScale 2-8, output 18/36/54/72px.
-  // renderAvatar sets canvas.width/height internally.
-  const mcScale = scale * 2;
-  const canvas = createCanvas(1, 1);
-
-  await renderAvatar(canvas as any, {
-    skin: skinImage as any,
-    scale: mcScale,
-    slim,
-    showOverlay: true,
-    overlayInflated: true,
-  });
-
-  // Return PNG
-  const pngBuffer = canvas.toBuffer("image/png");
+  // 渲染结果由 (skinHash, slim, scale) 唯一决定，据此命中缓存并支持条件请求
+  const cacheKey = `${skinHash}|${slim ? 1 : 0}|${scale}`;
+  const etag = `"${cacheKey}"`;
   setHeader(event, "Content-Type", "image/png");
   setHeader(event, "Cache-Control", "public, max-age=3600");
+  setHeader(event, "ETag", etag);
+
+  if (getHeader(event, "if-none-match") === etag) {
+    setResponseStatus(event, 304);
+    return null;
+  }
+
+  let pngBuffer = avatarCache.get(cacheKey);
+  if (!pngBuffer) {
+    // Load skin texture from disk
+    const filePath = path.join("./irminsul-data/textures", skinHash) + ".png";
+    let skinImage;
+    try {
+      const buffer = await fs.readFile(filePath);
+      skinImage = await loadImage(buffer);
+    } catch {
+      throw createError({ statusCode: 404, statusMessage: "Skin texture not found" });
+    }
+
+    // Render avatar
+    // Avatar is 8x8 MC pixels. With overlayInflated, output = 9 * mcScale.
+    // scale 1-4 maps to mcScale 2-8, output 18/36/54/72px.
+    // renderAvatar sets canvas.width/height internally.
+    const mcScale = scale * 2;
+    const canvas = createCanvas(1, 1);
+
+    await renderAvatar(canvas as any, {
+      skin: skinImage as any,
+      scale: mcScale,
+      slim,
+      showOverlay: true,
+      overlayInflated: true,
+    });
+
+    pngBuffer = canvas.toBuffer("image/png");
+
+    // 超出上限时淘汰最早插入的项（Map 保持插入顺序）
+    if (avatarCache.size >= AVATAR_CACHE_LIMIT) {
+      const oldest = avatarCache.keys().next().value;
+      if (oldest !== undefined) avatarCache.delete(oldest);
+    }
+    avatarCache.set(cacheKey, pngBuffer);
+  }
+
   return pngBuffer;
 });
