@@ -100,7 +100,7 @@ describe("auth API", () => {
 
     it("returns null for unauthenticated", () => {
       const result = meHandler({ context: {} });
-      expect(result).toEqual({});
+      expect(result).toBeNull();
     });
   });
 
