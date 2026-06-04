@@ -8,7 +8,7 @@ const bodySchema = z.object({
   altchaPayload: z.string().optional(),
 });
 
-export default defineEventHandler(async (event) => {
+export default defineWebApiHandler(async (event) => {
   const log = useLogger(event);
   const user = requireAuth(event);
 
@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
 
   const parsed = bodySchema.safeParse(await readBody(event));
   if (!parsed.success) {
-    return { success: false, error: "参数格式错误" };
+    webError("参数格式错误");
   }
 
   const { oldPassword, newPassword, confirmPassword, altchaPayload } = parsed.data;
@@ -39,22 +39,22 @@ export default defineEventHandler(async (event) => {
 
   // Validate inputs
   if (!oldPassword) {
-    return { success: false, error: "请输入旧密码" };
+    webError("请输入旧密码");
   }
   if (!newPassword || newPassword.length < PASSWORD_MIN_LENGTH) {
-    return { success: false, error: "新密码长度不能少于8个字符" };
+    webError("新密码长度不能少于8个字符");
   }
   if (newPassword.length > PASSWORD_MAX_LENGTH) {
-    return { success: false, error: "新密码长度不能超过128个字符" };
+    webError("新密码长度不能超过128个字符");
   }
   if (newPassword !== confirmPassword) {
-    return { success: false, error: "两次输入的新密码不一致" };
+    webError("两次输入的新密码不一致");
   }
 
   // Find user
   const userDoc = await findUserByUuid(user.userId);
   if (!userDoc) {
-    return { success: false, error: "用户不存在" };
+    webError("用户不存在");
   }
 
   // Verify old password
@@ -65,7 +65,7 @@ export default defineEventHandler(async (event) => {
     userDoc.hashVersion,
   );
   if (!passwordValid) {
-    return { success: false, error: "旧密码错误" };
+    webError("旧密码错误");
   }
 
   // Hash and update password

@@ -1,9 +1,9 @@
 import { useLogger } from "evlog";
 
-export default defineEventHandler(async (event) => {
+export default defineWebApiHandler(async (event) => {
   const log = useLogger(event);
   if (!event.context.user) {
-    return { success: false, error: "未登录" };
+    webError("未登录");
   }
 
   // Rate limit by user (already authenticated)
@@ -23,19 +23,19 @@ export default defineEventHandler(async (event) => {
   // Check if email verification is required
   const requireEmailVerification = getSetting("auth.requireEmailVerification");
   if (!requireEmailVerification) {
-    return { success: false, error: "当前无需验证邮箱" };
+    webError("当前无需验证邮箱");
   }
 
   // Check SMTP configured
   const smtpHost = getSetting("smtp.host");
   if (!smtpHost) {
-    return { success: false, error: "邮件服务未配置，请联系管理员" };
+    webError("邮件服务未配置，请联系管理员");
   }
 
   // Fetch user from DB
   const user = await findUserByUuid(event.context.user.userId);
   if (!user) {
-    return { success: false, error: "用户不存在" };
+    webError("用户不存在");
   }
 
   // Already verified

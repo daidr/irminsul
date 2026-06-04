@@ -8,10 +8,10 @@ const bodySchema = z.object({
   altchaPayload: z.string().optional(),
 });
 
-export default defineEventHandler(async (event) => {
+export default defineWebApiHandler(async (event) => {
   const parsed = bodySchema.safeParse(await readBody(event));
   if (!parsed.success) {
-    return { success: false, error: "参数格式错误" };
+    webError("参数格式错误");
   }
   const log = useLogger(event);
 
@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
 
   // Validate input
   if (!email || !password) {
-    return { success: false, error: "请填写邮箱和密码" };
+    webError("请填写邮箱和密码");
   }
 
   // Verify altcha
@@ -41,13 +41,13 @@ export default defineEventHandler(async (event) => {
   if (!user) {
     // Run a dummy verify so timing does not leak user existence
     await dummyPasswordVerify(password);
-    return { success: false, error: "邮箱或密码错误" };
+    webError("邮箱或密码错误");
   }
 
   // Verify password (with legacy migration support)
   const passwordValid = await verifyPassword(event, password, user.passwordHash, user.hashVersion);
   if (!passwordValid) {
-    return { success: false, error: "邮箱或密码错误" };
+    webError("邮箱或密码错误");
   }
 
   // Auto-upgrade legacy password hash to argon2id

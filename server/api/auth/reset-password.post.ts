@@ -8,11 +8,11 @@ const bodySchema = z.object({
   altchaPayload: z.string().optional(),
 });
 
-export default defineEventHandler(async (event) => {
+export default defineWebApiHandler(async (event) => {
   const log = useLogger(event);
   const parsed = bodySchema.safeParse(await readBody(event));
   if (!parsed.success) {
-    return { success: false, error: "参数格式错误" };
+    webError("参数格式错误");
   }
 
   const { token, password, confirmPassword, altchaPayload } = parsed.data;
@@ -37,30 +37,30 @@ export default defineEventHandler(async (event) => {
 
   // Validate password
   if (!password || password.length < PASSWORD_MIN_LENGTH) {
-    return { success: false, error: "密码长度不能少于8个字符" };
+    webError("密码长度不能少于8个字符");
   }
   if (password.length > PASSWORD_MAX_LENGTH) {
-    return { success: false, error: "密码长度不能超过128个字符" };
+    webError("密码长度不能超过128个字符");
   }
   if (password !== confirmPassword) {
-    return { success: false, error: "两次输入的密码不一致" };
+    webError("两次输入的密码不一致");
   }
 
   // Validate token
   if (!token) {
-    return { success: false, error: "无效的重置链接" };
+    webError("无效的重置链接");
   }
 
   // Consume token (one-time use)
   const tokenData = await consumePasswordResetToken(event, token);
   if (!tokenData) {
-    return { success: false, error: "重置链接无效或已过期，请重新发送" };
+    webError("重置链接无效或已过期，请重新发送");
   }
 
   // Find user
   const user = await findUserByUuid(tokenData.userId);
   if (!user) {
-    return { success: false, error: "用户不存在" };
+    webError("用户不存在");
   }
   // Hash and update password
   const newHash = await hashPassword(password);

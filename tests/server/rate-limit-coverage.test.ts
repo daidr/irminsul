@@ -2,7 +2,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Real helpers under test — they reference the stubbed checkRateLimit/
 // verifyAltchaPayload/YggdrasilError globals, so the 429-translation contract
 // is exercised against the real implementation.
-import { checkWebAltcha, checkWebRateLimit } from "../../server/utils/web-api";
+import {
+  checkWebAltcha,
+  checkWebRateLimit,
+  defineWebApiHandler,
+  webError,
+} from "../../server/utils/web-api";
 import { EMAIL_REGEX, PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH } from "../../server/utils/constants";
 
 // --- Auto-import stubs (Nitro) ---
@@ -67,6 +72,8 @@ beforeEach(() => {
   vi.stubGlobal("checkRateLimit", mockCheckRateLimit);
   vi.stubGlobal("checkWebAltcha", checkWebAltcha);
   vi.stubGlobal("checkWebRateLimit", checkWebRateLimit);
+  vi.stubGlobal("defineWebApiHandler", defineWebApiHandler);
+  vi.stubGlobal("webError", webError);
   vi.stubGlobal("EMAIL_REGEX", EMAIL_REGEX);
   vi.stubGlobal("PASSWORD_MIN_LENGTH", PASSWORD_MIN_LENGTH);
   vi.stubGlobal("PASSWORD_MAX_LENGTH", PASSWORD_MAX_LENGTH);

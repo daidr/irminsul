@@ -5,44 +5,42 @@ const bodySchema = z.object({
   token: z.string().optional(),
 });
 
-export default defineEventHandler(async (event) => {
+export default defineWebApiHandler(async (event) => {
   const log = useLogger(event);
   const parsed = bodySchema.safeParse(await readBody(event));
   if (!parsed.success) {
-    return { success: false, error: "参数格式错误" };
+    webError("参数格式错误");
   }
 
   // Rate limit by IP
-  try {
-    await checkRateLimit(event, `web:verify-email:ip:${extractClientIp(event)}`, {
+  const rateLimitFail = await checkWebRateLimit(
+    event,
+    `web:verify-email:ip:${extractClientIp(event)}`,
+    {
       duration: 60_000,
       max: 10,
       delayAfter: 5,
       timeWait: 2_000,
       fastFail: true,
-    });
-  } catch (err) {
-    if (err instanceof YggdrasilError && err.httpStatus === 429) {
-      return { success: false, error: "请求过于频繁，请稍后再试" };
-    }
-    throw err;
-  }
+    },
+  );
+  if (rateLimitFail) return rateLimitFail;
 
   const { token } = parsed.data;
 
   if (!token) {
-    return { success: false, error: "无效的验证链接" };
+    webError("无效的验证链接");
   }
 
   const result = await consumeEmailVerificationToken(event, token);
   if (!result) {
-    return { success: false, error: "验证链接无效或已过期" };
+    webError("验证链接无效或已过期");
   }
 
   // Verify email matches current user email
   const user = await findUserByUuid(result.userId);
   if (!user) {
-    return { success: false, error: "用户不存在" };
+    webError("用户不存在");
   }
 
   if (user.email !== result.email) {
@@ -54,7 +52,7 @@ export default defineEventHandler(async (event) => {
         currentEmail: user.email,
       },
     });
-    return { success: false, error: "邮箱地址已变更，请重新发送验证邮件" };
+    webError("邮箱地址已变更，请重新发送验证邮件");
   }
 
   if (user.emailVerified) {

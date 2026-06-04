@@ -20,43 +20,40 @@ const bodySchema = z.object({
   altchaPayload: z.string().optional(),
 });
 
-export default defineEventHandler(async (event) => {
+export default defineWebApiHandler(async (event) => {
   const parsed = bodySchema.safeParse(await readBody(event));
   if (!parsed.success) {
-    return { success: false, error: "参数格式错误" };
+    webError("参数格式错误");
   }
 
   const { email, gameId, password, confirmPassword, altchaPayload } = parsed.data;
 
   // Validate input
   if (!email || !gameId || !password || !confirmPassword) {
-    return { success: false, error: "请填写所有必填字段" };
+    webError("请填写所有必填字段");
   }
 
   // Validate email format
   if (!EMAIL_REGEX.test(email)) {
-    return { success: false, error: "邮箱格式不正确" };
+    webError("邮箱格式不正确");
   }
 
   // Validate game ID
   if (!GAME_ID_REGEX.test(gameId)) {
-    return {
-      success: false,
-      error: "游戏昵称仅支持字母、数字、下划线，长度4-12个字符",
-    };
+    webError("游戏昵称仅支持字母、数字、下划线，长度4-12个字符");
   }
 
   // Validate password length
   if (password.length < PASSWORD_MIN_LENGTH) {
-    return { success: false, error: "密码长度不能少于8个字符" };
+    webError("密码长度不能少于8个字符");
   }
   if (password.length > PASSWORD_MAX_LENGTH) {
-    return { success: false, error: "密码长度不能超过128个字符" };
+    webError("密码长度不能超过128个字符");
   }
 
   // Confirm password match
   if (password !== confirmPassword) {
-    return { success: false, error: "两次输入的密码不一致" };
+    webError("两次输入的密码不一致");
   }
 
   // Verify altcha
@@ -79,10 +76,10 @@ export default defineEventHandler(async (event) => {
 
   // Check uniqueness
   if (await emailExists(email)) {
-    return { success: false, error: "该邮箱已被注册" };
+    webError("该邮箱已被注册");
   }
   if (await gameIdExists(gameId)) {
-    return { success: false, error: "该游戏昵称已被使用" };
+    webError("该游戏昵称已被使用");
   }
 
   // Hash password
@@ -122,9 +119,9 @@ export default defineEventHandler(async (event) => {
     await insertUser(userDoc);
   } catch (err: unknown) {
     if (err instanceof MongoServerError && err.code === 11000) {
-      return { success: false, error: "邮箱或游戏昵称已被使用" };
+      webError("邮箱或游戏昵称已被使用");
     }
-    return { success: false, error: "注册失败，请稍后重试" };
+    webError("注册失败，请稍后重试");
   }
 
   emitUserHook("user:registered", {

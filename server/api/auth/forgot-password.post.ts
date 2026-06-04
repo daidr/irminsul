@@ -24,11 +24,11 @@ const bodySchema = z.object({
   altchaPayload: z.string().optional(),
 });
 
-export default defineEventHandler(async (event) => {
+export default defineWebApiHandler(async (event) => {
   const log = useLogger(event);
   const parsed = bodySchema.safeParse(await readBody(event));
   if (!parsed.success) {
-    return { success: false, error: "参数格式错误" };
+    webError("参数格式错误");
   }
 
   const { email, altchaPayload } = parsed.data;
@@ -53,13 +53,13 @@ export default defineEventHandler(async (event) => {
 
   // Validate email format
   if (!email || !EMAIL_REGEX.test(email)) {
-    return { success: false, error: "请输入有效的邮箱地址" };
+    webError("请输入有效的邮箱地址");
   }
 
   // Check if SMTP is configured
   const smtpHost = getSetting("smtp.host");
   if (!smtpHost) {
-    return { success: false, error: "邮件服务未配置，请联系管理员" };
+    webError("邮件服务未配置，请联系管理员");
   }
 
   // Per-email rate limit (prevent email bombing)
