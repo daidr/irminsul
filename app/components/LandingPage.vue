@@ -9,15 +9,12 @@ import {
   ServerStack03Icon,
   ZapIcon,
 } from "@hugeicons/core-free-icons";
-import { useWindowScroll } from "@vueuse/core";
+import { useScroll, useTransform, useSpring, motion } from "motion-v";
 
-// 用 VueUse（已是依赖）实现 hero 视差，替代 122KB 的 motion-v。SSR 时 y=0，安全降级。
-const { y: scrollY } = useWindowScroll();
 const easeOut = (t: number) => 1 - (1 - t) ** 3;
-const heroY = computed(() => {
-  const t = Math.min(1, Math.max(0, scrollY.value / 500));
-  return easeOut(t) * 150;
-});
+const { scrollY } = useScroll();
+const rawY = useTransform(scrollY, [0, 500], [0, 150], { ease: easeOut });
+const heroY = useSpring(rawY, { stiffness: 100, damping: 10 });
 
 const features = computed(() => [
   {
@@ -49,9 +46,9 @@ const features = computed(() => [
 
 <template>
   <section class="h-[calc(100dvh+48px)] -mt-18 overflow-hidden flex items-center justify-center">
-    <div
+    <motion.div
       class="flex flex-col items-center justify-center gap-9 relative"
-      :style="{ transform: `translateY(${heroY}px)` }"
+      :style="{ y: heroY }"
     >
       <div
         class="backdrop-blur-sm bg-black/2 border-black/7 dark:bg-white/5 dark:border-white/17 border px-4 py-1.5 text-sm flex gap-2 items-center"
@@ -70,7 +67,7 @@ const features = computed(() => [
           <HugeiconsIcon :icon="GithubIcon" :size="18" />GitHub
         </a>
       </div>
-    </div>
+    </motion.div>
   </section>
   <section class="px-5 pb-25 flex justify-center">
     <div class="grid gap-8 md:grid-cols-2 max-w-300">
