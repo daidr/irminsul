@@ -1,10 +1,10 @@
-export default defineEventHandler(async (event) => {
+export default defineWebApiHandler(async (event) => {
   const admin = requireAdmin(event);
 
   const userId = getRouterParam(event, "userId");
   const banId = getRouterParam(event, "banId");
   if (!userId || !banId) {
-    return { success: false, error: "缺少参数" };
+    webError("缺少参数");
   }
 
   const result = await removeBan(userId, banId);
@@ -35,5 +35,9 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  return result.success ? { success: true } : { success: false, error: result.error };
+  if (!result.success) {
+    webError(result.error);
+  }
+
+  return { success: true };
 });

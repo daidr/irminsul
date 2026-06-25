@@ -7,40 +7,38 @@ const bodySchema = z.object({
   credential: z.record(z.string(), z.any()).optional(),
 });
 
-export default defineEventHandler(async (event) => {
+export default defineWebApiHandler(async (event) => {
   const log = useLogger(event);
   const user = requireAuth(event);
 
   // Rate limit by user (already authenticated)
-  try {
-    await checkRateLimit(event, `web:passkey:register-verify:uid:${user.userId}`, {
+  const rateLimitFail = await checkWebRateLimit(
+    event,
+    `web:passkey:register-verify:uid:${user.userId}`,
+    {
       duration: 60_000,
       max: 10,
       delayAfter: 5,
       timeWait: 2_000,
       fastFail: true,
-    });
-  } catch (err) {
-    if (err instanceof YggdrasilError && err.httpStatus === 429) {
-      return { success: false, error: "请求过于频繁，请稍后再试" };
-    }
-    throw err;
-  }
+    },
+  );
+  if (rateLimitFail) return rateLimitFail;
 
   const parsed = bodySchema.safeParse(await readBody(event));
   if (!parsed.success) {
-    return { success: false, error: "参数格式错误" };
+    webError("参数格式错误");
   }
 
   if (!parsed.data.credential) {
-    return { success: false, error: "缺少凭证数据" };
+    webError("缺少凭证数据");
   }
 
   const credential = parsed.data.credential as RegistrationResponseJSON;
 
   const userDoc = await findUserByUuid(user.userId);
   if (!userDoc) {
-    return { success: false, error: "用户不存在" };
+    webError("用户不存在");
   }
 
   let verified;
@@ -48,14 +46,14 @@ export default defineEventHandler(async (event) => {
     verified = await verifyRegistration(userDoc.uuid, credential);
   } catch (e) {
     log.error(e as Error, { step: "passkey_register_verify", userId: userDoc.uuid });
-    return { success: false, error: "验证失败，请重试" };
+    webError("验证失败，请重试");
   }
 
   if (!verified.verified || !verified.registrationInfo) {
     log.set({
       passkey: { registrationFailure: true, userId: userDoc.uuid, verified: verified.verified },
     });
-    return { success: false, error: "验证失败，请重试" };
+    webError("验证失败，请重试");
   }
 
   const { credential: cred, credentialBackedUp, credentialDeviceType } = verified.registrationInfo;
@@ -81,7 +79,7 @@ export default defineEventHandler(async (event) => {
 
   const added = await addPasskey(userDoc.uuid, passkey);
   if (!added) {
-    return { success: false, error: "通行密钥数量已达上限" };
+    webError("通行密钥数量已达上限");
   }
 
   return {

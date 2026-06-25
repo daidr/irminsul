@@ -27,6 +27,16 @@ export default defineNuxtConfig({
 
   vite: {
     plugins: [tailwindcss()],
+    optimizeDeps: {
+      include: [
+        "@vue/devtools-core",
+        "@vue/devtools-kit",
+        "@hugeicons/core-free-icons",
+        "@hugeicons/vue",
+        "sortablejs",
+        "motion-v",
+      ],
+    },
     vue: {
       template: {
         compilerOptions: {
@@ -38,13 +48,7 @@ export default defineNuxtConfig({
 
   css: ["~/assets/css/tailwind.css"],
 
-  modules: [
-    "@pinia/nuxt",
-    "@nuxt/test-utils/module",
-    "@nuxt/a11y",
-    "@nuxt/hints",
-    "evlog/nuxt",
-  ],
+  modules: ["@pinia/nuxt", "@nuxt/test-utils/module", "@nuxt/a11y", "@nuxt/hints", "evlog/nuxt"],
 
   evlog: {
     env: { service: "irminsul" },

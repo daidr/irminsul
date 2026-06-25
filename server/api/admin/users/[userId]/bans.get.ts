@@ -1,9 +1,9 @@
-export default defineEventHandler(async (event) => {
+export default defineWebApiHandler(async (event) => {
   requireAdmin(event);
 
   const userId = getRouterParam(event, "userId");
   if (!userId) {
-    return { success: false, error: "缺少用户 ID" };
+    webError("缺少用户 ID");
   }
 
   const bans = await getUserBans(userId);

@@ -5,18 +5,18 @@ const bodySchema = z.object({
   values: z.record(z.string(), z.any()).optional(),
 });
 
-export default defineEventHandler(async (event) => {
+export default defineWebApiHandler(async (event) => {
   requireAdmin(event);
 
   const parsed = bodySchema.safeParse(await readBody(event));
   if (!parsed.success) {
-    return { success: false, error: "参数格式错误" };
+    webError("参数格式错误");
   }
 
   const { category, values } = parsed.data;
 
   if (!category || !values) {
-    return { success: false, error: "参数错误" };
+    webError("参数错误");
   }
 
   if (category === "smtp") {
@@ -28,10 +28,10 @@ export default defineEventHandler(async (event) => {
     const from = values["smtp.from"];
 
     if (typeof host !== "string" || !host.trim()) {
-      return { success: false, error: "SMTP 主机不能为空" };
+      webError("SMTP 主机不能为空");
     }
     if (typeof port !== "number" || port < 1 || port > 65535) {
-      return { success: false, error: "端口号须为 1-65535" };
+      webError("端口号须为 1-65535");
     }
 
     await setSetting("smtp.host", host.trim());
@@ -47,7 +47,7 @@ export default defineEventHandler(async (event) => {
   if (category === "auth") {
     const requireEmailVerification = values["auth.requireEmailVerification"];
     if (typeof requireEmailVerification !== "boolean") {
-      return { success: false, error: "参数类型错误" };
+      webError("参数类型错误");
     }
 
     await setSetting("auth.requireEmailVerification", requireEmailVerification);
@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
   if (category === "general") {
     const announcement = values["general.announcement"];
     if (typeof announcement !== "string") {
-      return { success: false, error: "参数类型错误" };
+      webError("参数类型错误");
     }
 
     await setSetting("general.announcement", announcement);
@@ -67,12 +67,12 @@ export default defineEventHandler(async (event) => {
   if (category === "oauth") {
     const enabled = values["oauth.enabled"];
     if (typeof enabled !== "boolean") {
-      return { success: false, error: "参数类型错误" };
+      webError("参数类型错误");
     }
 
     await setSetting("oauth.enabled", enabled);
     return { success: true };
   }
 
-  return { success: false, error: "未知的配置分类" };
+  webError("未知的配置分类");
 });

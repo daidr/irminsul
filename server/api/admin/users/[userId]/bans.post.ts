@@ -5,28 +5,28 @@ const bodySchema = z.object({
   reason: z.string().optional(),
 });
 
-export default defineEventHandler(async (event) => {
+export default defineWebApiHandler(async (event) => {
   const admin = requireAdmin(event);
 
   const userId = getRouterParam(event, "userId");
   if (!userId) {
-    return { success: false, error: "缺少用户 ID" };
+    webError("缺少用户 ID");
   }
 
   // Prevent self-ban
   if (userId === admin.userId) {
-    return { success: false, error: "不能封禁自己" };
+    webError("不能封禁自己");
   }
 
   const parsed = bodySchema.safeParse(await readBody(event));
   if (!parsed.success) {
-    return { success: false, error: "参数格式错误" };
+    webError("参数格式错误");
   }
   const { end, reason } = parsed.data;
 
   // Validate reason length
   if (reason && reason.length > 500) {
-    return { success: false, error: "封禁理由不能超过 500 个字符" };
+    webError("封禁理由不能超过 500 个字符");
   }
 
   // Validate and parse end date
@@ -34,10 +34,10 @@ export default defineEventHandler(async (event) => {
   if (end) {
     endDate = new Date(end);
     if (Number.isNaN(endDate.getTime())) {
-      return { success: false, error: "截止时间格式无效" };
+      webError("截止时间格式无效");
     }
     if (endDate <= new Date()) {
-      return { success: false, error: "截止时间必须是未来时间" };
+      webError("截止时间必须是未来时间");
     }
   }
 
@@ -55,7 +55,9 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  return result.success
-    ? { success: true, banId: result.banId }
-    : { success: false, error: result.error };
+  if (!result.success) {
+    webError(result.error);
+  }
+
+  return { success: true, banId: result.banId };
 });

@@ -8,31 +8,29 @@ const bodySchema = z.object({
   challengeId: z.string().optional(),
 });
 
-export default defineEventHandler(async (event) => {
+export default defineWebApiHandler(async (event) => {
   const log = useLogger(event);
   const parsed = bodySchema.safeParse(await readBody(event));
   if (!parsed.success) {
-    return { success: false, error: "参数格式错误" };
+    webError("参数格式错误");
   }
 
   // Rate limit by IP (this is the login path; user not yet authenticated)
-  try {
-    await checkRateLimit(event, `web:passkey:auth-verify:ip:${extractClientIp(event)}`, {
+  const rateLimitFail = await checkWebRateLimit(
+    event,
+    `web:passkey:auth-verify:ip:${extractClientIp(event)}`,
+    {
       duration: 60_000,
       max: 10,
       delayAfter: 5,
       timeWait: 2_000,
       fastFail: true,
-    });
-  } catch (err) {
-    if (err instanceof YggdrasilError && err.httpStatus === 429) {
-      return { success: false, error: "请求过于频繁，请稍后再试" };
-    }
-    throw err;
-  }
+    },
+  );
+  if (rateLimitFail) return rateLimitFail;
 
   if (!parsed.data.credential || !parsed.data.challengeId) {
-    return { success: false, error: "缺少验证数据" };
+    webError("缺少验证数据");
   }
 
   const credential = parsed.data.credential as AuthenticationResponseJSON;
@@ -43,14 +41,14 @@ export default defineEventHandler(async (event) => {
   const user = await findUserByPasskeyCredentialId(credentialId);
   if (!user) {
     log.set({ passkey: { failure: "no_user_found", credentialId } });
-    return { success: false, error: "通行密钥验证失败" };
+    webError("通行密钥验证失败");
   }
 
   // Find the specific passkey record
   const passkey = user.passkeys.find((pk) => pk.credentialId === credentialId);
   if (!passkey) {
     log.set({ passkey: { failure: "credential_not_in_user", credentialId, userId: user.uuid } });
-    return { success: false, error: "通行密钥验证失败" };
+    webError("通行密钥验证失败");
   }
 
   // Cross-check userHandle if provided (userHandle is Base64URL-encoded UTF-8 of uuid)
@@ -58,7 +56,7 @@ export default defineEventHandler(async (event) => {
     const decoded = new TextDecoder().decode(base64URLToUint8Array(credential.response.userHandle));
     if (decoded !== user.uuid) {
       log.set({ passkey: { failure: "user_handle_mismatch", userId: user.uuid } });
-      return { success: false, error: "通行密钥验证失败" };
+      webError("通行密钥验证失败");
     }
   }
 
@@ -73,12 +71,12 @@ export default defineEventHandler(async (event) => {
     });
   } catch (e) {
     log.error(e as Error, { step: "passkey_verify", userId: user.uuid });
-    return { success: false, error: "通行密钥验证失败" };
+    webError("通行密钥验证失败");
   }
 
   if (!verified.verified) {
     log.set({ passkey: { failure: "verification_not_passed", userId: user.uuid } });
-    return { success: false, error: "通行密钥验证失败" };
+    webError("通行密钥验证失败");
   }
 
   // Update passkey counter and lastUsedAt

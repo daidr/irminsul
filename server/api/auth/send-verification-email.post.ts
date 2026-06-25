@@ -60,7 +60,7 @@ export default defineWebApiHandler(async (event) => {
     }
   } catch (err) {
     log.error(err as Error, { step: "send_verification_email", email: user.email });
-    return { success: false, error: "邮件发送失败，请稍后重试" };
+    webError("邮件发送失败，请稍后重试");
   }
 
   return { success: true, message: "验证邮件已发送，请检查收件箱" };

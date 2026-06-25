@@ -8,7 +8,11 @@ import {
   defineWebApiHandler,
   webError,
 } from "../../server/utils/web-api";
-import { EMAIL_REGEX, PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH } from "../../server/utils/constants";
+import {
+  EMAIL_REGEX,
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_MAX_LENGTH,
+} from "../../server/utils/constants";
 
 // --- Auto-import stubs (Nitro) ---
 const mockCheckRateLimit = vi.fn();
@@ -53,6 +57,11 @@ const mockReadBody = vi.fn();
 const mockGetHeader = vi.fn(() => "test-ua");
 const mockSetCookie = vi.fn();
 const mockDeleteCookie = vi.fn();
+const mockLogger = vi.hoisted(() => ({
+  set: vi.fn(),
+  error: vi.fn(),
+  emit: vi.fn(),
+}));
 
 vi.mock("zod", async (importOriginal) => {
   const mod = await importOriginal<typeof import("zod")>();
@@ -61,7 +70,7 @@ vi.mock("zod", async (importOriginal) => {
 
 vi.mock("evlog", async (importOriginal) => {
   const mod = await importOriginal<typeof import("evlog")>();
-  return { ...mod, useLogger: () => ({ set: vi.fn(), error: vi.fn(), emit: vi.fn() }) };
+  return { ...mod, useLogger: () => mockLogger };
 });
 
 beforeEach(() => {
@@ -204,6 +213,30 @@ describe("rate-limit coverage: web auth helper endpoints", () => {
         "web:send-verification-email:uid:user-uuid",
         expect.objectContaining({ max: 3, fastFail: true }),
       );
+    });
+
+    it("returns a failure envelope without logging an exception when SMTP send returns false", async () => {
+      mockGetSetting.mockImplementation((key: string) => {
+        if (key === "auth.requireEmailVerification") return true;
+        if (key === "smtp.host") return "smtp.example.com";
+        return undefined;
+      });
+      mockFindUserByUuid.mockResolvedValue({
+        uuid: "user-uuid",
+        email: "u@example.com",
+        emailVerified: false,
+      });
+      mockCreateEmailVerificationToken.mockResolvedValue("email-token");
+      mockSendEmailVerificationEmail.mockResolvedValue(false);
+
+      const event = createFakeEvent({}, { userId: "user-uuid", email: "u@example.com" });
+      const result = await handler(event);
+
+      expect(result).toEqual({ success: false, error: "邮件发送失败，请稍后重试" });
+      expect(mockLogger.set).toHaveBeenCalledWith({
+        emailVerification: { emailSendFailed: true, email: "u@example.com" },
+      });
+      expect(mockLogger.error).not.toHaveBeenCalled();
     });
   });
 

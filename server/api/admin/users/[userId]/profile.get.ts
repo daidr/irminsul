@@ -1,14 +1,14 @@
-export default defineEventHandler(async (event) => {
+export default defineWebApiHandler(async (event) => {
   requireAdmin(event);
 
   const userId = getRouterParam(event, "userId");
   if (!userId) {
-    return { success: false, error: "缺少用户 ID" };
+    webError("缺少用户 ID");
   }
 
   const user = await findUserByUuid(userId);
   if (!user) {
-    return { success: false, error: "用户不存在" };
+    webError("用户不存在");
   }
 
   return {

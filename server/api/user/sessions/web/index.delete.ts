@@ -4,22 +4,22 @@ const bodySchema = z.object({
   sessionId: z.string().optional(),
 });
 
-export default defineEventHandler(async (event) => {
+export default defineWebApiHandler(async (event) => {
   const user = requireAuth(event);
   const currentSessionId = event.context.sessionId as string | null;
 
   const parsed = bodySchema.safeParse(await readBody(event));
   if (!parsed.success) {
-    return { success: false, error: "参数格式错误" };
+    webError("参数格式错误");
   }
   const { sessionId } = parsed.data;
 
   if (!sessionId) {
-    return { success: false, error: "缺少会话标识" };
+    webError("缺少会话标识");
   }
 
   if (sessionId === currentSessionId) {
-    return { success: false, error: "不能删除当前会话" };
+    webError("不能删除当前会话");
   }
 
   await destroySessionById(user.userId, sessionId);
