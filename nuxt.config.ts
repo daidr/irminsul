@@ -29,12 +29,15 @@ export default defineNuxtConfig({
     plugins: [tailwindcss()],
     optimizeDeps: {
       include: [
-        "@vue/devtools-core",
-        "@vue/devtools-kit",
-        "@hugeicons/core-free-icons",
-        "@hugeicons/vue",
-        "sortablejs",
-        "motion-v",
+        '@vue/devtools-core',
+        '@vue/devtools-kit',
+        '@hugeicons/core-free-icons',
+        '@hugeicons/vue',
+        'sortablejs',
+        'motion-v',
+        '@daidr/minecraft-skin-renderer/vue3',
+        '@daidr/minecraft-skin-renderer/webgl',
+        '@simplewebauthn/browser',
       ],
     },
     vue: {

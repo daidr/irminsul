@@ -29,6 +29,8 @@ useHead({
 
 const { data: user, refresh: refreshUser } = await useFetch("/api/auth/me", {
   key: "current-user",
+  // null 响应会被序列化为 204，而 $fetch 会将其解析为 undefined。
+  transform: (user) => user ?? null,
 });
 
 // Prerendered pages carry stale payload — refresh user data on client
