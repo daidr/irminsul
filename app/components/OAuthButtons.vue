@@ -6,7 +6,8 @@ interface OAuthProvider {
   brandColor: string;
 }
 
-const { data: providersData } = await useFetch("/api/oauth/providers");
+// 登录页会预渲染；OAuth 提供方依赖运行时插件，须在浏览器挂载后获取。
+const { data: providersData } = await useFetch("/api/oauth/providers", { server: false });
 const providers = computed<OAuthProvider[]>(
   () => (providersData.value as { providers: OAuthProvider[] })?.providers ?? [],
 );
